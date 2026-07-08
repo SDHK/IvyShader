@@ -31,7 +31,7 @@ struct IonStruct_Light
 
 //===[数据结构字段映射]===
 // 顶点位置
-#define IonVar_PositionOS float4 PositionOS : POSITION;
+#define IonVar_PositionOs float4 PositionOs : POSITION;
 // 顶点颜色
 #define IonVar_Color float4 Color : COLOR;
 // 顶点法线
@@ -43,7 +43,7 @@ struct IonStruct_Light
 // 实例ID
 #define IonVar_InstanceID uint InstanceID : SV_InstanceID;
 // 顶点在屏幕空间位置
-#define IonVar_PositionCS float4 PositionCS : SV_POSITION;
+#define IonVar_PositionCs float4 PositionCs : SV_POSITION;
 // 正面检测（双面渲染）
 #define IonVar_IsFrontFace bool IsFrontFace : SV_IsFrontFace;
 

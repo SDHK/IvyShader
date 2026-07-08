@@ -35,17 +35,17 @@ float4 PassVar_MainTex_ST;
 
 struct VertData
 {
-    IonVar_PositionOS
+    IonVar_PositionOs
     IonVar_Normal
     IonVar_T0(float2, UV)
 };
 
 struct FragData
 {
-    IonVar_PositionCS
+    IonVar_PositionCs
     IonVar_T0(float2, UV)
-    IonVar_T1(float3, NormalWS)
-    IonVar_T2(float3, PositionWS)
+    IonVar_T1(float3, NormalWs)
+    IonVar_T2(float3, PositionWs)
 };
 
 FragData vert(VertData vertData)
@@ -54,11 +54,11 @@ FragData vert(VertData vertData)
     // 计算UV坐标
     fragData.UV = IonMath_Transform2D(vertData.UV.xy, PassVar_MainTex_ST.xy,PassVar_MainTex_ST.zw);
     // 计算世界空间位置
-    fragData.PositionCS = IonMatrix_ObjectToClip(vertData.PositionOS);
+    fragData.PositionCs = IonMatrix_ObjectToClip(vertData.PositionOs);
     // 将法线转换到世界空间（使用法线专用函数）
-    fragData.NormalWS = IonMatrix_ObjectToWorldNormal(vertData.Normal);
+    fragData.NormalWs = IonMatrix_ObjectToWorldNormal(vertData.Normal);
     // 计算世界空间位置
-    fragData.PositionWS = IonMatrix_ObjectToWorld(vertData.PositionOS);
+    fragData.PositionWs = IonMatrix_ObjectToWorld(vertData.PositionOs);
     return fragData;
 }
 
@@ -69,7 +69,7 @@ half4 frag(FragData fragData) : SV_Target
     // 获取主光源信息并计算阴影（统一接口，自动适配URP/BRP）
     Light mainLight = GetMainLight();
     // 计算 Lambert 光照（使用工具函数）
-    half3 directLighting = IonLight_LambertSimple(fragData.NormalWS, mainLight.direction, mainLight.color, mainLight.shadowAttenuation);
+    half3 directLighting = IonLight_LambertSimple(fragData.NormalWs, mainLight.direction, mainLight.color, mainLight.shadowAttenuation);
     // 最终光照 = 直接光照 + 环境光
     float3 lighting = directLighting + IonParam_AmbientSky.rgb;
     // 应用光照

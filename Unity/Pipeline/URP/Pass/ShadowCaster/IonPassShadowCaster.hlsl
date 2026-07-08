@@ -27,18 +27,18 @@ float PassVar_Scale = 1.0;
 
 struct VertData
 {
-    IonVar_PositionOS
+    IonVar_PositionOs
 };
 
 struct FragData
 {
-    IonVar_PositionCS
+    IonVar_PositionCs
 };
 
 FragData vert(VertData vertData)
 {
     FragData fragData;
-    fragData.PositionCS = IonMatrix_ObjectToClip(vertData.PositionOS);
+    fragData.PositionCs = IonMatrix_ObjectToClip(vertData.PositionOs);
     return fragData;
 }
 

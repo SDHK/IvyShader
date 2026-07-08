@@ -23,9 +23,7 @@
 //                              半兰伯特:     scale=0.5, offset=0.5
 // float  offset              - NdotL 偏移量（默认 0.0）
 // float3 return              - 光照贡献
-float3 IonLight_Lambert(float3 normalWS, float3 lightDirection,
-    half3 lightColor, half shadowAttenuation, float distanceAttenuation,
-    float scale = 1.0, float offset = 0.0)
+float3 IonLight_Lambert(float3 normalWS, float3 lightDirection, half3 lightColor, half shadowAttenuation, float distanceAttenuation, float scale = 1.0, float offset = 0.0)
 {
     // NdotL 映射：scale=1,offset=0 → 标准Lambert；scale=0.5,offset=0.5 → 半兰伯特
     float NdotL = saturate(dot(normalWS, lightDirection) * scale + offset);
@@ -48,22 +46,16 @@ float3 IonLight_Lambert(float3 normalWS, float3 lightDirection,
 //       _SkinColor,      0.7, 0.02,
 //       _HighlightColor, 1.0, 0.05,
 //       _HighlightColor);    // color4 与 color3 相同则退化为三域
-float3 IonLight_Ramp(
-    float  weight,
-    float3 color1, float threshold1, float softness1,
-    float3 color2, float threshold2, float softness2,
-    float3 color3, float threshold3, float softness3,
-    float3 color4, float threshold4, float softness4,
-    float3 color5)
+float3 IonLight_Ramp(float weight, float3 color1, float threshold1, float softness1, float3 color2, float threshold2, float softness2, float3 color3, float threshold3, float softness3, float3 color4, float threshold4, float softness4, float3 color5)
 {
     float t1 = smoothstep(threshold1 - softness1, threshold1 + softness1, weight);
     float t2 = smoothstep(threshold2 - softness2, threshold2 + softness2, weight);
     float t3 = smoothstep(threshold3 - softness3, threshold3 + softness3, weight);
     float t4 = smoothstep(threshold4 - softness4, threshold4 + softness4, weight);
     float3 c = lerp(color1, color2, t1);
-           c = lerp(c,      color3, t2);
-           c = lerp(c,      color4, t3);
-           c = lerp(c,      color5, t4);
+    c = lerp(c, color3, t2);
+    c = lerp(c, color4, t3);
+    c = lerp(c, color5, t4);
     return c;
 }
 
@@ -77,7 +69,7 @@ float3 IonLight_Ramp(
 float IonLight_Fresnel(float3 normalWS, float3 viewDir, float power)
 {
     float NdotV = saturate(dot(normalWS, viewDir));
-    return pow(1.0 - NdotV, 10-power * 10);
+    return pow(1.0 - NdotV, 10 - power * 10);
 }
 
 //===[背光边缘光]===
@@ -91,8 +83,10 @@ float IonLight_Fresnel(float3 normalWS, float3 viewDir, float power)
 // float  return    - 背光强度（0~1，仅逆光时非零）
 float IonLight_BackRim(float3 normalWS, float3 viewDir, float3 lightDir, float power)
 {
-    float backFacing = saturate(-dot(normalWS, lightDir));              // 法线背对光源程度
-    float rimMask    = pow(1.0 - saturate(dot(normalWS, viewDir)), 10 - power * 10); // 视角边缘遮罩
+    float backFacing = saturate(-dot(normalWS, lightDir));
+    // 法线背对光源程度
+    float rimMask = pow(1.0 - saturate(dot(normalWS, viewDir)), 10 - power * 10);
+    // 视角边缘遮罩
     return backFacing * rimMask;
 }
 
@@ -108,4 +102,75 @@ float IonLight_RampGray(float weight, float threshold, float softness)
     return smoothstep(threshold - softness, threshold + softness, weight);
 }
 
-#endif // DefPart(IonLight, Tool)
+
+//===[星云]===
+float3 IonLight_StarNest(float3 uv, float time, float2 dir, float speed)
+{
+    int iterations = 17 ;
+    int volsteps = 20 ;
+    float formuparam = 0.53;
+    float stepsize = 0.1;
+    float zoom = 0.85;
+    float3 tile = float3(1, 1, 1) * 0.85;
+    //亮度
+    float brightness = 0.001;
+    //暗物质
+    float darkmatter = 0.300;
+    //衰减
+    float distfading = 0.730;
+    //饱和度
+    float saturation = 0.85;
+     //float3 aniDir = float3(uv * zoom, 1);
+     float3 aniDir = normalize(uv) * zoom;
+    time = time * speed;
+
+    //观察视角旋转，让星云看起来来没那么重复
+    float a1 = .54 + time * 0.0;
+    float a2 = .45 + time * 0.0;
+    float2x2 rot1 = float2x2(cos(a1), sin(a1), -sin(a1), cos(a1));
+    float2x2 rot2 = float2x2(cos(a2), sin(a2), -sin(a2), cos(a2));
+    aniDir.xz = mul(aniDir.xz, rot1);
+    aniDir.xy = mul(aniDir.xy, rot2);
+    float3 from = float3(1.5, 0.5, 0.5);
+    from += float3(time * dir.x, time * dir.y, 0);
+    from.xz = mul(from.xz, rot1);
+    from.xy = mul(from.xy, rot2);
+
+    //volumetric rendering
+    float s = 0.1, fade = 1.;
+    float3 v = float3(0.1, 0.1, 0.1);
+    for (int r = 0; r < volsteps; r++)
+    {
+        float3 p = from + s * aniDir * 0.5;
+        p = abs(float3(tile) - fmod(p, float3(tile * 2.)));
+        // tiling fold
+        float pa, a = pa = 0.;
+        for (int i = 0; i < iterations; i++)
+        {
+            p = abs(p) / dot(p, p) - formuparam;
+            // the magic formula
+            a += abs(length(p) - pa);
+            // absolute sum of average change
+            pa = length(p);
+        }
+        float dm = max(0., darkmatter - a * a * .001);
+        //dark matter
+        a *= a * a;
+        // add contrast
+        if (r > 6)
+            fade *= 1. - dm;        // 黑暗噪音，让远处星星有覆盖闪烁感。
+        //v+=float3(dm,dm*.5,0.);//太空变蓝
+        v += fade;
+        v += float3(s, s * s, s * s * s * s) * a * brightness * fade;
+        // coloring based on distance
+        fade *= distfading;
+        // distance fading
+        s += stepsize;
+    }
+    v = lerp(float3(length(v), length(v), length(v)), v, saturation);
+    //color adjust
+    return v * .01;
+}
+
+
+#endif// DefPart(IonLight, Tool)

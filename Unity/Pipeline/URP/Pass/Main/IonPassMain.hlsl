@@ -53,17 +53,17 @@ float4 PassVar_MainTex_ST;
 
 struct VertData
 {
-    IonVar_PositionOS
+    IonVar_PositionOs
     IonVar_Normal
     IonVar_T0(float2, UV)
 };
 
 struct FragData
 {
-    IonVar_PositionCS
+    IonVar_PositionCs
     IonVar_T0(float2, UV)
-    IonVar_T1(float3, NormalWS)
-    IonVar_T2(float3, PositionWS)
+    IonVar_T1(float3, NormalWs)
+    IonVar_T2(float3, PositionWs)
 };
 
 FragData vert(VertData vertData)
@@ -74,13 +74,13 @@ FragData vert(VertData vertData)
     fragData.UV = IonMath_Transform2D(vertData.UV.xy, PassVar_MainTex_ST.xy, PassVar_MainTex_ST.zw);
     
     // 计算裁剪空间位置
-    fragData.PositionCS = IonMatrix_ObjectToClip(vertData.PositionOS);
+    fragData.PositionCs = IonMatrix_ObjectToClip(vertData.PositionOs);
     
     // 将法线转换到世界空间
-    fragData.NormalWS = IonMatrix_ObjectToWorldNormal(vertData.Normal);
+    fragData.NormalWs = IonMatrix_ObjectToWorldNormal(vertData.Normal);
     
     // 计算世界空间位置
-    fragData.PositionWS = IonMatrix_ObjectToWorld(vertData.PositionOS);
+    fragData.PositionWs = IonMatrix_ObjectToWorld(vertData.PositionOs);
     
     return fragData;
 }
@@ -91,7 +91,7 @@ half4 frag(FragData fragData) : SV_Target
     half4 mainTex = tex2D(_MainTex, fragData.UV);
     
     // 归一化法线
-    float3 normalWS = normalize(fragData.NormalWS);
+    float3 normalWs = normalize(fragData.NormalWs);
     
     // === 主光源（平行光）===
     // 注意：主光源使用 IonLight_LambertSimple（不包含距离衰减）
@@ -99,9 +99,9 @@ half4 frag(FragData fragData) : SV_Target
     // 1. 平行光在物理上没有距离衰减（无限远光源），distanceAttenuation 理论上总是 1.0
     // 2. URP 的 Forward+ 渲染路径存在已知 Bug：GetMainLight().distanceAttenuation 可能错误返回 0，导致场景全黑
     // 3. 使用 Simple 版本既避免了 Bug，又在语义上更清晰地表达"无距离衰减"
-    float4 shadowCoord = TransformWorldToShadowCoord(fragData.PositionWS);
+    float4 shadowCoord = TransformWorldToShadowCoord(fragData.PositionWs);
     Light mainLight = GetMainLight(shadowCoord);
-    half3 lighting = IonLight_LambertSimple(normalWS, mainLight.direction, mainLight.color, mainLight.shadowAttenuation);
+    half3 lighting = IonLight_LambertSimple(normalWs, mainLight.direction, mainLight.color, mainLight.shadowAttenuation);
     
     // === 附加光源（点光源和聚光灯）===
     // 注意：附加光源使用 IonLight_Lambert（包含距离衰减）
@@ -113,11 +113,11 @@ half4 frag(FragData fragData) : SV_Target
         for (uint lightIndex = 0u; lightIndex < pixelLightCount; ++lightIndex)
         {
             // 获取附加光源信息
-            Light light = GetAdditionalLight(lightIndex, fragData.PositionWS,shadowMask);
+            Light light = GetAdditionalLight(lightIndex, fragData.PositionWs,shadowMask);
             
             // 计算光照贡献（包含距离衰减）
             half3 additionalLighting = IonLight_Lambert(
-                normalWS, 
+                normalWs, 
                 light.direction, 
                 light.color, 
                 light.shadowAttenuation, 

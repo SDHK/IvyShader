@@ -15,7 +15,7 @@
 //===[相机]===
 
 //float3 世界空间中的相机位置。
-#define IonParam_WorldSpaceCameraPos _WorldSpaceCameraPos 
+#define IonParam_CameraPosWs _WorldSpaceCameraPos 
 //float4 投影参数
 #define IonParam_ProjectionParams _ProjectionParams
 //float4 屏幕参数

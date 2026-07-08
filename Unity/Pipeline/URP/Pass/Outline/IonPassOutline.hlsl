@@ -30,13 +30,13 @@ float PassVar_Scale = 1.0;
 
 struct VertData
 {
-    IonVar_PositionOS
+    IonVar_PositionOs
     IonVar_Normal
 };
 
 struct FragData
 {
-    IonVar_PositionCS
+    IonVar_PositionCs
 };
             
 
@@ -44,8 +44,8 @@ FragData vert(VertData vertData)
 {
     FragData fragData;
 
-    float3 position3 = vertData.PositionOS.xyz + vertData.Normal * PassVar_Scale;
-    fragData.PositionCS = IonMatrix_ObjectToClip(float4(position3, 1.0));
+    float3 position3 = vertData.PositionOs.xyz + vertData.Normal * PassVar_Scale;
+    fragData.PositionCs = IonMatrix_ObjectToClip(float4(position3, 1.0));
     return fragData;
 }
             
