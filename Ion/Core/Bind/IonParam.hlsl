@@ -54,7 +54,7 @@
 //float4x4 模型矩阵的逆矩阵
 #define IonParam_Matrix_I_M IonConst_Float4x4_Identity
 //float4x4 模型矩阵的逆转置（用于法线转换）
-// 注意：默认实现中，法线转换在 IonMatrix_ObjectToWorldNormal() 函数中处理
+// 注意：默认实现中，法线转换在 IonMatrix_NrmOsToWs() 函数中处理
 #define IonParam_Matrix_IT_M IonConst_Float4x4_Identity
 //float4x4 视图矩阵
 #define IonParam_Matrix_V IonConst_Float4x4_Identity

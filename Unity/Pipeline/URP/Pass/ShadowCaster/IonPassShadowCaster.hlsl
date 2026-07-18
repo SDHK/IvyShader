@@ -38,7 +38,7 @@ struct FragData
 FragData vert(VertData vertData)
 {
     FragData fragData;
-    fragData.PositionCs = IonMatrix_ObjectToClip(vertData.PositionOs);
+    fragData.PositionCs = IonMatrix_PosOsToCs(vertData.PositionOs);
     return fragData;
 }
 

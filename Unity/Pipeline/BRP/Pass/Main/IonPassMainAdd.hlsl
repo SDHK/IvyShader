@@ -113,13 +113,13 @@ FragData vert(VertData vertData)
     fragData.UV = IonMath_Transform2D(vertData.UV.xy, IonArg_MainTex_ST.xy, IonArg_MainTex_ST.zw);
     
     // 计算裁剪空间位置
-    fragData.PositionCs = IonMatrix_ObjectToClip(vertData.PositionOs);
+    fragData.PositionCs = IonMatrix_PosOsToCs(vertData.PositionOs);
     
     // 将法线转换到世界空间
-    fragData.NormalWs = IonMatrix_ObjectToWorldNormal(vertData.Normal);
+    fragData.NormalWs = IonMatrix_NrmOsToWs(vertData.Normal);
     
     // 计算世界空间位置
-    fragData.PositionWs = IonMatrix_ObjectToWorld(vertData.PositionOs);
+    fragData.PositionWs = IonMatrix_PosOsToWs(vertData.PositionOs);
     
     // 计算光照坐标（用于距离衰减）
     // 对应 Unity 的 COMPUTE_LIGHT_COORDS 宏

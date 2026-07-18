@@ -54,9 +54,9 @@ FragData vert(VertData vertData)
     // 计算UV坐标
     fragData.UV = IonMath_Transform2D(vertData.UV.xy, PassVar_MainTex_ST.xy,PassVar_MainTex_ST.zw);
     // 计算世界空间位置
-    fragData.PositionCs = IonMatrix_ObjectToClip(vertData.PositionOs);
+    fragData.PositionCs = IonMatrix_PosOsToCs(vertData.PositionOs);
     // 将法线转换到世界空间（使用法线专用函数）
-    fragData.NormalWs = IonMatrix_ObjectToWorldNormal(vertData.Normal);
+    fragData.NormalWs = IonMatrix_NrmOsToWs(vertData.Normal);
     // 计算世界空间位置
     fragData.PositionWs = IonMatrix_ObjectToWorld(vertData.PositionOs);
     return fragData;

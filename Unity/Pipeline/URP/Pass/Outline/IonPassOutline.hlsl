@@ -45,7 +45,7 @@ FragData vert(VertData vertData)
     FragData fragData;
 
     float3 position3 = vertData.PositionOs.xyz + vertData.Normal * PassVar_Scale;
-    fragData.PositionCs = IonMatrix_ObjectToClip(float4(position3, 1.0));
+    fragData.PositionCs = IonMatrix_PosOsToCs(float4(position3, 1.0));
     return fragData;
 }
             

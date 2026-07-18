@@ -39,7 +39,7 @@ float3 IonVertex_Displace(float4 positionOS, float3 normalOS, float2 uv,
     float maxDepth, sampler2D mask)
 {
     // 把触摸点从世界空间转到模型空间，统一在模型空间计算距离
-    float3 touchPosOS = IonMatrix_WorldToObject(float4(touchPosWS, 1.0)).xyz;
+    float3 touchPosOS = IonMatrix_PosWsToOs(float4(touchPosWS, 1.0)).xyz;
     float dist = distance(positionOS.xyz, touchPosOS);
     // 平滑衰减：中心最强，边缘归零
     float falloff = 1.0 - smoothstep(0.0, touchRadius, dist);

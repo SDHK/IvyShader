@@ -121,11 +121,11 @@ FragData vert(VertData vertData)
     FragData fragData;
 
     fragData.UV = IonMath_Transform2D(vertData.UV.xy, IonArg_MainTex_ST.xy, IonArg_MainTex_ST.zw);
-    fragData.PositionCs = IonMatrix_ObjectToClip(vertData.PositionOs);
+    fragData.PositionCs = IonMatrix_PosOsToCs(vertData.PositionOs);
     fragData.Normal = vertData.Normal;
     fragData.PositionOs = vertData.PositionOs;
-    fragData.NormalWs = IonMatrix_ObjectToWorldNormal(vertData.Normal);
-    fragData.PositionWs = IonMatrix_ObjectToWorld(vertData.PositionOs);
+    fragData.NormalWs = IonMatrix_NrmOsToWs(vertData.Normal);
+    fragData.PositionWs = IonMatrix_PosOsToWs(vertData.PositionOs);
     // light-space shadow coord：基于顶点世界坐标变换，不依赖屏幕深度缓冲
     fragData.ShadowCoord = IonLight_ShadowCoord(vertData.PositionOs, fragData.PositionCs, fragData.PositionWs);
     return fragData;
@@ -200,9 +200,9 @@ half4 frag(FragData fragData) : SV_Target
 
     // BaseRamp：固定方向结构性阴影（定义颜色区间，受光源强度/阴影调制，不自发光）
     // 将固定方向转换到世界空间
-    float3 baseRampDirWs = IonMatrix_ObjectToWorld(IonArg_BaseRampDir).xyz;
+    float3 baseRampDirWs = IonMatrix_PosOsToWs(IonArg_BaseRampDir).xyz;
     // 从观察空间转换到世界空间
-    //float3 baseRampDirWs = IonMatrix_ViewToWorld(IonArg_BaseRampDir).xyz;
+    //float3 baseRampDirWs = IonMatrix_PosVsToWs(IonArg_BaseRampDir).xyz;
     float NdotBase = saturate(dot(normalWs, baseRampDirWs) * 0.5 + 0.5);
 
     // 计算法线与固定方向的夹角，映射到 0~1 作为 BaseRamp 权重
@@ -306,8 +306,12 @@ half4 frag(FragData fragData) : SV_Target
 
     // 4. 跟随视角同步旋转的法线渲染 
     float3 worldDir4 = IonCoord_ViewSpace(dirCameraWsToPosWs);
+
+    //float3 objectPosWs =IonCoord_NormalAsObject(fragData.Normal);
+    float3 objectPosWs =IonCoord_NormalToWorld (fragData.Normal);
+
     // 透镜凹凸效果。
-    float3 normalVs4 = IonCoord_ObjectView(normalWs, fragData.PositionOs);
+    float3 normalVs4 = IonMatrix_PosWsToCs(float4(normalWs + fragData.PositionOs,1));
     worldDir4 = lerp(worldDir4,normalVs4, IonArg_StarNestlens);
 
     float3 worldDir = float3(0,0,0);
@@ -316,7 +320,7 @@ half4 frag(FragData fragData) : SV_Target
     worldDir += worldDir3 * colorMask3.r;
     worldDir += worldDir4 * colorMask4.r;
     
-    worldDir = worldDir4;
+    worldDir = objectPosWs;
     float3 starNestRGB = 0;
     if (IonArg_StarNestToggle)
         starNestRGB = IonLight_StarNest(worldDir, IonParam_Time.z, float2(1, 1), 0.0003);

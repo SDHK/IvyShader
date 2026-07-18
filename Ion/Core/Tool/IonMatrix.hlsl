@@ -6,7 +6,7 @@
 * 描述： 矩阵计算集
 
 * 缩写说明：
-* - Os (Object Space)：物体空间，顶点相对于模型自身的坐标系
+* - Os (Object Space)：物体空间，顶点相对于物体自身的坐标系
 * - Ws (World Space)：世界空间，顶点相对于整个场景的坐标系
 * - Vs (View Space)：观察空间，顶点相对于摄像机的坐标系
 * - Cs (Clip Space)：裁剪空间，用于最终投影到屏幕的坐标系
@@ -21,8 +21,8 @@
 * 详细说明：
 * Os → Ws（物体空间 → 世界空间）
 *   使用：Model Matrix (M)
-*    作用：将顶点从模型本地坐标系转换到世界坐标系
-*    包含：位置、旋转、缩放
+*    作用：将顶点从物体本地坐标系转换到世界坐标系
+*    包含：坐标、旋转、缩放
 * Ws → Vs（世界空间 → 观察空间）
 *    使用：View Matrix (V)
 *    作用：将顶点从世界坐标系转换到相机坐标系
@@ -50,148 +50,220 @@ float3 IonMatrix_SafeNormalize(float3 inVec)
     return inVec * rsqrt(dp3);
 }
 
+
+//===[Normal (Nrm) 转换]===
+
+/// <summary>
+/// 转换为法线：从物体空间转到世界空间（法线专用，使用逆转置矩阵，应对转世界阶段的模型非均匀缩放法线矫正）
+/// </summary>
+/// <param name="nrmOs">物体法线</param>
+/// <returns>世界法线</returns>
+float3 IonMatrix_NrmOsToWs(float3 nrmOs)
+{
+    // 使用物体矩阵的逆转置来转换法线到世界空间
+    // 注意：IonParam_Matrix_IT_MV 会将法线转换到观察空间，而不是世界空间
+    return normalize(mul((float3x3)IonParam_Matrix_IT_M, nrmOs)); // (M⁻¹)ᵀ × nrmOs
+}
+
+
+/// <summary>
+/// 转换为法线：从世界空间转到物体空间（法线专用，使用逆转置矩阵，应对转世界阶段的模型非均匀缩放法线矫正）
+/// </summary>
+/// <param name="nrmWs">世界法线</param>
+/// <returns>物体法线</returns>
+float3 IonMatrix_NrmWsToOs(float3 nrmWs)
+{
+    return normalize(mul(transpose((float3x3)IonParam_Matrix_M), nrmWs)).xyz;// Mᵀ × nrmWs
+}
+
 //===[Object Space (Os) 转换]===
 
-// 转换坐标系：从模型空间转到裁剪空间（Clip Space）。顶点着色器常用，用于输出 PositionCS
-// float4 pos: 输入的模型空间位置
-// float4 return: 裁剪空间位置
-float4 IonMatrix_ObjectToClip(float4 pos)
+/// <summary>
+/// 转换为坐标：从物体空间转到世界空间（Object Space -> World Space） 
+/// </summary>
+/// <param name="posOs">物体坐标</param>
+/// <returns>世界坐标</returns>
+float3 IonMatrix_PosOsToWs(float3 posOs)
 {
-    return mul(IonParam_Matrix_MVP, pos);
+    return mul(IonParam_Matrix_M, float4(posOs, 1.0)).xyz;
 }
 
-// 转换坐标系：从模型空间转到观察空间（View Space / Camera Space）
-// float4 pos: 输入的模型空间位置
-// float4 return: 观察空间位置
-float4 IonMatrix_ObjectToView(float4 pos)
+/// <summary>
+/// 转换为向量：从物体空间转到世界空间（Object Space -> World Space）
+/// </summary>
+/// <param name="posOs">物体坐标</param>
+/// <returns>世界向量</returns>
+float3 IonMatrix_DirOsToWs(float3 posOs)
 {
-    return mul(IonParam_Matrix_MV, pos);
+    return mul((float3x3)IonParam_Matrix_M, posOs);
 }
 
-// 转换坐标系：从模型空间转到世界空间
-// float4 pos: 输入的模型空间位置
-// float4 return: 世界空间位置
-float4 IonMatrix_ObjectToWorld(float4 pos)
+
+/// <summary>
+/// 转换为坐标：从物体空间转到观察空间（Object Space -> Camera Space） 
+/// </summary>
+/// <param name="posOs">物体坐标</param>
+/// <returns>观察坐标</returns>
+float3 IonMatrix_PosOsToVs(float3 posOs)
 {
-    return mul(IonParam_Matrix_M, pos);
+    return mul(IonParam_Matrix_MV, float4(posOs, 1.0)).xyz;
 }
 
-// 转换坐标系：从模型空间转到世界空间（float3版本，常用于方向向量）
-// 注意：对于法线向量，请使用 IonMatrix_ObjectToWorldNormal
-// 如需归一化，请手动调用 IonMatrix_SafeNormalize()
-// float3 pos: 输入的模型空间位置
-// float3 return: 世界空间位置
-float3 IonMatrix_ObjectToWorld(float3 pos)
+/// <summary>
+/// 转换为向量：从物体空间转到观察空间（Object Space -> Camera Space）
+/// </summary>
+/// <param name="posOs">物体坐标</param>
+/// <returns>观察向量</returns>
+float3 IonMatrix_DirOsToVs(float3 posOs)
 {
-    return mul(IonParam_Matrix_M, float4(pos, 1.0)).xyz;
+    return mul((float3x3)IonParam_Matrix_MV, posOs);
 }
 
-// 转换坐标系：从模型空间转到世界空间（法线专用，使用逆转置矩阵）
-// 用于法线向量转换，正确处理非均匀缩放
-// float3 normal: 输入的模型空间法线
-// float3 return: 世界空间法线
-float3 IonMatrix_ObjectToWorldNormal(float3 normal)
+/// <summary>
+/// 转换为坐标：从物体空间转到裁剪空间（Object Space -> Clip Space） 
+/// </summary>
+/// <param name="posOs">物体坐标</param>
+/// <returns>裁剪坐标</returns>
+float4 IonMatrix_PosOsToCs(float3 posOs)
 {
-    // 使用模型矩阵的逆转置来转换法线到世界空间
-    // 注意：IonParam_Matrix_IT_MV 会将法线转换到观察空间，而不是世界空间
-    return normalize(mul((float3x3)IonParam_Matrix_IT_M, normal));
+    return mul(IonParam_Matrix_MVP, float4(posOs, 1.0));
 }
+
 
 //===[World Space (Ws) 转换]===
 
-// 转换坐标系：从世界空间转到裁剪空间
-// float4 pos: 输入的世界空间位置
-// float4 return: 裁剪空间位置
-float4 IonMatrix_WorldToClip(float4 pos)
+/// <summary>
+/// 转换为坐标：从世界空间转到物体空间（World Space -> Object Space）
+/// </summary>
+/// <param name="posWs">世界坐标</param>
+/// <returns>物体坐标</returns>
+float3 IonMatrix_PosWsToOs(float3 posWs)
 {
-    return mul(IonParam_Matrix_VP, pos);
+    return mul(IonParam_Matrix_I_M,float4(posWs, 1.0)).xyz;
+}
+/// <summary>
+/// 转换为向量：从世界空间转到物体空间（World Space -> Object Space）
+/// </summary>
+/// <param name="posWs">世界坐标</param>
+/// <returns>物体向量</returns>
+float3 IonMatrix_DirWsToOs(float3 posWs)
+{
+    return mul((float3x3)IonParam_Matrix_I_M, posWs);
 }
 
-// 转换坐标系：从世界空间转到观察空间
-// float4 pos: 输入的世界空间位置
-// float4 return: 观察空间位置
-float4 IonMatrix_WorldToView(float4 pos)
+/// <summary>
+/// 转换为坐标：从世界空间转到观察空间（World Space -> View Space）
+/// </summary>
+/// <param name="posWs">世界坐标</param>
+/// <returns>观察坐标</returns>
+float3 IonMatrix_PosWsToVs(float3 posWs)
 {
-    return mul(IonParam_Matrix_V, pos);
+    return mul(IonParam_Matrix_V, float4(posWs, 1.0)).xyz;
+}
+/// <summary>
+/// 转换为向量：从世界空间转到观察空间（World Space -> View Space）
+/// </summary>
+/// <param name="posWs">世界坐标</param>
+/// <returns>观察向量</returns>
+float3 IonMatrix_DirWsToVs(float3 posWs)
+{
+    return mul((float3x3)IonParam_Matrix_V, posWs);
 }
 
-// 转换坐标系：从世界空间转到模型空间
-// float4 pos: 输入的世界空间位置
-// float4 return: 模型空间位置
-float4 IonMatrix_WorldToObject(float4 pos)
+/// <summary>
+/// 转换为坐标：从世界空间转到裁剪空间（World Space -> Clip Space）
+/// </summary>
+/// <param name="posWs">世界坐标</param>
+/// <returns>裁剪坐标</returns>
+float4 IonMatrix_PosWsToCs(float3 posWs)
 {
-    return mul(IonParam_Matrix_I_M, pos);
-}
-
-// 转换坐标系：从世界空间转到模型空间（float3版本，常用于方向向量）
-// 注意：对于法线向量，请使用 IonMatrix_WorldToObjectNormal
-// 如需归一化，请手动调用 IonMatrix_SafeNormalize()
-// float3 pos: 输入的世界空间位置
-// float3 return: 模型空间位置
-float3 IonMatrix_WorldToObject(float3 pos)
-{
-    return mul(IonParam_Matrix_I_M, float4(pos, 1.0)).xyz;
-}
-
-// 转换坐标系：从世界空间转到模型空间（法线专用）
-// 用于法线向量转换，正确处理非均匀缩放
-// float3 normal: 输入的世界空间法线
-// float3 return: 模型空间法线
-float3 IonMatrix_WorldToObjectNormal(float3 normal)
-{
-    return normalize(mul((float3x3)IonParam_Matrix_I_M, normal));
+    return mul(IonParam_Matrix_VP, float4(posWs, 1.0));
 }
 
 //===[View Space (Vs) 转换]===
 
-// 转换坐标系：从观察空间转到裁剪空间
-// float4 pos: 输入的观察空间位置
-// float4 return: 裁剪空间位置
-float4 IonMatrix_ViewToClip(float4 pos)
+/// <summary>
+/// 转换为坐标：从观察空间转到物体空间（View Space -> Object Space）
+/// </summary>
+/// <param name="posVs">观察坐标</param>
+/// <returns>物体坐标</returns>
+float3 IonMatrix_PosVsToOs(float3 posVs)
 {
-    return mul(IonParam_Matrix_P, pos);
+    return mul(IonParam_Matrix_I_MV, float4(posVs, 1.0)).xyz;
+}
+/// <summary>
+/// 转换为向量：从观察空间转到物体空间（View Space -> Object Space）
+/// </summary>
+/// <param name="posVs">观察坐标</param>
+/// <returns>物体向量</returns>
+float3 IonMatrix_DirVsToOs(float3 posVs)
+{
+    return mul((float3x3)IonParam_Matrix_I_MV, posVs);
 }
 
-// 转换坐标系：从观察空间转到世界空间
-// float4 pos: 输入的观察空间位置
-// float4 return: 世界空间位置
-float4 IonMatrix_ViewToWorld(float4 pos)
+/// <summary>
+/// 转换为坐标：从观察空间转到世界空间（View Space -> World Space）
+/// </summary>
+/// <param name="posVs">观察坐标</param>
+/// <returns>世界坐标</returns>
+float3 IonMatrix_PosVsToWs(float3 posVs)
 {
-    return mul(IonParam_Matrix_I_V, pos);
+    return mul(IonParam_Matrix_I_V, float4(posVs, 1.0)).xyz;
+}
+/// <summary>
+/// 转换为向量：从观察空间转到世界空间（View Space -> World Space）
+/// </summary>
+/// <param name="posVs">观察坐标</param>
+/// <returns>世界向量</returns>
+float3 IonMatrix_DirVsToWs(float3 posVs)
+{
+    return mul((float3x3)IonParam_Matrix_I_V, posVs);
 }
 
-// 转换坐标系：从观察空间转到模型空间
-// float4 pos: 输入的观察空间位置
-// float4 return: 模型空间位置
-float4 IonMatrix_ViewToObject(float4 pos)
+/// <summary>
+/// 转换为坐标：从观察空间转到裁剪空间（View Space -> Clip Space）
+/// </summary>
+/// <param name="posVs">观察坐标</param>
+/// <returns>裁剪坐标</returns>
+float4 IonMatrix_PosVsToCs(float3 posVs)
 {
-    return mul(IonParam_Matrix_I_MV, pos);
+    return mul(IonParam_Matrix_P, float4(posVs, 1.0));
 }
+
 
 //===[Clip Space (Cs) 转换]===
 
-// 转换坐标系：从裁剪空间转到模型空间
-// float4 pos: 输入的裁剪空间位置
-// float4 return: 模型空间位置
-float4 IonMatrix_ClipToObject(float4 pos)
+/// <summary>
+/// 转换为坐标：从裁剪空间转到物体空间（Clip Space -> Object Space）
+/// </summary>
+/// <param name="posCs">裁剪坐标</param>
+/// <returns>物体坐标</returns>
+float3 IonMatrix_PosCsToOs(float4 posCs)
 {
-    return mul(IonParam_Matrix_I_MVP, pos);
+    float4 posOs = mul(IonParam_Matrix_I_MVP, posCs);
+    return posOs.xyz / posOs.w;
 }
 
-// 转换坐标系：从裁剪空间转到世界空间
-// float4 pos: 输入的裁剪空间位置
-// float4 return: 世界空间位置
-float4 IonMatrix_ClipToWorld(float4 pos)
+/// <summary>
+/// 转换为坐标：从裁剪空间转到世界空间（Clip Space -> World Space）
+/// </summary>
+/// <param name="posCs">裁剪坐标</param>
+/// <returns>世界坐标</returns>
+float3 IonMatrix_PosCsToWs(float4 posCs)
 {
-    return mul(IonParam_Matrix_I_VP, pos);
+    float4 posWs = mul(IonParam_Matrix_I_VP, posCs);
+    return posWs.xyz / posWs.w;
 }
 
-// 转换坐标系：从裁剪空间转到观察空间
-// float4 pos: 输入的裁剪空间位置
-// float4 return: 观察空间位置
-float4 IonMatrix_ClipToView(float4 pos)
+/// <summary>
+/// 转换为坐标：从裁剪空间转到观察空间（Clip Space -> View Space）
+/// </summary>
+/// <param name="posCs">裁剪坐标</param>
+/// <returns>观察坐标</returns>
+float3 IonMatrix_PosCsToVs(float4 posCs)
 {
-    return mul(IonParam_Matrix_I_P, pos);
+    float4 posVs = mul(IonParam_Matrix_I_P, posCs);
+    return posVs.xyz / posVs.w;
 }
 
 #endif 
