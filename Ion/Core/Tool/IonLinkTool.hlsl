@@ -31,8 +31,8 @@
 #include "IonLight.hlsl"     // 光照计算工具（Lambert 等）
 #endif
 //===[高级工具]===
-#if Link(IonCoord)
-#include "IonCoord.hlsl"     // 坐标扭曲工具
+#if Link(IonDirMap)
+#include "IonDirMap.hlsl"     // 坐标扭曲工具
 #endif
 #if Link(IonNoise)
 #include "IonNoise.hlsl"     // 噪声函数（依赖 IonHash）

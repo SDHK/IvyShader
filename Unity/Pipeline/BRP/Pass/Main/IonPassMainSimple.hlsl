@@ -93,7 +93,7 @@ float IonArg_StarNestlens;
 #define Link_IonMatrix
 #define Link_IonMath
 #define Link_IonVertex
-#define Link_IonCoord
+#define Link_IonDirMap
 #include "../../Core/IonCore.hlsl"
 
 
@@ -142,7 +142,7 @@ half4 frag(FragData fragData) : SV_Target
     half4 mainTex = tex2D(IonArg_MainTex, fragData.UV);
 
     // 世界相机到世界坐标的向量
-    float3 dirCameraWsToPosWs = IonCoord_LookTo(IonParam_CameraPosWs, fragData.PositionWs);
+    float3 dirCameraWsToPosWs = IonDirMap_LookTo(IonParam_CameraPosWs, fragData.PositionWs);
     // 世界坐标到世界相机的向量
     float3 dirPosWsToCameraWs = - dirCameraWsToPosWs;
 
@@ -248,82 +248,35 @@ half4 frag(FragData fragData) : SV_Target
     // 合并：颜色 + 动态光照（随光源）
     //half3 finalColor = baseColor * dynamicShading;
 
-
-    // ===星旋效果
-
-    //       float iTime = IonParam_Time.y;
-    //   //float2 uv = (fragData.UV / iResolution.xy) - .5;
-    //   float2 uv = fragData.UV*0.5;
-    //float t = iTime * .1 + ((.25 + .05 * sin(iTime * .1))/(length(uv.xy) + .07)) * 2.2;
-    //float si = sin(t);
-    //float co = cos(t);
-    //float2x2 ma = float2x2(co, -si, si, co);
-
-    //float v1, v2, v3;
-    //v1 = v2 = v3 = 0.0;
-
-    //float s = 0.0;
-    //for (int i = 0; i < 100; i++)
-    //{
-    //	float3 p = s * float3(uv, 0.0);
-    //	p.xy = mul(p.xy, ma);
-    //	p += float3(.22, .3, s - 1.5 - sin(iTime * .13) * .1);
-    //	for (int i = 0; i < 10; i++)	p = abs(p) / dot(p,p) - 0.659;
-    //	v1 += dot(p,p) * .0015 * (1.8 + sin(length(uv.xy * 13.0) + .5  - iTime * .2));
-    //	v2 += dot(p,p) * .0013 * (1.5 + sin(length(uv.xy * 14.5) + 1.2 - iTime * .3));
-    //	v3 += length(p.xy*10.) * .0003;
-    //	s  += .035;
-    //}
-
-    //float len = length(uv);
-    //v1 *= smoothstep(.7, .0, len);
-    //v2 *= smoothstep(.5, .0, len);
-    //v3 *= smoothstep(.9, .0, len);
-
-    //float3 col = float3( v3 * (1.5 + sin(iTime * .2) * .4),(v1 + v3) * .3,v2) + smoothstep(0.2, .0, len) * .85 + smoothstep(.0, .6, v3) * .3;
-    //   float4 col001 = float4(min(pow(abs(col), float3(1.2, 1.2, 1.2)), 1.0), 1.0); // ✅ HLSL
-    //===
-
-
-    //get coords and direction
-    //跟随物体移动和旋转的法线渲染
-    //float3 normalVs1 = mul((float3x3)IonParam_Matrix_I_M, fragData.NormalWs);
-    //跟随物体移动但反向旋转的法线渲染
-     //float3 normalVs1 = mul((float3x3)IonParam_Matrix_M, fragData.NormalWs);
-     //跟随物体移动但不旋转的法线渲染
-    //float3 normalVs1 =  fragData.NormalWs;
-
+    //===[特效向量映射]=====================================================
    
     // 1. 世界空间视线方向（无限远天空盒，角度跟世界）
-    float3 worldDir1 = IonCoord_SkyBox(IonParam_CameraPosWs, fragData.PositionWs);
-    float3 posOs1 = IonCoord_PositionToNormalAsWorld(fragData.PositionOs);
-    worldDir1 = lerp(worldDir1,posOs1, IonArg_StarNestlens);
+    float3 skyBoxDirMap = IonDirMap_SkyBox(IonParam_CameraPosWs, fragData.PositionWs);
+    float3 posOs1 = IonDirMap_PositionToNormalAsWorld(fragData.PositionOs);
+    skyBoxDirMap  = lerp(skyBoxDirMap ,posOs1, IonArg_StarNestlens);
 
     //2.镜面反射效果
-    float3 worldDir2 = IonCoord_Reflect(dirCameraWsToPosWs, normalWs);
+    float3 reflectDirMap = IonDirMap_Reflect(dirCameraWsToPosWs, normalWs);
     // 3.法线映射到物体表面，跟随物体移动和旋转
-    float3 worldDir3 = IonCoord_ObjectSpace(fragData.Normal,fragData.PositionOs);
+    float3 worldDir3 = IonDirMap_ObjectSpace(fragData.Normal,fragData.PositionOs);
 
     // 4. 跟随视角同步旋转的法线渲染 
-    float3 worldDir4 = IonCoord_ViewSpace(dirCameraWsToPosWs);
-
-    //float3 objectPosWs =IonCoord_NormalAsObject(fragData.Normal);
-    float3 objectPosWs =IonCoord_NormalToWorld (fragData.Normal);
+    float3 viewSpaceDirMap = IonDirMap_ViewSpace(dirCameraWsToPosWs);
 
     // 透镜凹凸效果。
     float3 normalVs4 = IonMatrix_PosWsToCs(float4(normalWs + fragData.PositionOs,1));
-    worldDir4 = lerp(worldDir4,normalVs4, IonArg_StarNestlens);
+    viewSpaceDirMap = lerp(viewSpaceDirMap,normalVs4, IonArg_StarNestlens);
 
     float3 worldDir = float3(0,0,0);
-    worldDir += worldDir1 * colorMask1.r;
-    worldDir += worldDir2 * colorMask2.r;
+    worldDir += skyBoxDirMap  * colorMask1.r;
+    worldDir += reflectDirMap * colorMask2.r;
     worldDir += worldDir3 * colorMask3.r;
-    worldDir += worldDir4 * colorMask4.r;
+    worldDir += viewSpaceDirMap * colorMask4.r;
     
-    worldDir = objectPosWs;
+    worldDir = skyBoxDirMap;
     float3 starNestRGB = 0;
     if (IonArg_StarNestToggle)
-        starNestRGB = IonLight_StarNest(worldDir, IonParam_Time.z, float2(1, 1), 0.0003);
+        starNestRGB = IonLight_StarNest(worldDir, IonParam_Time.z, float2(1, 1), 0.0001);
 
  // 投影到平面（类似相机投影视差）
 //float2 tileUV = worldDir.xy / max(abs(worldDir.z), 1e-3);
@@ -333,7 +286,7 @@ float2 tileUV;
 tileUV.x = atan2(D1.x, D1.z) / (2.0 * 3.14159265) + 0.5;
 tileUV.y = asin(clamp(D1.y, -1.0, 1.0)) / 3.14159265 + 0.5;
 
-starNestRGB = tex2D(IonArg_MetalMatCap, tileUV).rgb;
+//starNestRGB = tex2D(IonArg_MetalMatCap, tileUV).rgb;
 
     //===[金属]=====================================================
     float metalMask = saturate(IonArg_Metallic * tex2D(IonArg_MetalMask, fragData.UV).r);
@@ -402,3 +355,43 @@ starNestRGB = tex2D(IonArg_MetalMatCap, tileUV).rgb;
 }
 
 #endif// Def(IonPassMainSimple)
+
+
+
+
+
+
+    // ===星旋效果
+
+    //       float iTime = IonParam_Time.y;
+    //   //float2 uv = (fragData.UV / iResolution.xy) - .5;
+    //   float2 uv = fragData.UV*0.5;
+    //float t = iTime * .1 + ((.25 + .05 * sin(iTime * .1))/(length(uv.xy) + .07)) * 2.2;
+    //float si = sin(t);
+    //float co = cos(t);
+    //float2x2 ma = float2x2(co, -si, si, co);
+
+    //float v1, v2, v3;
+    //v1 = v2 = v3 = 0.0;
+
+    //float s = 0.0;
+    //for (int i = 0; i < 100; i++)
+    //{
+    //	float3 p = s * float3(uv, 0.0);
+    //	p.xy = mul(p.xy, ma);
+    //	p += float3(.22, .3, s - 1.5 - sin(iTime * .13) * .1);
+    //	for (int i = 0; i < 10; i++)	p = abs(p) / dot(p,p) - 0.659;
+    //	v1 += dot(p,p) * .0015 * (1.8 + sin(length(uv.xy * 13.0) + .5  - iTime * .2));
+    //	v2 += dot(p,p) * .0013 * (1.5 + sin(length(uv.xy * 14.5) + 1.2 - iTime * .3));
+    //	v3 += length(p.xy*10.) * .0003;
+    //	s  += .035;
+    //}
+
+    //float len = length(uv);
+    //v1 *= smoothstep(.7, .0, len);
+    //v2 *= smoothstep(.5, .0, len);
+    //v3 *= smoothstep(.9, .0, len);
+
+    //float3 col = float3( v3 * (1.5 + sin(iTime * .2) * .4),(v1 + v3) * .3,v2) + smoothstep(0.2, .0, len) * .85 + smoothstep(.0, .6, v3) * .3;
+    //   float4 col001 = float4(min(pow(abs(col), float3(1.2, 1.2, 1.2)), 1.0), 1.0); // ✅ HLSL
+    //===

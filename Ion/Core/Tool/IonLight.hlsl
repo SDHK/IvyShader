@@ -103,8 +103,8 @@ float IonLight_RampGray(float weight, float threshold, float softness)
 }
 
 
-//===[星云]===
-float3 IonLight_StarNest(float3 uv, float time, float2 dir, float speed)
+//===[星空]===
+float3 IonLight_StarNest(float3 map, float time, float2 dir, float speed)
 {
     int iterations = 17 ;
     int volsteps = 20 ;
@@ -121,7 +121,7 @@ float3 IonLight_StarNest(float3 uv, float time, float2 dir, float speed)
     //饱和度
     float saturation = 0.85;
      //float3 aniDir = float3(uv * zoom, 1);
-     float3 aniDir = normalize(uv) * zoom;
+     float3 aniDir = normalize(map) * zoom;
     time = time * speed;
 
     //观察视角旋转，让星云看起来来没那么重复
