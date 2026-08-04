@@ -26,14 +26,9 @@
 #if Link(IonMatrix)
 #include "IonMatrix.hlsl"   // 矩阵计算
 #endif
-//===[光照工具]===
-#if Link(IonLight)
-#include "IonLight.hlsl"     // 光照计算工具（Lambert 等）
-#endif
+
 //===[高级工具]===
-#if Link(IonDirMap)
-#include "IonDirMap.hlsl"     // 坐标扭曲工具
-#endif
+
 #if Link(IonNoise)
 #include "IonNoise.hlsl"     // 噪声函数（依赖 IonHash）
 #endif
@@ -43,4 +38,20 @@
 #if Link(IonVertex)
 #include "IonVertex.hlsl"   // 顶点工具
 #endif
+#if Link(IonDirMap)
+#include "IonDirMap.hlsl"     // 坐标扭曲工具
+#endif
+#if Link(IonField)
+#include "IonField.hlsl"     // 采样场工具
+#endif
+
+//===[光照工具]===
+#if Link(IonLight)
+#include "IonLight.hlsl"     // 光照计算工具（Lambert 等）
+#endif
+
+#if Link(IonEffect)
+#include "IonEffect.hlsl"     // 特效工具
+#endif
+
 

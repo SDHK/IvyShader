@@ -71,12 +71,25 @@ Shader "Ion/IonObjectTransparent"
         Input_OutlineColor              ("描边颜色",                           Color)  = (0, 0, 0, 1)
         Input_OutlineScale              ("描边大小",                           Float)  = 0
 
+       
         [Space(20)]
-        [Toggle] Input_StarNestToggle  ("星云启用",           Int)  = 0
-        Input_StarNestlens 		("星云天空盒透镜",           Range(-2,2))  = 0
+        [Header(Null0 Star3d1 Crystal3d2 Star2d3)]
+        [IntRange] Input_EffectMap ("特效图",       Range(0,3))     = 0
+        [IntRange] Input_EffectMap1 ("特效图1",       Range(0,3))     = 0
+        [IntRange] Input_EffectMap2 ("特效图2",       Range(0,3))     = 0
+        [IntRange] Input_EffectMap3 ("特效图3",       Range(0,3))     = 0
+        [IntRange] Input_EffectMap4 ("特效图4",       Range(0,3))     = 0
+        [Toggle] Input_EffectInside ("内部面", Int) = 0
 
         [Space(20)]
-        Input_Cutoff             ("透明度裁剪",                    Range(0,1)) = 0.5
+        [Header(SkyOs0 SkyWs1 CamVs2 Reflect3 NrmOs4 NrmWs5 NrmVs6)]
+        [IntRange] Input_DirMap1			 ("方向映射1",       Range(0,6))     = 0
+        [IntRange] Input_DirMap2			 ("方向映射2",       Range(0,6))     = 0
+        [IntRange] Input_DirMap3			 ("方向映射3",       Range(0,6))     = 0
+        [IntRange] Input_DirMap4			 ("方向映射4",       Range(0,6))     = 0
+
+        [Space(20)]
+        Input_Cutoff             ("透明度裁剪",                    Range(0,5)) = 0.5
     }
 
     //===[URP 管线]===================================================
@@ -138,6 +151,8 @@ Shader "Ion/IonObjectTransparent"
         Tags { "RenderType" = "Transparent" "Queue" = "Transparent" }
         LOD 100
 
+        
+
         // ===[描边]===
         Pass
         {
@@ -160,7 +175,7 @@ Shader "Ion/IonObjectTransparent"
         {
             Name "DEPTH_PREPASS"
             Tags { "LightMode" = "Always" }
-            Cull Back
+             Cull Back
             ZWrite On
             ColorMask 0
             HLSLPROGRAM
@@ -172,12 +187,14 @@ Shader "Ion/IonObjectTransparent"
             ENDHLSL
         }
 
+        // ===[GrabPass]===
+        GrabPass { "IonArg_GrabTexture" }
         // ===[主光照 ForwardBase]===
         Pass
         {
             Name "FORWARD"
             Tags { "LightMode" = "ForwardBase" }
-             // Cull Front  
+             Cull Off  
 
             ZWrite Off
             ZTest LEqual
@@ -245,8 +262,17 @@ Shader "Ion/IonObjectTransparent"
             #define IonArg_MetalProbeInfluence   Input_MetalProbeInfluence
             #define IonArg_MetalDiffuseScale     Input_MetalDiffuseScale
 
-            #define IonArg_StarNestToggle	   Input_StarNestToggle
-            #define IonArg_StarNestlens	    Input_StarNestlens
+            #define IonArg_EffectMap Input_EffectMap
+            #define IonArg_EffectMap1 Input_EffectMap1
+            #define IonArg_EffectMap2 Input_EffectMap2
+            #define IonArg_EffectMap3 Input_EffectMap3
+            #define IonArg_EffectMap4 Input_EffectMap4
+            #define IonArg_EffectInside Input_EffectInside
+
+            #define IonArg_DirMap1 Input_DirMap1
+            #define IonArg_DirMap2 Input_DirMap2
+            #define IonArg_DirMap3 Input_DirMap3
+            #define IonArg_DirMap4 Input_DirMap4
 
 
             #define Link_IonPassMainSimple

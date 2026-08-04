@@ -10,6 +10,9 @@
 #if DefPart(IonHash, Tool) 
 #define Def_IonHash_Tool
 
+/// <summary>
+/// 哈希：输入1维，返回1维
+/// </summary>
 float IonHash_11(float p)
 {
     p = frac(p * .1031);
@@ -17,72 +20,110 @@ float IonHash_11(float p)
     p *= p + p;
     return frac(p);
 }
-float IonHash_2to1(float2 p)
+/// <summary>
+/// 哈希：输入1维，返回2维
+/// </summary>
+float2 IonHash_12(float p)
 {
-    float3 p3 = frac(float3(p.xyx) * .1031);
+    float3 p3 = frac(float3(p, p, p) * float3(.1031, .1030, .0973));
+    p3 += dot(p3, p3.yzx + 33.33);
+    return frac((p3.xx + p3.yz) * p3.zy);
+}
+/// <summary>
+/// 哈希：输入1维，返回3维
+/// </summary>
+float3 IonHash_13(float p)
+{
+    float3 p3 = frac(float3(p, p, p) * float3(.1031, .1030, .0973));
+    p3 += dot(p3, p3.yzx + 33.33);
+    return frac((p3.xxy + p3.yzz) * p3.zyx);
+}
+/// <summary>
+/// 哈希：输入1维，返回4维
+/// </summary>
+float4 IonHash_14(float p)
+{
+    float4 p4 = frac(float4(p, p, p, p) * float4(.1031, .1030, .0973, .1099));
+    p4 += dot(p4, p4.wzxy + 33.33);
+    return frac((p4.xxyz + p4.yzzw) * p4.zywx);
+}
+
+/// <summary>
+/// 哈希：输入2维，返回1维
+/// </summary>
+float IonHash_21(float2 p2)
+{
+    float3 p3 = frac(float3(p2.xyx) * .1031);
     p3 += dot(p3, p3.yzx + 33.33);
     return frac((p3.x + p3.y) * p3.z);
 }
-float IonHash_3to1(float3 p3)
+/// <summary>
+/// 哈希：输入2维，返回2维
+/// </summary>
+float2 IonHash_22(float2 p2)
+{
+    float3 p3 = frac(float3(p2.xyx) * float3(.1031, .1030, .0973));
+    p3 += dot(p3, p3.yzx + 33.33);
+    return frac((p3.xx + p3.yz) * p3.zy);
+}
+/// <summary>
+/// 哈希：输入2维，返回3维
+/// </summary>
+float3 IonHash_23(float2 p2)
+{
+    float3 p3 = frac(float3(p2.xyx) * float3(.1031, .1030, .0973));
+    p3 += dot(p3, p3.yxz + 33.33);
+    return frac((p3.xxy + p3.yzz) * p3.zyx);
+}
+/// <summary>
+/// 哈希：输入2维，返回4维
+/// </summary>
+float4 IonHash_24(float2 p2)
+{
+    float4 p4 = frac(float4(p2.xyxy) * float4(.1031, .1030, .0973, .1099));
+    p4 += dot(p4, p4.wzxy + 33.33);
+    return frac((p4.xxyz + p4.yzzw) * p4.zywx);
+}
+/// <summary>
+/// 哈希：输入3维，返回1维
+/// </summary>
+float IonHash_31(float3 p3)
 {
     p3 = frac(p3 * .1031);
     p3 += dot(p3, p3.zyx + 31.32);
     return frac((p3.x + p3.y) * p3.z);
 }
-float2 IonHash_1to2(float p)
-{
-    float3 p3 = frac(float3(p, p, p) * float3(.1031, .1030, .0973));
-    p3 += dot(p3, p3.yzx + 33.33);
-    return frac((p3.xx + p3.yz) * p3.zy);
-}
-float2 IonHash_22(float2 p)
-{
-    float3 p3 = frac(float3(p.xyx) * float3(.1031, .1030, .0973));
-    p3 += dot(p3, p3.yzx + 33.33);
-    return frac((p3.xx + p3.yz) * p3.zy);
-}
-float2 IonHash_3to2(float3 p3)
+/// <summary>
+/// 哈希：输入3维，返回2维
+/// </summary>
+float2 IonHash_32(float3 p3)
 {
     p3 = frac(p3 * float3(.1031, .1030, .0973));
     p3 += dot(p3, p3.yzx + 33.33);
     return frac((p3.xx + p3.yz) * p3.zy);
 }
-float3 IonHash_1to3(float p)
-{
-    float3 p3 = frac(float3(p, p, p) * float3(.1031, .1030, .0973));
-    p3 += dot(p3, p3.yzx + 33.33);
-    return frac((p3.xxy + p3.yzz) * p3.zyx);
-}
-float3 IonHash_2to3(float2 p)
-{
-    float3 p3 = frac(float3(p.xyx) * float3(.1031, .1030, .0973));
-    p3 += dot(p3, p3.yxz + 33.33);
-    return frac((p3.xxy + p3.yzz) * p3.zyx);
-}
+/// <summary>
+/// 哈希：输入3维，返回3维
+/// </summary>
 float3 IonHash_33(float3 p3)
 {
     p3 = frac(p3 * float3(.1031, .1030, .0973));
     p3 += dot(p3, p3.yxz + 33.33);
     return frac((p3.xxy + p3.yxx) * p3.zyx);
 }
-float4 IonHash_1to4(float p)
+/// <summary>
+/// 哈希：输入3维，返回4维
+/// </summary>
+float4 IonHash_34(float3 p3)
 {
-    float4 p4 = frac(float4(p, p, p, p) * float4(.1031, .1030, .0973, .1099));
+    float4 p4 = frac(float4(p3.xyzx) * float4(.1031, .1030, .0973, .1099));
     p4 += dot(p4, p4.wzxy + 33.33);
     return frac((p4.xxyz + p4.yzzw) * p4.zywx);
 }
-float4 IonHash_2to4(float2 p)
-{
-    float4 p4 = frac(float4(p.xyxy) * float4(.1031, .1030, .0973, .1099));
-    p4 += dot(p4, p4.wzxy + 33.33);
-    return frac((p4.xxyz + p4.yzzw) * p4.zywx);
-}
-float4 IonHash_3to4(float3 p)
-{
-    float4 p4 = frac(float4(p.xyzx) * float4(.1031, .1030, .0973, .1099));
-    p4 += dot(p4, p4.wzxy + 33.33);
-    return frac((p4.xxyz + p4.yzzw) * p4.zywx);
-}
+
+/// <summary>
+/// 哈希：输入4维，返回4维
+/// </summary>
 float4 IonHash_44(float4 p4)
 {
     p4 = frac(p4 * float4(.1031, .1030, .0973, .1099));
@@ -90,11 +131,11 @@ float4 IonHash_44(float4 p4)
     return frac((p4.xxyz + p4.yzzw) * p4.zywx);
 }
 
-float2 IonHash_2d2(float2 uv)
-{
-    const float2 k = float2(0.3183099, 0.3678794);
-    uv = uv * k + k.yx;
-    return -1.0 + 2.0 * frac(16.0 * k * frac(uv.x * uv.y * (uv.x + uv.y)));
-}
+//float2 IonHash_22(float2 uv)
+//{
+//    const float2 k = float2(0.3183099, 0.3678794);
+//    uv = uv * k + k.yx;
+//    return -1.0 + 2.0 * frac(16.0 * k * frac(uv.x * uv.y * (uv.x + uv.y)));
+//}
 
 #endif

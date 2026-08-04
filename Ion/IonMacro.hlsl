@@ -8,7 +8,9 @@
 * 功能：定义框架使用的核心宏系统
 *       - Def 宏：模块包装宏，用于防止重复定义
 *       - Link 宏：模块链接宏，用于控制模块加载
-*
+* 
+*       - 通用方法：全局辅助方法。
+*       
 * 设计理念：
 * - 统一管理框架的核心宏定义，避免重复定义
 * - 所有需要 Def/Link 宏的文件都应包含本文件
@@ -53,5 +55,27 @@
 #define PassNul(name) #define name  
 
 #define PassVar(name) (!defined(PassVar_##name))
+
+
+/// <summary>
+/// 根据 switchValue 选择对应的 float3 值
+/// </summary>
+float3 IonSwitch_Float3(int switchValue, float3 arg0=0, float3 arg1=0,float3 arg2 = 0,float3 arg3 = 0,float3 arg4 = 0,float3 arg5 = 0,float3 arg6 = 0,float3 arg7 = 0)
+{
+    float3 result;
+    switch (switchValue)
+    {
+        case 0:result = arg0; break;
+        case 1:result = arg1; break;
+        case 2:result = arg2; break;
+        case 3:result = arg3; break;
+        case 4:result = arg4; break;
+        case 5:result = arg5; break;
+        case 6:result = arg6; break;
+        case 7:result = arg7; break;
+        default:result = 0; break;
+    }
+    return result;
+}
 
 #endif

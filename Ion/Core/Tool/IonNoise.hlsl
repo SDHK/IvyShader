@@ -103,10 +103,10 @@ float IonNoise_Value(float2 uv)
     float2 u = fracPos * fracPos * (3.0 - 2.0 * fracPos);
 
     // 四方取点，由于 intPos 是固定的，所以栅格化了（同一晶格内四点值相同，只是小数部分不同拿来插值）
-    float va = IonHash_2to1(intPos + float2(0.0, 0.0)); // Hash2to1 二维输入，映射到 1 维输出
-    float vb = IonHash_2to1(intPos + float2(1.0, 0.0));
-    float vc = IonHash_2to1(intPos + float2(0.0, 1.0));
-    float vd = IonHash_2to1(intPos + float2(1.0, 1.0));
+    float va = IonHash_21(intPos + float2(0.0, 0.0)); // Hash2to1 二维输入，映射到 1 维输出
+    float vb = IonHash_21(intPos + float2(1.0, 0.0));
+    float vc = IonHash_21(intPos + float2(0.0, 1.0));
+    float vd = IonHash_21(intPos + float2(1.0, 1.0));
 
     // lerp 的展开形式，完全可以用 lerp(a, b, c) 嵌套实现
     float k0 = va;

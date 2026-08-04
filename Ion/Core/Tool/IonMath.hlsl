@@ -10,6 +10,26 @@
 #if DefPart(IonMath, Tool) 
 #define Def_IonMath_Tool
 
+/// <summary>
+/// 计算复数的平方
+/// </summary>
+/// <param name="z">输入的复数，表示为二维向量 (x, y)</param>
+/// <returns>返回复数的平方，表示为二维向量 (x, y)</returns>
+float2 IonMath_Csqr(float2 z)
+{
+    // (x + yi)² = (x² - y²) + 2xy i
+    return float2(z.x * z.x - z.y * z.y, 2.0 * z.x * z.y);
+}
+
+/// <summary>
+/// 计算复数的模 
+/// </summary>
+/// <param name="z">输入的复数</param>
+/// <returns>返回复数的模</returns>
+float IonMath_Fract(float z)
+{
+    return z - floor(z);
+}
 
 // 2D坐标缩放偏移
 // float2 uv : 输入的二维坐标
@@ -79,5 +99,7 @@ float4 IonMath_MapColor(float colorWeight, float4 colors[8], int colorCount = 8)
     }
     return colors[colorCount - 1]; // 超出范围返回最后一个颜色
 }
+
+
 
 #endif

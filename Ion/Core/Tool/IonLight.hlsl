@@ -10,6 +10,7 @@
 #if DefPart(IonLight, Tool)
 #define Def_IonLight_Tool
 
+
 //===[Lambert 光照计算]===
 
 // 计算通用 Lambert / 半兰伯特光照贡献
@@ -100,76 +101,6 @@ float IonLight_BackRim(float3 normalWS, float3 viewDir, float3 lightDir, float p
 float IonLight_RampGray(float weight, float threshold, float softness)
 {
     return smoothstep(threshold - softness, threshold + softness, weight);
-}
-
-
-//===[星空]===
-float3 IonLight_StarNest(float3 map, float time, float2 dir, float speed)
-{
-    int iterations = 17 ;
-    int volsteps = 20 ;
-    float formuparam = 0.53;
-    float stepsize = 0.1;
-    float zoom = 0.85;
-    float3 tile = float3(1, 1, 1) * 0.85;
-    //亮度
-    float brightness = 0.001;
-    //暗物质
-    float darkmatter = 0.300;
-    //衰减
-    float distfading = 0.730;
-    //饱和度
-    float saturation = 0.85;
-     //float3 aniDir = float3(uv * zoom, 1);
-     float3 aniDir = normalize(map) * zoom;
-    time = time * speed;
-
-    //观察视角旋转，让星云看起来来没那么重复
-    float a1 = .54 + time * 0.0;
-    float a2 = .45 + time * 0.0;
-    float2x2 rot1 = float2x2(cos(a1), sin(a1), -sin(a1), cos(a1));
-    float2x2 rot2 = float2x2(cos(a2), sin(a2), -sin(a2), cos(a2));
-    aniDir.xz = mul(aniDir.xz, rot1);
-    aniDir.xy = mul(aniDir.xy, rot2);
-    float3 from = float3(1.5, 0.5, 0.5);
-    from += float3(time * dir.x, time * dir.y, 0);
-    from.xz = mul(from.xz, rot1);
-    from.xy = mul(from.xy, rot2);
-
-    //volumetric rendering
-    float s = 0.1, fade = 1.;
-    float3 v = float3(0.1, 0.1, 0.1);
-    for (int r = 0; r < volsteps; r++)
-    {
-        float3 p = from + s * aniDir * 0.5;
-        p = abs(float3(tile) - fmod(p, float3(tile * 2.)));
-        // tiling fold
-        float pa, a = pa = 0.;
-        for (int i = 0; i < iterations; i++)
-        {
-            p = abs(p) / dot(p, p) - formuparam;
-            // the magic formula
-            a += abs(length(p) - pa);
-            // absolute sum of average change
-            pa = length(p);
-        }
-        float dm = max(0., darkmatter - a * a * .001);
-        //dark matter
-        a *= a * a;
-        // add contrast
-        if (r > 6)
-            fade *= 1. - dm;        // 黑暗噪音，让远处星星有覆盖闪烁感。
-        //v+=float3(dm,dm*.5,0.);//太空变蓝
-        v += fade;
-        v += float3(s, s * s, s * s * s * s) * a * brightness * fade;
-        // coloring based on distance
-        fade *= distfading;
-        // distance fading
-        s += stepsize;
-    }
-    v = lerp(float3(length(v), length(v), length(v)), v, saturation);
-    //color adjust
-    return v * .01;
 }
 
 
