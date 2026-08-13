@@ -196,7 +196,7 @@ Shader "Ion/IonObject"
             #define IonArg_FixedRimPower       Input_FixedRimPower
             #define IonArg_FixedRimIntensity   Input_FixedRimIntensity
             #define Link_IonPassMainSimple
-            #include "../IonCoreUnity.hlsl"
+            // #include "../IonCoreUnity.hlsl"
             ENDHLSL
         }
 
@@ -237,7 +237,7 @@ Shader "Ion/IonObject"
             #define IonArg_BackRimPower        Input_BackRimPower
             #define IonArg_BackRimIntensity    Input_BackRimIntensity
             #define Link_IonPassMainAdd
-            #include "../IonCoreUnity.hlsl"
+            // #include "../IonCoreUnity.hlsl"
             ENDHLSL
         }
 

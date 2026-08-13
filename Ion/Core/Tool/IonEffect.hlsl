@@ -153,6 +153,7 @@ float3 IonEffect_StarNest(float3 map, float time, float2 dir)
 /// <returns>返回计算后的颜色值</returns>
 float3 IonEffect_VolumeCrystal(float3 skyOsDirMap, float3 camOs, float near, float far)
 {
+    float3 samplePos;
     // 归一化方向向量
     skyOsDirMap = normalize(skyOsDirMap);
     // 步进
@@ -163,7 +164,8 @@ float3 IonEffect_VolumeCrystal(float3 skyOsDirMap, float3 camOs, float near, flo
     {
         near += step * exp(-2. * weight);
         if (near > far) break;
-        weight = IonField_Crystal(camOs + near * skyOsDirMap);
+        samplePos = camOs + near * skyOsDirMap;
+        weight = IonField_Crystal(samplePos);
         color = .99 * color + .08 * float3(weight * weight * weight, weight * weight, weight);//blue
     }
     color = 1 * (log(1 + color));
@@ -189,11 +191,16 @@ float3 IonEffect_VolumeStar(float3 skyOsDirMap, float3 camOs, float near, float 
     {
         near += step * exp(-2. * weight);
         if (near > far) break;
+        //weight = IonSDField_Box(camOs + near * skyOsDirMap);
+        //color = weight;
+
         weight = IonField_Star(camOs + near * skyOsDirMap);
         color = .99 * color + .08 * float3(weight * weight * weight, weight * weight, weight);//blue
     }
     color = 1 * (log(1 + color));
     return color;
 }
+
+// 云，液体，酒杯，汽水糖浆
 
 #endif// DefPart(IonEffect, Tool)

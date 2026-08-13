@@ -58,9 +58,9 @@
 
 
 /// <summary>
-/// 根据 switchValue 选择对应的 float3 值
+/// 根据 switchValue(0~9) 选择对应的 float3 值
 /// </summary>
-float3 IonSwitch_Float3(int switchValue, float3 arg0=0, float3 arg1=0,float3 arg2 = 0,float3 arg3 = 0,float3 arg4 = 0,float3 arg5 = 0,float3 arg6 = 0,float3 arg7 = 0)
+float3 IonSwitch_Float3(int switchValue, float3 arg0=0, float3 arg1=0,float3 arg2 = 0,float3 arg3 = 0,float3 arg4 = 0,float3 arg5 = 0,float3 arg6 = 0,float3 arg7 = 0,float3 arg8 = 0,float3 arg9 = 0)
 {
     float3 result;
     switch (switchValue)
@@ -73,6 +73,31 @@ float3 IonSwitch_Float3(int switchValue, float3 arg0=0, float3 arg1=0,float3 arg
         case 5:result = arg5; break;
         case 6:result = arg6; break;
         case 7:result = arg7; break;
+        case 8:result = arg8; break;
+        case 9:result = arg9; break;
+        default:result = 0; break;
+    }
+    return result;
+}
+
+/// <summary>
+/// 根据 switchValue(0~9) 选择对应的 float4 值
+/// </summary>
+float4 IonSwitch_Float4(int switchValue, float4 arg0=0, float4 arg1=0,float4 arg2 = 0,float4 arg3 = 0,float4 arg4 = 0,float4 arg5 = 0,float4 arg6 = 0,float4 arg7 = 0,float4 arg8 = 0,float4 arg9 = 0)
+{
+    float4 result;
+    switch (switchValue)
+    {
+        case 0:result = arg0; break;
+        case 1:result = arg1; break;
+        case 2:result = arg2; break;
+        case 3:result = arg3; break;
+        case 4:result = arg4; break;
+        case 5:result = arg5; break;
+        case 6:result = arg6; break;
+        case 7:result = arg7; break;
+        case 8:result = arg8; break;
+        case 9:result = arg9; break;
         default:result = 0; break;
     }
     return result;

@@ -7,17 +7,25 @@ Shader "Ion/IonObjectTransparent"
     Properties
     {
         Input_MainTex            ("材质",                        2D)     = "white" {}
-        Input_ColorMask          ("颜色遮罩",   2D)     = "white" {}
-        Input_ColorMask1          ("颜色遮罩1",   2D)     = "white" {}
-        Input_ColorMask2          ("颜色遮罩2",   2D)     = "white" {}
-        Input_ColorMask3          ("颜色遮罩3",   2D)     = "white" {}
-        Input_ColorMask4          ("颜色遮罩4",   2D)     = "white" {}
+        Input_TexMask0          ("颜色遮罩0",   2D)     = "white" {}
+        Input_TexMask1          ("颜色遮罩1",   2D)     = "white" {}
+        Input_TexMask2          ("颜色遮罩2",   2D)     = "white" {}
+        Input_TexMask3          ("颜色遮罩3",   2D)     = "white" {}
+        
+        //调色盘 10*5
 
         [Space(20)]
-        Input_Color1             ("主色",                   Color)  = (1.00, 1.00, 1.00, 1)
-        Input_Color2             ("次色",                   Color)  = (0.80, 0.80, 0.80, 1)
-        Input_Color3             ("附加色",                 Color)  = (0.60, 0.60, 0.60, 1)
-        Input_Color4             ("高亮色",                 Color)  = (1.00, 1.00, 0.50, 1)
+        Input_Color0             ("主要",                   Color)  = (1.00, 1.00, 1.00, 1)
+        Input_Color01             ("主要",                   Color)  = (1.00, 1.00, 1.00, 1)
+        [Space(10)]
+        Input_Color1             ("次要",                   Color)  = (1.00, 1.00, 1.00, 1)
+        Input_Color11             ("次要",                   Color)  = (1.00, 1.00, 1.00, 1)
+        [Space(10)]
+        Input_Color2             ("附加",                   Color)  = (0.80, 0.80, 0.80, 1)
+        Input_Color21             ("附加",                   Color)  = (0.80, 0.80, 0.80, 1)
+        [Space(10)]
+        Input_Color3             ("金属",                 Color)  = (0.60, 0.60, 0.60, 1)
+        Input_Color31             ("金属",                 Color)  = (0.60, 0.60, 0.60, 1)
         
         [Space(20)]
         [Toggle] Input_BaseRampToggle  ("附加渐变色",                   Int) = 0
@@ -74,15 +82,16 @@ Shader "Ion/IonObjectTransparent"
        
         [Space(20)]
         [Header(Null0 Star3d1 Crystal3d2 Star2d3)]
-        [IntRange] Input_EffectMap ("特效图",       Range(0,3))     = 0
+        [IntRange] Input_EffectMap0 ("特效图0",       Range(0,3))     = 0
         [IntRange] Input_EffectMap1 ("特效图1",       Range(0,3))     = 0
         [IntRange] Input_EffectMap2 ("特效图2",       Range(0,3))     = 0
         [IntRange] Input_EffectMap3 ("特效图3",       Range(0,3))     = 0
         [IntRange] Input_EffectMap4 ("特效图4",       Range(0,3))     = 0
-        [Toggle] Input_EffectInside ("内部面", Int) = 0
+        [IntRange] Input_EffectMapInside ("内部特效", Range(0,3))     = 0
 
         [Space(20)]
         [Header(SkyOs0 SkyWs1 CamVs2 Reflect3 NrmOs4 NrmWs5 NrmVs6)]
+        [IntRange] Input_DirMap0			 ("方向映射0",       Range(0,6))     = 0
         [IntRange] Input_DirMap1			 ("方向映射1",       Range(0,6))     = 0
         [IntRange] Input_DirMap2			 ("方向映射2",       Range(0,6))     = 0
         [IntRange] Input_DirMap3			 ("方向映射3",       Range(0,6))     = 0
@@ -175,7 +184,7 @@ Shader "Ion/IonObjectTransparent"
         {
             Name "DEPTH_PREPASS"
             Tags { "LightMode" = "Always" }
-             Cull Back
+            Cull Off
             ZWrite On
             ColorMask 0
             HLSLPROGRAM
@@ -198,7 +207,7 @@ Shader "Ion/IonObjectTransparent"
 
             ZWrite Off
             ZTest LEqual
-            Offset 0, -1    // 固定单位偏移（不含斜率项），轻推深度避免 Z-Fighting
+            //Offset 0, -1    // 固定单位偏移（不含斜率项），轻推深度避免 Z-Fighting
             Blend SrcAlpha OneMinusSrcAlpha
 
             HLSLPROGRAM
@@ -206,16 +215,20 @@ Shader "Ion/IonObjectTransparent"
             #define IonArg_MainTex           Input_MainTex
             #define IonArg_MainTex_ST        Input_MainTex_ST
 
-            #define IonArg_ColorMask         Input_ColorMask
-            #define IonArg_ColorMask1         Input_ColorMask1
-            #define IonArg_ColorMask2         Input_ColorMask2
-            #define IonArg_ColorMask3         Input_ColorMask3
-            #define IonArg_ColorMask4         Input_ColorMask4
+            #define IonArg_TexMask0         Input_TexMask0
+            #define IonArg_TexMask1         Input_TexMask1
+            #define IonArg_TexMask2         Input_TexMask2
+            #define IonArg_TexMask3         Input_TexMask3
 
-            #define IonArg_Color1            Input_Color1
-            #define IonArg_Color2            Input_Color2
-            #define IonArg_Color3            Input_Color3
-            #define IonArg_Color4            Input_Color4
+            #define IonArg_SkinRgb00           Input_Color0
+            #define IonArg_SkinRgb01		  Input_Color01
+            #define IonArg_SkinRgb10           Input_Color1
+            #define IonArg_SkinRgb11          Input_Color11
+            #define IonArg_SkinRgb20           Input_Color2
+            #define IonArg_SkinRgb21          Input_Color21
+            #define IonArg_SkinRgb30           Input_Color3
+            #define IonArg_SkinRgb31          Input_Color31
+
 
             #define IonArg_LightInfluence   Input_LightInfluence
             #define IonArg_LightMax        Input_LightMax
@@ -262,13 +275,14 @@ Shader "Ion/IonObjectTransparent"
             #define IonArg_MetalProbeInfluence   Input_MetalProbeInfluence
             #define IonArg_MetalDiffuseScale     Input_MetalDiffuseScale
 
-            #define IonArg_EffectMap Input_EffectMap
+            #define IonArg_EffectMap0 Input_EffectMap0
             #define IonArg_EffectMap1 Input_EffectMap1
             #define IonArg_EffectMap2 Input_EffectMap2
             #define IonArg_EffectMap3 Input_EffectMap3
             #define IonArg_EffectMap4 Input_EffectMap4
-            #define IonArg_EffectInside Input_EffectInside
+            #define IonArg_EffectMapInside Input_EffectMapInside
 
+            #define IonArg_DirMap0 Input_DirMap0
             #define IonArg_DirMap1 Input_DirMap1
             #define IonArg_DirMap2 Input_DirMap2
             #define IonArg_DirMap3 Input_DirMap3
@@ -291,7 +305,7 @@ Shader "Ion/IonObjectTransparent"
 
             #define IonArg_MainTex       Input_MainTex
             #define IonArg_MainTex_ST    Input_MainTex_ST
-            #define IonArg_ColorMask     Input_ColorMask
+            #define IonArg_TexMask     Input_TexMask
             #define IonArg_Color1        Input_Color1
             #define IonArg_Color2        Input_Color2
             #define IonArg_Color3        Input_Color3
