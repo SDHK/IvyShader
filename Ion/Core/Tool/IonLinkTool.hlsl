@@ -45,9 +45,9 @@
 #include "IonField.hlsl"     // 采样场工具
 #endif
 
-//===[光照工具]===
-#if Link(IonLight)
-#include "IonLight.hlsl"     // 光照计算工具（Lambert 等）
+
+#if Link(IonRamp)
+#include "IonRamp.hlsl"     // 渐变计算工具（Lambert 等）
 #endif
 
 #if Link(IonEffect)

@@ -104,7 +104,7 @@ half4 frag(FragData fragData) : SV_Target
     half3 lighting = IonLight_LambertSimple(normalWs, mainLight.direction, mainLight.color, mainLight.shadowAttenuation);
     
     // === 附加光源（点光源和聚光灯）===
-    // 注意：附加光源使用 IonLight_Lambert（包含距离衰减）
+    // 注意：附加光源使用 IonRamp_Lambert（包含距离衰减）
     // 原因：点光源和聚光灯都有距离衰减，光照强度随距离递减
     #ifdef _ADDITIONAL_LIGHTS
         half4 shadowMask = half4(1.0h, 1.0h, 1.0h, 1.0h);
@@ -116,7 +116,7 @@ half4 frag(FragData fragData) : SV_Target
             Light light = GetAdditionalLight(lightIndex, fragData.PositionWs,shadowMask);
             
             // 计算光照贡献（包含距离衰减）
-            half3 additionalLighting = IonLight_Lambert(
+            half3 additionalLighting = IonRamp_Lambert(
                 normalWs, 
                 light.direction, 
                 light.color, 

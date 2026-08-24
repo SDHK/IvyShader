@@ -11,10 +11,10 @@ sampler2D IonArg_GrabTexture;
 
 
 // ColorMask：RGBA 四通道权重分别对应 Color1 ~ Color4 区域
-sampler2D IonArg_TexMask0;
-sampler2D IonArg_TexMask1;
-sampler2D IonArg_TexMask2;
-sampler2D IonArg_TexMask3;
+sampler2D IonArg_SkinMask0;
+sampler2D IonArg_SkinMask1;
+sampler2D IonArg_SkinMask2;
+sampler2D IonArg_SkinMask3;
 
 float4 IonArg_SkinRgb00;
 float4 IonArg_SkinRgb01;
@@ -33,37 +33,37 @@ float IonArg_LightMin;
 sampler2D IonArg_EmissiveTex;
 float IonArg_EmissiveIntensity;// 自发光强度倍率（与灰度图相乘，0=关闭）
 
-// BaseRamp 光照（固定参考方向，提供不随光源变化的结构性阴影）
-float IonArg_BaseRampToggle;// BaseRamp 混合权重（0=不启用，1=完全启用）
-float4 IonArg_BaseRampDir;// 固定参考方向（世界空间，默认 (0,1,0) 向上）
+// SkinRamp 光照（固定参考方向，提供不随光源变化的结构性阴影）
+float IonArg_SkinRampToggle;// SkinRamp 混合权重（0=不启用，1=完全启用）
+float4 IonArg_SkinRampDir;// 固定参考方向（世界空间，默认 (0,1,0) 向上）
 
-float4 IonArg_BaseRampColor1;
-float4 IonArg_BaseRampColor2;
-float4 IonArg_BaseRampColor3;
-float4 IonArg_BaseRampColor4;
-float4 IonArg_BaseRampColor5;
+// SkinRamp 渐变色（分别对基准色、亮色、暗色）
+float4 IonArg_RampRgbBase;
+float4 IonArg_SkinRampRgb0;
+float4 IonArg_SkinRampRgb1;
 
-float IonArg_BaseRampThreshold1;
-float IonArg_BaseRampThreshold2;
-float IonArg_BaseRampThreshold3;
-float IonArg_BaseRampThreshold4;
+float IonArg_SkinRampThreshold0;
+float IonArg_SkinRampThreshold1;
+float IonArg_SkinRampSoftness;
 
-float IonArg_BaseRampSoftness1;
-float IonArg_BaseRampSoftness2;
-float IonArg_BaseRampSoftness3;
-float IonArg_BaseRampSoftness4;
+//皮肤边缘光（菲涅耳边缘光，跟随视角）
+float IonArg_SkinRimThreshold;
+float IonArg_SkinRimSoftness;
 
-// Ramp 动态光照（灰度，只控制阴影边界，颜色由光源颜色和 BaseRamp 提供）
-float IonArg_LightRampThreshold;// 阴影边界位置（NdotL 轴 0~1）
+
+// Ramp 动态光照（灰度，只控制阴影边界，颜色由光源颜色和 SkinRamp 提供）
+float IonArg_LightRampThreshold;// 阴影边界位置（lightLambert 轴 0~1）
 float IonArg_LightRampSoftness;// 边界过渡宽度（0=硬切卡通）
 
 
-// 菲涅耳边缘光
+// 边缘色
+float4 IonArg_RampRgb0;// 边缘光颜色
+float4 IonArg_RampRgb1;// 边缘光颜色
+
 float IonArg_RimPower;// 边缘集中度（高=细窄，低=宽泛，建议 2~8）
 float IonArg_RimIntensity;// 边缘光强度（0=关闭）
 
 // 背光边缘光（逆光轮廓光，跟随光源方向）
-float4 IonArg_BackRimColor;// 背光颜色
 float IonArg_BackRimPower;// 边缘集中度（建议 2~8）
 float IonArg_BackRimIntensity;// 背光强度（0=关闭）
 
@@ -92,7 +92,7 @@ int IonArg_DirMap4;
 
 
 //色板暂定为：10*5 : 白 → 粉 → 红 → 橘 → 橙 → 黄 → 绿 → 青 → 蓝 → 紫
-//6+3=18色，6个细节贴图，法线贴图。6个材质枚举。
+//4*2=8色，4个细节贴图，法线贴图。8个材质枚举。
 //通道融合度滑动条
 
 //===[定义宏]====================================================
@@ -118,6 +118,7 @@ int IonArg_DirMap4;
 #define Link_IonVertex
 #define Link_IonField
 #define Link_IonDirMap
+#define Link_IonRamp
 #define Link_IonEffect
 #include "../../Core/IonCore.hlsl"
 
@@ -238,123 +239,106 @@ half4 frag(FragData fragData, float facing : VFACE) : SV_Target
     float lightLuma = saturate(dot(lightColor, float3(0.299, 0.587, 0.114)));
     // 主体光照色影响度，防止过度受光源颜色调制
     float3 mainLightColor = lerp(lightLuma, saturate(lightColor), IonArg_LightInfluence);
-    // 当光线消失时，保持固定方向以维持 BaseRamp 的结构性阴影效果
-    half3 lightDirection = lerp(IonArg_BaseRampDir, light.Direction, ceil(lightLuma));
+    // 当光线消失时，保持固定方向以维持 SkinRamp 的结构性阴影效果
+    half3 lightDirection = lerp(IonArg_SkinRampDir, light.Direction, ceil(lightLuma));
 
 
-    //===[颜色混合]=================================================
-    //原图+透明度
-    half4 texMask = 0;
-    //灰度
-    float maskLuma = 0;
-    //颜色
-    float3 baseColor = 0;
-    //透明度
-    float finalAlpha = 0;
+    //===[皮肤着色]=================================================
+    //皮肤细节遮罩
+    half4 skinMask = 0;
+    //皮肤灰度
+    float skinMaskLuma = 0;
+    //皮肤颜色
+    float3 skinRgb = 0;
+    //最终透明度
+    float finalAlpha = 1;
     // 根据 uvId 选择对应的纹理和颜色
+
+    //临时颜色！！！！
     IonArg_SkinRgb10 =IonArg_SkinRgb00;
     IonArg_SkinRgb20 =IonArg_SkinRgb00;
     IonArg_SkinRgb30 =IonArg_SkinRgb00;
+    IonArg_SkinRgb11 = IonArg_SkinRgb01;
+    IonArg_SkinRgb21 = IonArg_SkinRgb01;
+    IonArg_SkinRgb31 = IonArg_SkinRgb01;
 
-    float4 color0 = IonSwitch_Float4(uvId,IonArg_SkinRgb00,IonArg_SkinRgb10,IonArg_SkinRgb20,IonArg_SkinRgb30);
-    float4 color1 = IonSwitch_Float4(uvId,IonArg_SkinRgb01,IonArg_SkinRgb11,IonArg_SkinRgb21,IonArg_SkinRgb31);
-   
+    float4 skinRgb0 = IonSwitch_Float4(uvId,IonArg_SkinRgb00,IonArg_SkinRgb10,IonArg_SkinRgb20,IonArg_SkinRgb30);
+    float4 skinRgb1 = IonSwitch_Float4(uvId,IonArg_SkinRgb01,IonArg_SkinRgb11,IonArg_SkinRgb21,IonArg_SkinRgb31);
     //原图
     switch (uvId)
     {
-        case 0:texMask = tex2D(IonArg_TexMask0, localUV); break;
-        case 1:texMask = tex2D(IonArg_TexMask1, localUV); break;
-        case 2:texMask = tex2D(IonArg_TexMask2, localUV); break;
-        case 3:texMask = tex2D(IonArg_TexMask3, localUV); break;
-        default:texMask = 1; break;
+        case 0:skinMask = tex2D(IonArg_SkinMask0, localUV); break;
+        case 1:skinMask = tex2D(IonArg_SkinMask1, localUV); break;
+        case 2:skinMask = tex2D(IonArg_SkinMask2, localUV); break;
+        case 3:skinMask = tex2D(IonArg_SkinMask3, localUV); break;
+        default:skinMask = 1; break;
     }
     //灰度
-    maskLuma  = IonMath_Luma(texMask.rgb) * texMask.a;
+    skinMaskLuma = IonMath_Luma(skinMask.rgb) * skinMask.a;
     //渐变着色
-    baseColor = lerp(color0.rgb, color1.rgb, 1 - maskLuma );
-    //透明度
-    finalAlpha = texMask.a;
+    skinRgb = lerp(skinRgb0.rgb, skinRgb1.rgb,  skinMaskLuma);
+    //最终透明度
+    finalAlpha = skinMask.a;
+
+    //===[皮肤渐变喷涂]========================
+    //当前皮肤色
+    float3 skinHsv = IonMath_RgbToHsv(saturate(skinRgb));
+    //渐变基准色
+    float3 skinRampHsv = IonMath_RgbToHsv(IonArg_RampRgbBase.rgb);
+
+    //===[边缘光颜色]====================================
+    float3 rimDeltaHsv1 = IonMath_HsvDelta(IonMath_RgbToHsv(IonArg_RampRgb1.rgb), skinRampHsv);
+    float3 rimRgb1 = IonMath_HsvToRgb(IonMath_ApplyHsvDelta(skinHsv , rimDeltaHsv1));
+    float3 viewDir = normalize(dirPosToCamWs);
 
 
 
-    // BaseRamp：固定方向结构性阴影（定义颜色区间，受光源强度/阴影调制，不自发光）
-    // 将固定方向转换到世界空间
-    float3 baseRampDirWs = IonMatrix_PosOsToWs(IonArg_BaseRampDir).xyz;
-    // 从观察空间转换到世界空间
-    //float3 baseRampDirWs = IonMatrix_PosVsToWs( IonArg_BaseRampDir).xyz;
-    // 光源方向当做阴影用
-    //float3 baseRampDirWs = light.Direction;
+    if(IonArg_SkinRampToggle != 0)
+    {
+        //半Lambert喷涂
+        float skinRampLambert = IonRamp_Lambert(nrmOs, IonArg_SkinRampDir, 0.5);
+        //计算当前皮肤色与渐变基准色的 HSV 差值
+        float3 skinDeltaHsv0 = IonMath_HsvDelta(IonMath_RgbToHsv(IonArg_SkinRampRgb0.rgb), skinRampHsv);
+        float3 skinDeltaHsv1 = IonMath_HsvDelta(IonMath_RgbToHsv(IonArg_SkinRampRgb1.rgb), skinRampHsv);
+        //根据当前皮肤色与渐变基准色的 HSV 差值，计算出当前皮肤色在各个渐变域的颜色
+        float3 skinRampRgb0 = IonMath_HsvToRgb(IonMath_ApplyHsvDelta(skinHsv , skinDeltaHsv0));
+        float3 skinRampRgb1 = IonMath_HsvToRgb(IonMath_ApplyHsvDelta(skinHsv , skinDeltaHsv1));
+        //根据 Lambert 灰度权重，计算出当前片元在各个渐变域的颜色
+        skinRgb = IonRamp_Rgb3(
+        skinRampLambert,
+        skinRampRgb0, IonArg_SkinRampThreshold0, IonArg_SkinRampSoftness,
+        skinRgb, 1-IonArg_SkinRampThreshold1, IonArg_SkinRampSoftness,
+        skinRampRgb1);
+    }
+    //再次获取基准色
+    skinHsv = IonMath_RgbToHsv(saturate(skinRgb));
+    float3 rimDeltaHsv0 = IonMath_HsvDelta(IonMath_RgbToHsv(IonArg_RampRgb0.rgb), skinRampHsv);
+    float3 rimRgb0 = IonMath_HsvToRgb(IonMath_ApplyHsvDelta(skinHsv , rimDeltaHsv0));
+    float skinRimLambert = IonRamp_Lambert(normalWs, viewDir, 0.5);
+    skinRgb = IonRamp_Rgb2(skinRimLambert, rimRgb0, IonArg_SkinRimThreshold, IonArg_SkinRimSoftness, skinRgb);
 
-    float NdotBase = saturate(dot(nrmOs, IonArg_BaseRampDir.xyz) * 0.5 + 0.5);
-
-    // 计算法线与固定方向的夹角，映射到 0~1 作为 BaseRamp 权重
-    float3 N = normalize(nrmOs);
-    float3 D = normalize(IonArg_BaseRampDir.xyz);
-    float cosTheta = clamp(dot(N, D), -1.0, 1.0);
-    float angle = acos(cosTheta) * (180.0 / UNITY_PI);
-    // 0 ~ 180（角度）
-    float NdotBaseLine = 1 - angle / 180.0;
-
-
-    //float3 offsetColor1 = (IonArg_BaseRampColor1 - IonArg_BaseRampColor3).rgb;
-    //float3 offsetColor2 = (IonArg_BaseRampColor2 - IonArg_BaseRampColor3).rgb;
-    //float3 offsetColor4 = (IonArg_BaseRampColor4 - IonArg_BaseRampColor3).rgb;
-    //float3 offsetColor5 = (IonArg_BaseRampColor5 - IonArg_BaseRampColor3).rgb;
-
-    //float3 baseRampColor = IonLight_Ramp(NdotBaseLine, baseColor + offsetColor1, IonArg_BaseRampThreshold1, IonArg_BaseRampSoftness1, baseColor + offsetColor2, IonArg_BaseRampThreshold2, IonArg_BaseRampSoftness2, baseColor, IonArg_BaseRampThreshold3, IonArg_BaseRampSoftness3, baseColor + offsetColor4, IonArg_BaseRampThreshold4, IonArg_BaseRampSoftness4, baseColor + offsetColor5);
-
-
-    float3 refHsv  = IonMath_RgbToHsv(IonArg_BaseRampColor3.rgb);
-    float3 baseHsv = IonMath_RgbToHsv(saturate(baseColor));
-
-    float3 deltaHsv1 = IonMath_HsvDelta(IonMath_RgbToHsv(IonArg_BaseRampColor1.rgb), refHsv);
-    float3 deltaHsv2 = IonMath_HsvDelta(IonMath_RgbToHsv(IonArg_BaseRampColor2.rgb), refHsv);
-    float3 deltaHsv4 = IonMath_HsvDelta(IonMath_RgbToHsv(IonArg_BaseRampColor4.rgb), refHsv);
-    float3 deltaHsv5 = IonMath_HsvDelta(IonMath_RgbToHsv(IonArg_BaseRampColor5.rgb), refHsv);
-
-    float3 rampColor1 = IonMath_HsvToRgb(IonMath_ApplyHsvDelta(baseHsv, deltaHsv1));
-    float3 rampColor2 = IonMath_HsvToRgb(IonMath_ApplyHsvDelta(baseHsv, deltaHsv2));
-    float3 rampColor3 = baseColor;
-    float3 rampColor4 = IonMath_HsvToRgb(IonMath_ApplyHsvDelta(baseHsv, deltaHsv4));
-    float3 rampColor5 = IonMath_HsvToRgb(IonMath_ApplyHsvDelta(baseHsv, deltaHsv5));
-
-    float3 baseRampColor = IonLight_Ramp(
-    NdotBaseLine,
-    rampColor1, IonArg_BaseRampThreshold1, IonArg_BaseRampSoftness1,
-    rampColor2, IonArg_BaseRampThreshold2, IonArg_BaseRampSoftness2,
-    rampColor3, IonArg_BaseRampThreshold3, IonArg_BaseRampSoftness3,
-    rampColor4, IonArg_BaseRampThreshold4, IonArg_BaseRampSoftness4,
-    rampColor5);
-
-
-
-    // 混合NdotBase 是为了让BaseRampColor 随法线方向变化而变化
-    //baseRampColor = (baseRampColor * (NdotBase * 0.5 + 0.5));
-    baseColor = lerp(baseColor, baseRampColor, IonArg_BaseRampToggle);
-
-
-
-
-    //=======================================
-    // Ramp：动态光照（灰度，跟随光源方向）
-    float NdotL = saturate(dot(normalWs, lightDirection) * 0.5 + 0.5);
-    float rampGray = IonLight_RampGray(NdotL, IonArg_LightRampThreshold, IonArg_LightRampSoftness);
+    //===[光照阴影]====================================
+    // 光照阴影（灰度，跟随光源方向）
+    float lightLambert = IonRamp_Lambert(normalWs, lightDirection, 0.5);
+    float lightLambrtGray  = IonRamp_Gray(lightLambert, IonArg_LightRampThreshold, IonArg_LightRampSoftness);
     // 光照强度映射到指定范围，避免过暗或过亮
-    rampGray = rampGray * (IonArg_LightMax - IonArg_LightMin) + IonArg_LightMin;
+    lightLambrtGray  = lightLambrtGray  * (IonArg_LightMax - IonArg_LightMin) + IonArg_LightMin;
+    //漫反射光照颜色（随光源方向变化）
+    float3 diffuseLight = mainLightColor * lightLambrtGray;
 
-    // 菲涅耳边缘光（始终存在，不依赖光源）
-    float fresnel = IonLight_Fresnel(normalWs, normalize (dirPosToCamWs), (IonArg_RimPower + lightLuma) * 0.5);
-    IonArg_RimIntensity = IonArg_RimIntensity * (IonArg_LightMax + lightLuma);
-    half3 rimLight = baseColor * lightColor * fresnel * IonArg_RimIntensity;
+ 
+    //===[菲涅耳边缘光]====================================
+    float fresnel = IonRamp_Fresnel(normalWs,viewDir, IonArg_RimPower * lightLuma ) * IonArg_RimIntensity;
+    half3 rimLight = rimRgb1 * lightColor * fresnel;
 
-    // 背光边缘光（逆光时才亮，颜色受光源颜色调制）
-    float backRim = IonLight_BackRim(normalWs, normalize(dirPosToCamWs), lightDirection, (IonArg_BackRimPower + lightLuma) * 0.5);
-    IonArg_BackRimIntensity = IonArg_BackRimIntensity * (IonArg_LightMax + lightLuma);
-    half3 backRimLight = baseColor * lightColor * backRim * IonArg_BackRimIntensity;
+    //===[背光边缘光]====================================
+    float backRim = IonRamp_BackRim(normalWs, viewDir, lightDirection, IonArg_BackRimPower * lightLuma) * IonArg_BackRimIntensity;
+    half3 backRimLight = rimRgb1 * lightColor * backRim;
 
-    float3 dynamicShading = mainLightColor * rampGray + rimLight + backRimLight;
+    float3 addLight =  rimLight + backRimLight;
+
     // 合并：颜色 + 动态光照（随光源）
-    //half3 finalColor = baseColor * dynamicShading;
+    //half3 finalColor = skinRgb * dynamicShading;
 
     //===[特效向量映射]=====================================================
 
@@ -461,18 +445,18 @@ half4 frag(FragData fragData, float facing : VFACE) : SV_Target
     float3 matcapReflect = tex2D(IonArg_MetalMatCap, matcapUV).rgb;
 
     float metalMask = saturate(IonArg_Metallic * tex2D(IonArg_MetalMask, fragData.UV).r);
-    // 金属 tint（金/银/铜来自 baseColor / Color1）
-    float3 metalTint = baseColor;
+    // 金属 tint（金/银/铜来自 skinRgb / Color1）
+    float3 metalTint = skinRgb;
     float3 F0 = metalTint;
     // 金属 F0 ≈ 自身颜色
     // 1. 弱漫反射 + 环境底色
     float3 metalDiffuse = metalTint * ambient * IonArg_MetalDiffuseScale;
-    metalDiffuse += metalTint * mainLightColor * rampGray * IonArg_MetalDiffuseScale;
+    metalDiffuse += metalTint * mainLightColor * lightLambrtGray  * IonArg_MetalDiffuseScale;
     // 2. 方向高光（Blinn-Phong）
     float3 H = normalize(lightDirection + dirPosToCamWs);
     float NdotH = saturate(dot(normalWs, H));
     float specPower = lerp(256.0, 16.0, IonArg_MetalRoughness);
-    float spec = pow(NdotH, specPower) * rampGray * light.ShadowAttenuation;
+    float spec = pow(NdotH, specPower) * lightLambrtGray  * light.ShadowAttenuation;
     float3 specular = F0 * spec * mainLightColor * IonArg_MetalSpecularIntensity;
     // 3. 环境反射：MatCap 保底 + SpecCube 增色
     float3 R = reflect(-dirPosToCamWs, normalWs);
@@ -484,7 +468,7 @@ half4 frag(FragData fragData, float facing : VFACE) : SV_Target
     // 探针混合
     float3 envReflect = lerp(matcapReflect, probeReflect, IonArg_MetalProbeInfluence);
     // 菲涅耳增强边缘反射
-    float fresnelMetal = IonLight_Fresnel(envReflect, dirPosToCamWs, IonArg_RimPower);
+    float fresnelMetal = IonRamp_Fresnel(envReflect, dirPosToCamWs, IonArg_RimPower);
     envReflect *= lerp(1.0, 1.5, fresnelMetal);
     float3 metalReflect = envReflect * F0 * IonArg_MetalReflectIntensity;
     // 4. 金属合成
@@ -495,9 +479,11 @@ half4 frag(FragData fragData, float facing : VFACE) : SV_Target
     //透镜，水波
 
     //===[最终混合]=================================================
-    half3 dielectric = baseColor * dynamicShading;
+    half3 dielectric = skinRgb * diffuseLight + addLight;
+
     half3 finalColor = lerp(dielectric, metalColor, metalMask);
-    
+    // 后面最终混合处：
+
     float a1 = saturate(dot(effectMapRgb, float3(0.299, 0.587, 0.114)));
     // 亮度当透明度
     a1 = pow(a1, 0.005);
@@ -509,6 +495,7 @@ half4 frag(FragData fragData, float facing : VFACE) : SV_Target
     //return half4(effectMapRgb, a1);
 
     finalColor = dielectric;
+
     return half4(finalColor, finalAlpha);
 
 }

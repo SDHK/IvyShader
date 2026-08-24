@@ -66,7 +66,9 @@ float3 IonMath_ApplyHsvDelta(float3 curMidHsv, float3 delta)
 {
     float3 o;
     o.x = frac(curMidHsv.x + delta.x);
-    o.y = saturate(curMidHsv.y * delta.y);
+    float s = curMidHsv.y;
+    if (s < 0.01) s = 0.01;   // 或改用 sAdd 分支
+    o.y = saturate(s * delta.y);
     o.z = saturate(curMidHsv.z * delta.z);
     return o; // 仍是 HSV，外面再 HsvToRgb
 }
@@ -141,26 +143,6 @@ float IonMath_ClampMap(float value, float min, float max, float targetMin = 0, f
     return value;
 }
 
-// 颜色映射
-// float colorWeight : 颜色权重值，范围0-1
-// float4 colors[8] : 颜色数组，最多支持8种颜色
-// int colorCount = 8 : 颜色数量
-// float4 return : 映射后的颜色值
-float4 IonMath_MapColor(float colorWeight, float4 colors[8], int colorCount = 8)
-{
-    float step = 1.0 / (colorCount - 1);
-    // 每段的权重范围
-    for (int i = 0; i < colorCount - 1; i++)
-    {
-        float minWeight = i * step;
-        float maxWeight = (i + 1) * step;
-        if (colorWeight >= minWeight && colorWeight < maxWeight)
-        {
-            return lerp(colors[i], colors[i + 1], IonMath_ClampMap(colorWeight, minWeight, maxWeight));
-        }
-    }
-    return colors[colorCount - 1];    // 超出范围返回最后一个颜色
-}
 
 
 

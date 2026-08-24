@@ -76,6 +76,7 @@ float     IonArg_BackRimIntensity;
 #define Link_IonLight
 #define Link_IonMatrix
 #define Link_IonMath
+#define Link_IonRamp
 #define Link_IonVertex
 #include "../../Core/IonCore.hlsl"
 
@@ -153,7 +154,7 @@ half4 frag(FragData fragData) : SV_Target
 
     // BaseRamp：固定方向结构性阴影（受附加光源衰减调制，不自发光）
     float NdotBase = saturate(dot(normalWs, normalize(IonArg_BaseRampDir)));
-    float3 baseRampColor = IonLight_Ramp(
+    float3 baseRampColor = IonRamp_Rgb5(
         NdotBase,
         IonArg_BaseRampColor1.rgb, IonArg_BaseRampThreshold1, IonArg_BaseRampSoftness1,
         IonArg_BaseRampColor2.rgb, IonArg_BaseRampThreshold2, IonArg_BaseRampSoftness2,
@@ -163,13 +164,14 @@ half4 frag(FragData fragData) : SV_Target
     );
     float3 baseShading = baseRampColor * IonArg_BaseRampEnable * atten;
 
+
     float NdotL     = saturate(dot(normalWs, lightDir) * IonArg_LambertScale + IonArg_LambertOffset);
-    float rampGray  = IonLight_RampGray(NdotL, IonArg_LightRampThreshold, IonArg_LightRampSoftness);
+    float rampGray  = IonRamp_Gray(NdotL, IonArg_LightRampThreshold, IonArg_LightRampSoftness);
     half3 lightContrib = baseShading + rampGray * IonParam_LightColor * atten;
 
     //===[背光边缘光]===============================================
     float3 viewDir     = normalize(IonParam_CameraPosWs - fragData.PositionWs);
-    float  backRim     = IonLight_BackRim(normalWs, viewDir, lightDir, IonArg_BackRimPower);
+    float  backRim     = IonRamp_BackRim(normalWs, viewDir, lightDir, IonArg_BackRimPower);
     half3  backRimLight = backRim * IonArg_BackRimColor.rgb * IonArg_BackRimIntensity
                         * IonParam_LightColor.rgb * atten;
 
@@ -181,5 +183,6 @@ half4 frag(FragData fragData) : SV_Target
     // ForwardAdd 只输出直接光照，Alpha 为 0（Blend One One 叠加模式）
     return half4((baseColor * lightContrib + backRimLight) * (1.0 - emissiveWeight), 0);
 }
+
 
 #endif // Def(IonPassMainAdd)
