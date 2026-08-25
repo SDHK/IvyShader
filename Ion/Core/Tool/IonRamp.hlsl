@@ -29,12 +29,25 @@ float3 IonRamp_Lambert(float3 normalWS, float3 lightDirection, float scale = 1.0
 // 计算菲涅耳边缘光强度（正对摄像机的面=0，侧边缘=1）
 // float3 normalWS  - 世界空间法线（已归一化）
 // float3 viewDir   - 视线方向（normalize(cameraPos - positionWS)）
-// float  power     - 边缘集中度（低=细窄边，高=宽泛晕染）
+// float  softness  - 边缘集中度（低=细窄边，高=宽泛晕染）
 // float  return    - 菲涅耳强度（0~1）
-float IonRamp_Fresnel(float3 normalWS, float3 viewDir, float power)
+float IonRamp_Fresnel(float3 normalWS, float3 viewDir, float softness)
 {
     float dotNv = saturate(dot(normalWS, viewDir));
-    return pow(1.0 - dotNv, 15 - power * 15);
+    return pow(1.0 - dotNv, 15 - softness * 15);
+}
+
+/// <summary>
+/// 计算高光强度
+/// </summary>
+/// <param name="nrmWs">世界空间法线（已归一化）</param>
+/// <param name="lightDir">光源方向（已归一化）</param>
+/// <param name="softness">边缘集中度（低=细窄，高=宽泛）</param>
+/// <returns>高光强度（0~1）</returns>
+float IonRamp_HighLight(float3 nrmWs,float3 lightDir, float softness)
+{
+    float dotNl = saturate(dot(nrmWs, lightDir));
+    return pow(dotNl, 256 - softness * 255);
 }
 
 //===[背光边缘光]===
@@ -44,14 +57,14 @@ float IonRamp_Fresnel(float3 normalWS, float3 viewDir, float power)
 // float3 normalWS  - 世界空间法线（已归一化）
 // float3 viewDir   - 视线方向（normalize(cameraPos - positionWS)）
 // float3 lightDir  - 光源方向（已归一化，由框架提供）
-// float  power     - 边缘集中度（低=细窄，高=宽泛）
+// float  softness  - 边缘集中度（低=细窄，高=宽泛）
 // float  return    - 背光强度（0~1，仅逆光时非零）
-float IonRamp_BackRim(float3 normalWS, float3 viewDir, float3 lightDir, float power)
+float IonRamp_BackRim(float3 normalWS, float3 viewDir, float3 lightDir, float softness)
 {
     // 法线背对光源程度（0=正对光源 1=完全背光)
     float backDotNl = saturate(-dot(normalWS, lightDir));
     // 视角边缘遮罩
-    float rimMask = IonRamp_Fresnel(normalWS, viewDir, power);
+    float rimMask = IonRamp_Fresnel(normalWS, viewDir, softness);
     return backDotNl * rimMask;
 }
 

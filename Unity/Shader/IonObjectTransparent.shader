@@ -13,7 +13,7 @@ Shader "Ion/IonObjectTransparent"
         Input_SkinMask3          ("颜色遮罩3",   2D)     = "white" {}
 
         [Space(20)]
-        Input_EmissiveIntensity  ("自发光",                       Range(0,1))  = 0.1
+        Input_EmissiveIntensity  ("自发光强度",                       Range(0,1))  = 0.1
         Input_EmissiveTex        ("自发光遮罩",       2D)     = "white" {}
 
         
@@ -37,16 +37,19 @@ Shader "Ion/IonObjectTransparent"
         
         [Space(20)]
         [Toggle] Input_SkinRampToggle  ("皮肤渐变色启用",            Int) = 0
-        Input_SkinRampDir      ("渐变照射位置",                 Vector)     = (0, 1, 0, 0)
-        Input_SkinRampRgb1     ("渐变亮色",                     Color)      = (0.60, 0.60, 0.60, 1)
-        Input_SkinRampRgb0     ("渐变暗色",                     Color)      = (0.60, 0.60, 0.60, 1)
-        Input_SkinRampThreshold1 ("渐变亮色阈值",                      Range(0,1)) = 0.9
-        Input_SkinRampThreshold0 ("渐变暗色阈值",                      Range(0,1)) = 0.3
-        Input_SkinRampSoftness  ("渐变柔和度",                       Range(0,1)) = 0.5
+        Input_SkinObjRampPos      ("方向渐变照射位置",                 Vector)     = (0, 1, 0, 0)
+        Input_SkinObjRampRgb1     ("方向渐变亮色",                     Color)      = (0.60, 0.60, 0.60, 1)
+        Input_SkinObjRampRgb0     ("方向渐变暗色",                     Color)      = (0.60, 0.60, 0.60, 1)
+        Input_SkinObjRampThreshold1 ("方向渐变亮色阈值",                  Range(0,1)) = 0.1
+        Input_SkinObjRampThreshold0 ("方向渐变暗色阈值",                  Range(0,1)) = 0.3
+        Input_SkinObjRampSoftness   ("方向渐变柔和度",                   Range(0,1)) = 0.5
+        
         [Space(10)]
-        Input_RampRgb0 		        ("边缘色",                        Color)  = (1, 1, 1, 1)
-        Input_SkinRimThreshold      ("边缘阈值",                       Range(0,1)) = 0.5
-        Input_SkinRimSoftness       ("边缘柔和度",                       Range(0,1)) = 0.5
+        Input_SkinViewRampRgb1 		    ("视线渐变亮色",                        Color)  = (1, 1, 1, 1)
+        Input_SkinViewRampRgb0 		    ("视线渐变暗色",                        Color)  = (1, 1, 1, 1)
+        Input_SkinViewRampThreshold1    ("视线渐变亮色阈值",                       Range(0,1)) = 0.1
+        Input_SkinViewRampThreshold0    ("视线渐变暗色阈值",                       Range(0,1)) = 0.5
+        Input_SkinViewRampSoftness      ("视线渐变柔和度",                       Range(0,1)) = 0.5
 
         [Space(20)]
         Input_LightInfluence      ("光照色影响",                        Range(0,1))  = 0.2
@@ -55,15 +58,19 @@ Shader "Ion/IonObjectTransparent"
         Input_LightRampThreshold      ("光照阈值",                        Range(0,1)) = 0.5
         Input_LightRampSoftness       ("光照柔和度",                         Range(0,1)) = 0.25
 
+        [Space(20)]
+        Input_RampRgb1 		        ("附加光",                        Color)  = (1, 1, 1, 1)
         [Space(10)]
-        Input_RampRgb1 		        ("附加光色",                        Color)  = (1, 1, 1, 1)
+        Input_RimIntensity          ("边光强度",                        Range(0,1))  = 0.25
+        Input_LightRimSoftness      ("边光柔和度",                            Range(0,1)) = 0.5
+        [Space(10)]
+        Input_BackRimIntensity      ("背光强度",                        Range(0,1))  = 0.25
+        Input_BackLightRimSoftness  ("背光柔和度",                            Range(0,1)) = 0.5
+        [Space(10)]
+        Input_HighLightIntensity 	("高光强度",                        Range(0,1))  = 0.25
+        Input_HighLightRimSoftness  ("高光柔和度",                      Range(0,1)) = 0.5
+
         [Space(20)]
-        Input_RimIntensity       ("边光强度",                        Range(0,1))  = 0.25
-        Input_RimPower           ("边光阈值",                            Range(0,1)) = 0.5
-        [Space(20)]
-        Input_BackRimIntensity   ("背光强度",                        Range(0,1))  = 0.25
-        Input_BackRimPower       ("背光阈值",                            Range(0,1)) = 0.5
-        
         [Header(Metal)]
         Input_Metallic              ("金属度",              Range(0,1)) = 0
         Input_MetalMask             ("金属遮罩 R",          2D) = "white" {}
@@ -239,27 +246,33 @@ Shader "Ion/IonObjectTransparent"
 
             #define IonArg_SkinRampToggle       Input_SkinRampToggle
             #define IonArg_StarNestEnable       Input_StarNestEnable
-            #define IonArg_SkinRampDir        Input_SkinRampDir
+            #define IonArg_SkinObjRampPos        Input_SkinObjRampPos
             #define IonArg_RampRgbBase     Input_RampRgbBase
-            #define IonArg_RampRgb0              Input_RampRgb0
+            #define IonArg_SkinViewRampRgb0              Input_SkinViewRampRgb0
+            #define IonArg_SkinViewRampRgb1              Input_SkinViewRampRgb1
+
             #define IonArg_RampRgb1              Input_RampRgb1
 
-            #define IonArg_SkinRampRgb0     Input_SkinRampRgb0
-            #define IonArg_SkinRampRgb1     Input_SkinRampRgb1
-            #define IonArg_SkinRampThreshold0 Input_SkinRampThreshold0
-            #define IonArg_SkinRampThreshold1 Input_SkinRampThreshold1
-            #define IonArg_SkinRampSoftness  Input_SkinRampSoftness
-            #define IonArg_SkinRimThreshold  Input_SkinRimThreshold
-            #define IonArg_SkinRimSoftness      Input_SkinRimSoftness
+            #define IonArg_SkinObjRampRgb0     Input_SkinObjRampRgb0
+            #define IonArg_SkinObjRampRgb1     Input_SkinObjRampRgb1
+            #define IonArg_SkinObjRampThreshold0 Input_SkinObjRampThreshold0
+            #define IonArg_SkinObjRampThreshold1 Input_SkinObjRampThreshold1
+            #define IonArg_SkinObjRampSoftness  Input_SkinObjRampSoftness
+            #define IonArg_SkinViewRampThreshold0  Input_SkinViewRampThreshold0
+            #define IonArg_SkinViewRampThreshold1  Input_SkinViewRampThreshold1
+            #define IonArg_SkinViewRampSoftness      Input_SkinViewRampSoftness
 
             #define IonArg_LightRampThreshold  Input_LightRampThreshold
             #define IonArg_LightRampSoftness   Input_LightRampSoftness
 
-            #define IonArg_RimPower           Input_RimPower
+            #define IonArg_LightRimSoftness           Input_LightRimSoftness
             #define IonArg_RimIntensity       Input_RimIntensity
 
-            #define IonArg_BackRimPower        Input_BackRimPower
+            #define IonArg_BackLightRimSoftness        Input_BackLightRimSoftness
             #define IonArg_BackRimIntensity    Input_BackRimIntensity
+
+            #define IonArg_HighLightRimSoftness     Input_HighLightRimSoftness
+            #define IonArg_HighLightIntensity       Input_HighLightIntensity
 
             #define IonArg_Metallic              Input_Metallic
             #define IonArg_MetalMask             Input_MetalMask
@@ -314,19 +327,19 @@ Shader "Ion/IonObjectTransparent"
             #define IonArg_LightRampSoftness       Input_LightRampSoftness
             #define IonArg_RampRgbBase     Input_RampRgbBase
             #define IonArg_SkinRampThreshold Input_SkinRampThreshold
-            #define IonArg_SkinRampSoftness  Input_SkinRampSoftness
-            #define IonArg_SkinRampRgb0     Input_SkinRampRgb0
+            #define IonArg_SkinObjRampSoftness  Input_SkinObjRampSoftness
+            #define IonArg_SkinObjRampRgb0     Input_SkinObjRampRgb0
             #define IonArg_SkinRampThreshold2 Input_SkinRampThreshold2
-            #define IonArg_SkinRampSoftness2  Input_SkinRampSoftness2
-            #define IonArg_SkinRampRgb1     Input_SkinRampRgb1
+            #define IonArg_SkinObjRampSoftness2  Input_SkinObjRampSoftness2
+            #define IonArg_SkinObjRampRgb1     Input_SkinObjRampRgb1
             #define IonArg_SkinRampThreshold3 Input_SkinRampThreshold3
-            #define IonArg_SkinRampSoftness3  Input_SkinRampSoftness3
+            #define IonArg_SkinObjRampSoftness3  Input_SkinObjRampSoftness3
             #define IonArg_SkinRampRgb4     Input_SkinRampRgb4
-            #define IonArg_SkinRampDir        Input_SkinRampDir
+            #define IonArg_SkinObjRampPos        Input_SkinObjRampPos
             #define IonArg_SkinRampToggle       Input_SkinRampToggle
 
             #define IonArg_RimRgb               Input_RimRgb
-            #define IonArg_BackRimPower        Input_BackRimPower
+            #define IonArg_BackLightRimSoftness        Input_BackLightRimSoftness
             #define IonArg_BackRimIntensity    Input_BackRimIntensity
             #define Link_IonPassMainAdd
             #include "../IonCoreUnity.hlsl"
