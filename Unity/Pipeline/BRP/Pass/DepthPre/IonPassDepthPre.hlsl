@@ -34,20 +34,20 @@ float     IonArg_Cutoff;
 
 struct VertData
 {
-    IonVar_PositionOs
+    IonVar_PosOs
     IonVar_T0(float2, UV)
 };
 
 struct FragData
 {
-    IonVar_PositionCs
+    IonVar_PosCs
     IonVar_T0(float2, UV)
 };
 
 FragData vert(VertData vertData)
 {
     FragData fragData;
-    fragData.PositionCs = IonMatrix_PosOsToCs(vertData.PositionOs);
+    fragData.PosCs = IonMatrix_PosOsToCs(vertData.PosOs);
     fragData.UV         = IonMath_Transform2D(vertData.UV, IonArg_MainTex_ST.xy, IonArg_MainTex_ST.zw);
     return fragData;
 }

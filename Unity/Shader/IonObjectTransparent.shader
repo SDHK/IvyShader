@@ -93,7 +93,6 @@ Shader "Ion/IonObjectTransparent"
         [IntRange] Input_EffectMap1 ("特效图1",       Range(0,3))     = 0
         [IntRange] Input_EffectMap2 ("特效图2",       Range(0,3))     = 0
         [IntRange] Input_EffectMap3 ("特效图3",       Range(0,3))     = 0
-        [IntRange] Input_EffectMap4 ("特效图4",       Range(0,3))     = 0
         [IntRange] Input_EffectMapInside ("内部特效", Range(0,3))     = 0
 
         [Space(20)]
@@ -102,7 +101,6 @@ Shader "Ion/IonObjectTransparent"
         [IntRange] Input_VecMap1			 ("向量映射1",       Range(0,6))     = 0
         [IntRange] Input_VecMap2			 ("向量映射2",       Range(0,6))     = 0
         [IntRange] Input_VecMap3			 ("向量映射3",       Range(0,6))     = 0
-        [IntRange] Input_VecMap4			 ("向量映射4",       Range(0,6))     = 0
         [Space(20)]
         Input_Cutoff             ("透明度裁剪",                    Range(0,5)) = 0.5
     }
@@ -283,19 +281,16 @@ Shader "Ion/IonObjectTransparent"
             #define IonArg_MetalProbeInfluence   Input_MetalProbeInfluence
             #define IonArg_MetalDiffuseScale     Input_MetalDiffuseScale
 
-            #define IonArg_EffectMap0 Input_EffectMap0
-            #define IonArg_EffectMap1 Input_EffectMap1
-            #define IonArg_EffectMap2 Input_EffectMap2
-            #define IonArg_EffectMap3 Input_EffectMap3
-            #define IonArg_EffectMap4 Input_EffectMap4
-            #define IonArg_EffectMapInside Input_EffectMapInside
+            #define IonArg_EffectMap0           Input_EffectMap0
+            #define IonArg_EffectMap1           Input_EffectMap1
+            #define IonArg_EffectMap2           Input_EffectMap2
+            #define IonArg_EffectMap3           Input_EffectMap3
+            #define IonArg_EffectMapInside      Input_EffectMapInside
 
             #define IonArg_VecMap0 Input_VecMap0
             #define IonArg_VecMap1 Input_VecMap1
             #define IonArg_VecMap2 Input_VecMap2
             #define IonArg_VecMap3 Input_VecMap3
-            #define IonArg_VecMap4 Input_VecMap4
-
 
             #define Link_IonPassMainSimple
             #include "../IonCoreUnity.hlsl"

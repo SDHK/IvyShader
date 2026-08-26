@@ -86,14 +86,14 @@ float     IonArg_BackRimIntensity;
 
 struct VertData
 {
-    IonVar_PositionOs
-    IonVar_Normal
+    IonVar_PosOs
+    IonVar_NrmOs
     IonVar_T0(float2, UV)
 };
 
 struct FragData
 {
-    IonVar_PositionCs
+    IonVar_PosCs
     IonVar_T0(float2, UV)
     IonVar_T1(float3, NormalWs)
     IonVar_T2(float3, PositionWs)
@@ -114,21 +114,21 @@ FragData vert(VertData vertData)
     fragData.UV = IonMath_Transform2D(vertData.UV.xy, IonArg_MainTex_ST.xy, IonArg_MainTex_ST.zw);
     
     // 计算裁剪空间位置
-    fragData.PositionCs = IonMatrix_PosOsToCs(vertData.PositionOs);
+    fragData.PosCs = IonMatrix_PosOsToCs(vertData.PosOs);
     
     // 将法线转换到世界空间
-    fragData.NormalWs = IonMatrix_NrmOsToWs(vertData.Normal);
+    fragData.NormalWs = IonMatrix_NrmOsToWs(vertData.NrmOs);
     
     // 计算世界空间位置
-    fragData.PositionWs = IonMatrix_PosOsToWs(vertData.PositionOs);
+    fragData.PositionWs = IonMatrix_PosOsToWs(vertData.PosOs);
     
     // 计算光照坐标（用于距离衰减）
     // 对应 Unity 的 COMPUTE_LIGHT_COORDS 宏
-    fragData.LightCoord = IonLight_LightCoord(vertData.PositionOs);
+    fragData.LightCoord = IonLight_LightCoord(vertData.PosOs);
     
     // 计算阴影坐标（用于阴影采样）
     // 对应 Unity 的 TRANSFER_SHADOW 宏
-    fragData.ShadowCoord = IonLight_ShadowCoord(vertData.PositionOs, fragData.PositionCs, fragData.PositionWs);
+    fragData.ShadowCoord = IonLight_ShadowCoord(vertData.PosOs, fragData.PosCs, fragData.PositionWs);
     
     return fragData;
 }

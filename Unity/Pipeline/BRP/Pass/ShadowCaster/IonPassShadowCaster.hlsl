@@ -25,13 +25,13 @@ float IonArg_Scale;
 
 struct VertData
 {
-    IonVar_PositionOs
-    IonVar_Normal
+    IonVar_PosOs
+    IonVar_NrmOs
 };
 
 struct FragData
 {
-    IonVar_PositionCs
+    IonVar_PosCs
     IonVar_T0(float3,LightVector3)
 };
 
@@ -39,9 +39,9 @@ FragData vert(VertData vertData)
 {
     FragData fragData;
     
-    float3 position3 = vertData.PositionOs.xyz + vertData.Normal * IonArg_Scale;
-    float4 positionOs = float4(position3, vertData.PositionOs.w);
-    fragData.PositionCs = IonShadowCaster_PositionCS(positionOs, vertData.Normal); 
+    float3 position3 = vertData.PosOs.xyz + vertData.NrmOs * IonArg_Scale;
+    float4 positionOs = float4(position3, vertData.PosOs.w);
+    fragData.PosCs = IonShadowCaster_PositionCS(positionOs, vertData.NrmOs); 
     fragData.LightVector3 = IonShadowCaster_Vector(positionOs);
     return fragData;
 }

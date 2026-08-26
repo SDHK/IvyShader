@@ -83,17 +83,17 @@ float IonArg_MetalProbeInfluence;
 float IonArg_MetalDiffuseScale;
 
 // 特效图
+int IonArg_EffectMap0;
 int IonArg_EffectMap1;
 int IonArg_EffectMap2;
 int IonArg_EffectMap3;
-int IonArg_EffectMap4;
 int IonArg_EffectMapInside;
 
 // 映射图
+int IonArg_VecMap0;
 int IonArg_VecMap1;
 int IonArg_VecMap2;
 int IonArg_VecMap3;
-int IonArg_VecMap4;
 
 
 //色板暂定为：10*5 : 白 → 粉 → 红 → 橘 → 橙 → 黄 → 绿 → 青 → 蓝 → 紫
@@ -128,48 +128,66 @@ int IonArg_VecMap4;
 #include "../../Core/IonCore.hlsl"
 
 
-struct VertData
+struct VertIn
 {
-    IonVar_PositionOs
-    IonVar_Normal
+    IonVar_PosOs
+    IonVar_NrmOs
     IonVar_T0(float2, UV)
 };
 
-struct FragData
+struct VertOut
 {
-    IonVar_PositionCs
+    IonVar_PosCs
     IonVar_T0(float2, UV)
-    IonVar_T1(float3, Normal)
-    IonVar_T2(float3, PositionOs)
-    IonVar_T3(float3, NormalWs)
-    IonVar_T4(float3, PositionWs)
+    IonVar_T1(float3, NrmOs)
+    IonVar_T2(float3, PosOs)
+    IonVar_T3(float3, NrmWs)
+    IonVar_T4(float3, PosWs)
     IonVar_T5(float4, ShadowCoord)
     IonVar_T6(float4, GrabPos)
 };
 
-
-#pragma vertex vert
-FragData vert(VertData vertData)
+struct FragIn
 {
-    FragData fragData;
+    VertOut VertOut;
+    IonVar_ViewFace
+};
 
-    fragData.UV = IonMath_Transform2D(vertData.UV.xy, IonArg_MainTex_ST.xy, IonArg_MainTex_ST.zw);
-    fragData.PositionCs = IonMatrix_PosOsToCs(vertData.PositionOs);
-    fragData.Normal = vertData.Normal;
-    fragData.PositionOs = vertData.PositionOs;
-    fragData.NormalWs = IonMatrix_NrmOsToWs(vertData.Normal);
-    fragData.PositionWs = IonMatrix_PosOsToWs(vertData.PositionOs);
+struct FragOut{ IonVar_TargetRgba };
+
+
+#pragma vertex Vert
+#pragma fragment Frag
+
+VertOut Vert(VertIn vertIn)
+{
+    VertOut vertOut;
+    vertOut.UV = IonMath_Transform2D(vertIn.UV.xy, IonArg_MainTex_ST.xy, IonArg_MainTex_ST.zw);
+    vertOut.PosCs = IonMatrix_PosOsToCs(vertIn.PosOs);
+    vertOut.NrmOs = vertIn.NrmOs;
+    vertOut.PosOs = vertIn.PosOs;
+    vertOut.NrmWs = IonMatrix_NrmOsToWs(vertIn.NrmOs);
+    vertOut.PosWs = IonMatrix_PosOsToWs(vertIn.PosOs);
     // light-space shadow coord：基于顶点世界坐标变换，不依赖屏幕深度缓冲
-    fragData.ShadowCoord = IonLight_ShadowCoord(vertData.PositionOs, fragData.PositionCs, fragData.PositionWs);
-    fragData.GrabPos = IonBase_GrabScreenPos(fragData.PositionCs);
-    return fragData;
+    vertOut.ShadowCoord = IonLight_ShadowCoord(vertIn.PosOs, vertOut.PosCs, vertOut.PosWs);
+    vertOut.GrabPos = IonBase_GrabScreenPos(vertOut.PosCs);
+    return vertOut;
 }
 
-#pragma fragment frag
-half4 frag(FragData fragData, float facing : VFACE) : SV_Target
+FragOut Frag(FragIn fragIn)
 {
+    float4 posCs = fragIn.VertOut.PosCs;
+    float2 uv = fragIn.VertOut.UV;
+    float3 nrmOs = fragIn.VertOut.NrmOs;
+    float3 posOs = fragIn.VertOut.PosOs;
+    float3 nrmWs = fragIn.VertOut.NrmWs;
+    float3 posWs = fragIn.VertOut.PosWs;
+    float4 shadowCoord = fragIn.VertOut.ShadowCoord;
+    float4 grabPos = fragIn.VertOut.GrabPos;
+    float viewFace = fragIn.ViewFace;
+
     //===[透镜折射效果}]===================================================
-    float2 grabUV = fragData.GrabPos.xy / fragData.GrabPos.w;
+    float2 grabUV = grabPos.xy / grabPos.w;
     // 简单整屏相对中心放大（先用片元 UV 中心试；更好是物体中心投到屏幕）
     float2 center = float2(0.5, 0.5);
     float zoom = 1.5;
@@ -180,7 +198,6 @@ half4 frag(FragData fragData, float facing : VFACE) : SV_Target
 
     //===[UV九宫格分区]===================================================
     // uv: 模型 UV0，假设在 [0,1)
-    float2 uv = fragData.UV;
     // 防止 uv==1 时落到第 3 格
     uv = saturate(uv);
     uv = min(uv, 0.9999);// 防止 uv==1 时落到第 3 格
@@ -194,23 +211,17 @@ half4 frag(FragData fragData, float facing : VFACE) : SV_Target
     int uvId = visualRow * 2 + col; // 0..3
     //==================================================================
 
-
-
     // 判断片元是正面还是背面
-    bool isFront = facing > 0.0;
+    bool isFront = viewFace > 0.0;
 
-    half4 mainTex = tex2D(IonArg_MainTex, fragData.UV);
+    half4 mainTex = tex2D(IonArg_MainTex, uv);
 
     float3 camWs = IonParam_CameraPosWs;
     float3 camOs = IonMatrix_PosWsToOs(camWs);
 
-    float3 posWs = fragData.PositionWs;
-    float3 posOs = fragData.PositionOs;
-    float3 nrmWs = fragData.NormalWs;
-    float3 nrmOs = fragData.Normal;
 
     // 世界相机到世界坐标的向量
-    float3 vecCamToPosWs = IonVecMap_LookTo(camWs, fragData.PositionWs);
+    float3 vecCamToPosWs = IonVecMap_LookTo(camWs, posWs);
     // 世界坐标到世界相机的向量
     float3 vecPosToCamWs = -vecCamToPosWs;
 
@@ -222,14 +233,14 @@ half4 frag(FragData fragData, float facing : VFACE) : SV_Target
     float3 vecCamToObjWs = -vecObjToCamWs;
 
     //===[自发光]===================================================
-    float emissiveMask = tex2D(IonArg_EmissiveTex, fragData.UV).r;
+    float emissiveMask = tex2D(IonArg_EmissiveTex, uv).r;
     float emissiveWeight = saturate(emissiveMask * IonArg_EmissiveIntensity);
 
     //===[场景光照]================================================
-    float3 normalWs = normalize(fragData.NormalWs);
+    float3 normalWs = normalize(nrmWs);
     //环境光球谐光照，晚上没有球谐光照。
     float3 ambient = ShadeSH9(float4(normalWs, 1));
-    IonStruct_Light light = IonLight_MainLight(fragData.ShadowCoord);
+    IonStruct_Light light = IonLight_MainLight(shadowCoord);
     // 光向下=1，光向上(夜晚)=0
     float sunUp = saturate(light.Direction.y);
     // 光向下=1，光向上(夜晚)=0
@@ -363,24 +374,24 @@ half4 frag(FragData fragData, float facing : VFACE) : SV_Target
     // 3.镜面反射效果
     float3 reflectVecMap = IonVecMap_Reflect(vecCamToPosWs, normalWs);
     // 4.法线映射到物体表面，跟随物体移动和旋转
-    float3 nrmPosOsVecMap = IonVecMap_NrmPosOs(fragData.Normal, fragData.PositionOs);
+    float3 nrmPosOsVecMap = IonVecMap_NrmPosOs(nrmOs, posOs);
     // 5.法线映射到物体表面，跟随物体移动但不旋转
-    float3 nrmPosWsVecMap = IonVecMap_NrmPosWs(fragData.Normal, fragData.PositionOs);
+    float3 nrmPosWsVecMap = IonVecMap_NrmPosWs(nrmOs, posOs);
     // 6.法线映射到物体表面，跟随视角同步旋转
-    float3 nrmPosVsVecMap = IonVecMap_NrmPosVs(normalWs, fragData.PositionOs);
+    float3 nrmPosVsVecMap = IonVecMap_NrmPosVs(normalWs, posOs);
 
-    float3 vecMap, vecMap1, vecMap2, vecMap3, vecMap4;
+    float3 vecMap, vecMap0, vecMap1, vecMap2, vecMap3, vecMap4;
     float effectMask = 1;
 
+    vecMap0 = IonSwitch_Float3(IonArg_VecMap0, skyOsVecMap, skyWsVecMap, camVsVecMap, reflectVecMap, nrmPosOsVecMap, nrmPosWsVecMap, nrmPosVsVecMap);
     vecMap1 = IonSwitch_Float3(IonArg_VecMap1, skyOsVecMap, skyWsVecMap, camVsVecMap, reflectVecMap, nrmPosOsVecMap, nrmPosWsVecMap, nrmPosVsVecMap);
     vecMap2 = IonSwitch_Float3(IonArg_VecMap2, skyOsVecMap, skyWsVecMap, camVsVecMap, reflectVecMap, nrmPosOsVecMap, nrmPosWsVecMap, nrmPosVsVecMap);
     vecMap3 = IonSwitch_Float3(IonArg_VecMap3, skyOsVecMap, skyWsVecMap, camVsVecMap, reflectVecMap, nrmPosOsVecMap, nrmPosWsVecMap, nrmPosVsVecMap);
-    vecMap4 = IonSwitch_Float3(IonArg_VecMap4, skyOsVecMap, skyWsVecMap, camVsVecMap, reflectVecMap, nrmPosOsVecMap, nrmPosWsVecMap, nrmPosVsVecMap);
 
-    vecMap = vecMap1;
-    vecMap += vecMap2 ;
-    vecMap += vecMap3 ;
-    vecMap += vecMap4 ;
+    vecMap = vecMap0;
+    vecMap += vecMap1;
+    vecMap += vecMap2;
+    vecMap += vecMap3;
 
     //===[对特效图的映射]==
     float tHit = length(skyOsVecMap);
@@ -406,10 +417,10 @@ half4 frag(FragData fragData, float facing : VFACE) : SV_Target
     //0和1为不启用特效图，2~31为启用特效图
     if(isFront)
     {
-        if(uvId == 0)effectMapBitMask |= 1<<IonArg_EffectMap1;
-        if(uvId == 1)effectMapBitMask |= 1<<IonArg_EffectMap2;
-        if(uvId == 2)effectMapBitMask |= 1<<IonArg_EffectMap3;
-        if(uvId == 3)effectMapBitMask |= 1<<IonArg_EffectMap4;
+        if(uvId == 0)effectMapBitMask |= 1<<IonArg_EffectMap0;
+        if(uvId == 1)effectMapBitMask |= 1<<IonArg_EffectMap1;
+        if(uvId == 2)effectMapBitMask |= 1<<IonArg_EffectMap2;
+        if(uvId == 3)effectMapBitMask |= 1<<IonArg_EffectMap3;
     }
     else
     {
@@ -428,10 +439,10 @@ half4 frag(FragData fragData, float facing : VFACE) : SV_Target
     float3 effectMapRgb = 0;
     if(isFront)
     {
-        if(uvId == 0) effectMapRgb += IonSwitch_Float3(IonArg_EffectMap1, 0, vol1, vol2, vol3);
-        if(uvId == 1) effectMapRgb += IonSwitch_Float3(IonArg_EffectMap2, 0, vol1, vol2, vol3);
-        if(uvId == 2) effectMapRgb += IonSwitch_Float3(IonArg_EffectMap3, 0, vol1, vol2, vol3);
-        if(uvId == 3) effectMapRgb += IonSwitch_Float3(IonArg_EffectMap4, 0, vol1, vol2, vol3);
+        if(uvId == 0) effectMapRgb += IonSwitch_Float3(IonArg_EffectMap0, 0, vol1, vol2, vol3);
+        if(uvId == 1) effectMapRgb += IonSwitch_Float3(IonArg_EffectMap1, 0, vol1, vol2, vol3);
+        if(uvId == 2) effectMapRgb += IonSwitch_Float3(IonArg_EffectMap2, 0, vol1, vol2, vol3);
+        if(uvId == 3) effectMapRgb += IonSwitch_Float3(IonArg_EffectMap3, 0, vol1, vol2, vol3);
     }
     else
     {
@@ -458,7 +469,7 @@ half4 frag(FragData fragData, float facing : VFACE) : SV_Target
     float2 matcapUV = normalWs.xy * 0.5 + 0.5;
     float3 matcapReflect = tex2D(IonArg_MetalMatCap, matcapUV).rgb;
 
-    float metalMask = saturate(IonArg_Metallic * tex2D(IonArg_MetalMask, fragData.UV).r);
+    float metalMask = saturate(IonArg_Metallic * tex2D(IonArg_MetalMask, uv).r);
     // 金属 tint（金/银/铜来自 skinRgb / Color1）
     float3 metalTint = skinRgb;
     float3 F0 = metalTint;
@@ -499,7 +510,9 @@ half4 frag(FragData fragData, float facing : VFACE) : SV_Target
     finalColor = lerp(finalColor, effectMapRgb , effectMapBitMask);
 
     // 后面最终混合处：
-    return half4(finalColor, finalAlpha);
+    FragOut fragOut;
+    fragOut.TargetRgba = half4(finalColor, finalAlpha);
+    return fragOut;
 
 }
 

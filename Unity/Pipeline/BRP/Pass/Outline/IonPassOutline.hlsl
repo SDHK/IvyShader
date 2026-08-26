@@ -23,23 +23,22 @@ float IonArg_Scale = 1.0;
 
 struct VertData
 {
-    IonVar_PositionOs
-    IonVar_Normal
+    IonVar_PosOs
+    IonVar_NrmOs
 };
 
 struct FragData
 {
-    IonVar_PositionCs
+    IonVar_PosCs
 };
             
-
 
 FragData vert(VertData vertData)
 {
     FragData fragData;
 
-    float3 position3 = vertData.PositionOs.xyz + vertData.Normal * IonArg_Scale;
-    fragData.PositionCs = IonMatrix_PosOsToCs(float4(position3, 1.0));
+    float3 position3 = vertData.PosOs.xyz + vertData.NrmOs * IonArg_Scale;
+    fragData.PosCs = IonMatrix_PosOsToCs(float4(position3, 1.0));
     return fragData;
 }
             
