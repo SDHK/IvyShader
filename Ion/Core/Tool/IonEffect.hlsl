@@ -151,7 +151,7 @@ float3 IonEffect_StarNest(float3 map, float time, float2 dir)
 /// <param name="camOs">物体相机</param>
 /// <param name="depth">深度</param>
 /// <returns>返回计算后的颜色值</returns>
-float3 IonEffect_VolumeCrystal(float3 skyOsDirMap, float3 camOs, float near, float far)
+float3 IonEffect_VolumeCrystal(float3 skyOsDirMap, float3 camOs, float near, float far,float2 time = 0)
 {
     float3 samplePos;
     // 归一化方向向量
@@ -159,16 +159,22 @@ float3 IonEffect_VolumeCrystal(float3 skyOsDirMap, float3 camOs, float near, flo
     // 步进
     float step = 0.05;
     float3 color = float3(0, 0, 0);
+    float3 colorR = float3(0, 0, 0);
     float weight = 0;
     for (int i = 0; i < 20; i++)
     {
         near += step * exp(-2. * weight);
         if (near > far) break;
         samplePos = camOs + near * skyOsDirMap;
-        weight = IonField_Crystal(samplePos);
-        color = .99 * color + .08 * float3(weight * weight * weight, weight * weight, weight);//blue
+        weight = IonField_Crystal(samplePos,time);
+
+        float w = weight;
+        //color +=0.05 * float3(w*w*w,w*w,w);
+
+        color += 0.05 *float3(w,w,w)*w*w*w;
     }
-    color = 1 * (log(1 + color));
+
+    color = 1 * (log2(1 + color));
     return color;
 }
 
@@ -179,7 +185,7 @@ float3 IonEffect_VolumeCrystal(float3 skyOsDirMap, float3 camOs, float near, flo
 /// <param name="camOs">物体相机</param>
 /// <param name="depth">深度</param>
 /// <returns>返回计算后的颜色值</returns>
-float3 IonEffect_VolumeStar(float3 skyOsDirMap, float3 camOs, float near, float far)
+float3 IonEffect_VolumeStar(float3 skyOsDirMap, float3 camOs, float near, float far,float2 time = 0)
 {
     // 归一化方向向量
     skyOsDirMap = normalize(skyOsDirMap);
@@ -194,10 +200,14 @@ float3 IonEffect_VolumeStar(float3 skyOsDirMap, float3 camOs, float near, float 
         //weight = IonSDField_Box(camOs + near * skyOsDirMap);
         //color = weight;
 
-        weight = IonField_Star(camOs + near * skyOsDirMap);
-        color = .99 * color + .08 * float3(weight * weight * weight, weight * weight, weight);//blue
+        weight = IonField_Star(camOs + near * skyOsDirMap,time);
+        //color = .99 * color + .08 * float3(weight * weight * weight, weight * weight, weight);//blue
+        //color = .99 * color + .08 * float3(weight * weight * weight,weight, weight * weight);//blue
+        float w = weight;
+        color +=5*float3(w,w,w)*w*w;
     }
-    color = 1 * (log(1 + color));
+
+    color = 1 * (log2(1 + color));
     return color;
 }
 

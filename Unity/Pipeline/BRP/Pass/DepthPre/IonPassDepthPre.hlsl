@@ -56,7 +56,9 @@ half4 frag(FragData fragData) : SV_Target
 {
     // alpha >= Cutoff → 正值 → 写深度（阻挡内部面）
     // alpha <  Cutoff → 负值 → clip 丢弃，不写深度（透明穿透）
-    clip(tex2D(IonArg_MainTex, fragData.UV).a - IonArg_Cutoff);
+    float alpha = tex2D(IonArg_MainTex, fragData.UV).a;
+    //这是个例子，需要和主shaderpass相同的透明度计算方式。
+    clip(alpha - IonArg_Cutoff);
     return 0;
 }
 

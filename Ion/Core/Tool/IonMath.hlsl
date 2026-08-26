@@ -19,6 +19,20 @@ float IonMath_Luma(float3 color)
 }
 
 /// <summary>
+/// 基于余弦的调色板，4个vec3参数
+/// </summary>
+/// <param name="time">时间</param>
+/// <param name="dcOffset">直流偏移量</param>
+/// <param name="amp">振幅</param>
+/// <param name="freq">频率</param>
+/// <param name="phase">相位</param>
+/// <returns>返回计算后的颜色值</returns>
+float3 IonMath_Palette( in float time, in float3 dcOffset, in float3 amp, in float3 freq, in float3 phase)
+{
+    return dcOffset + amp*cos( 6.283185*(freq*time+phase) );
+}
+
+/// <summary>
 /// 将 RGB 颜色转换为 HSV 颜色空间
 /// </summary>
 float3 IonMath_RgbToHsv(float3 c)

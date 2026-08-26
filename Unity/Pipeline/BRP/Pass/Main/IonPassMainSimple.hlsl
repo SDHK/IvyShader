@@ -3,7 +3,6 @@
 
 //===[必要参数声明]====================================================
 // 主贴图：启用颜色系统时作灰度细节图（.r 通道），否则全彩贴图
-sampler2D IonArg_MainTex;
 float4 IonArg_MainTex_ST;
 
 // 抓取贴图：用于屏幕空间特效（如模糊、折射、后期等）
@@ -176,6 +175,7 @@ VertOut Vert(VertIn vertIn)
 
 FragOut Frag(FragIn fragIn)
 {
+    //===[片元输入]===================================================
     float4 posCs = fragIn.VertOut.PosCs;
     float2 uv = fragIn.VertOut.UV;
     float3 nrmOs = fragIn.VertOut.NrmOs;
@@ -185,8 +185,12 @@ FragOut Frag(FragIn fragIn)
     float4 shadowCoord = fragIn.VertOut.ShadowCoord;
     float4 grabPos = fragIn.VertOut.GrabPos;
     float viewFace = fragIn.ViewFace;
+    //===[变量]===================================================
+    bool isFront = viewFace > 0.0;
+    float3 camWs = IonParam_CameraPosWs;
+    float3 camOs = IonMatrix_PosWsToOs(camWs);
 
-    //===[透镜折射效果}]===================================================
+    //===[透镜折射效果]===================================================
     float2 grabUV = grabPos.xy / grabPos.w;
     // 简单整屏相对中心放大（先用片元 UV 中心试；更好是物体中心投到屏幕）
     float2 center = float2(0.5, 0.5);
@@ -196,36 +200,23 @@ FragOut Frag(FragIn fragIn)
     float3 bg = tex2D(IonArg_GrabTexture, zoomedUV).rgb;
     //======
 
-    //===[UV九宫格分区]===================================================
+    //===[UV分区]===================================================
     // uv: 模型 UV0，假设在 [0,1)
     // 防止 uv==1 时落到第 3 格
-    uv = saturate(uv);
-    uv = min(uv, 0.9999);// 防止 uv==1 时落到第 3 格
+    uv = min(uv, 0.999999);// 防止 uv==1 时落到第 3 格
     int col = (int)floor(uv.x * 2.0); // 0,1 → u0,u1
     int row = (int)floor(uv.y * 2.0); // 0,1 → v0,v1（左下为 0）
     int visualRow = 1 - row; // 把数学 row0(下) 翻成「上=0」
-
     // 格子内局部 UV（采细节用）
     float2 localUV = frac(uv * 2.0);
     // uv的九宫格分区索引，0~3
     int uvId = visualRow * 2 + col; // 0..3
     //==================================================================
 
-    // 判断片元是正面还是背面
-    bool isFront = viewFace > 0.0;
-
-    half4 mainTex = tex2D(IonArg_MainTex, uv);
-
-    float3 camWs = IonParam_CameraPosWs;
-    float3 camOs = IonMatrix_PosWsToOs(camWs);
-
-
     // 世界相机到世界坐标的向量
     float3 vecCamToPosWs = IonVecMap_LookTo(camWs, posWs);
     // 世界坐标到世界相机的向量
     float3 vecPosToCamWs = -vecCamToPosWs;
-
-
     float3 objWs = IonMatrix_PosOsToWs(float3(0, 0, 0));
     // 世界物体到世界相机的向量
     float3 vecObjToCamWs = IonVecMap_LookTo(objWs, camWs);
@@ -431,8 +422,8 @@ FragOut Frag(FragIn fragIn)
     // 位运算判断筛选特效
     //effectMapBitMask 为0和1则不启用特效图
     float3 vol1 = 0, vol2 = 0, vol3 = 0;
-    if(effectMapBitMask&(1<<1)) vol1 += IonEffect_VolumeStar(vecMap, camOs, tNear, tFar);
-    if(effectMapBitMask&(1<<2)) vol2 += IonEffect_VolumeCrystal(vecMap, camOs, tNear, tFar);
+    if(effectMapBitMask&(1<<1)) vol1 += IonEffect_VolumeStar(vecMap, camOs, tNear, tFar,float2(cos(IonParam_Time.y),sin(IonParam_Time.y)));
+    if(effectMapBitMask&(1<<2)) vol2 += IonEffect_VolumeCrystal(vecMap, camOs, tNear, tFar,float2(cos(IonParam_Time.y),sin(IonParam_Time.y)));
     if(effectMapBitMask&(1<<3)) vol3 += IonEffect_StarNest(vecMap, IonParam_Time.x * 0.1, float2(1, 1));
 
     // 通道特效混合
@@ -443,11 +434,26 @@ FragOut Frag(FragIn fragIn)
         if(uvId == 1) effectMapRgb += IonSwitch_Float3(IonArg_EffectMap1, 0, vol1, vol2, vol3);
         if(uvId == 2) effectMapRgb += IonSwitch_Float3(IonArg_EffectMap2, 0, vol1, vol2, vol3);
         if(uvId == 3) effectMapRgb += IonSwitch_Float3(IonArg_EffectMap3, 0, vol1, vol2, vol3);
+
+      
     }
     else
     {
         effectMapRgb += IonSwitch_Float3(IonArg_EffectMapInside, 0, vol1, vol2, vol3);
+
     }
+
+
+        float3 paletteRgb = IonMath_Palette(IonParam_Time.x,
+        float3(0.5, 0.5, 0.5),
+        float3(0.5, 0.5, 0.5),
+        float3(1, 1, 1),
+        float3(	0.00, 0.33, 0.67)
+        );
+        effectMapRgb =effectMapRgb* paletteRgb;
+
+        //effectMapRgb = IonRamp_Rgb2(effectMapRgb,effectMapRgb*skinRgb0,0.7,0.5,effectMapRgb*skinRgb1);
+        //effectMapRgb*=skinRgb0;
 
     if(effectMapBitMask==1)effectMapBitMask = 0;
     if(effectMapBitMask>1)effectMapBitMask = 1;

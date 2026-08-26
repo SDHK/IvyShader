@@ -34,14 +34,18 @@ float IonSDField_Box( float3 p, float2 t = float2(0.5, 0.1) )
 /// </summary>
 /// <param name="pos">输入的位置</param>
 /// <returns>返回计算后的权重</returns>
-float IonField_Star(float3 pos)
+float IonField_Star(float3 pos,float2 sctime = 0)
 {
     float step = 0.0;
     float weight = 0.0;
+
+    float3 c = pos;
+    c.xy = c.xy * sctime.x + float2(c.y, c.x) * sctime.y;
+
     for (int i = 0; i < 10; i++)
     {
         pos = abs(pos) / dot(pos, pos) - 0.5315;
-        weight +=  abs(length(pos) - step) *.01;
+        weight +=  abs(length(dot(pos, c)) - step) *.01;
         step = length(pos);
     }
     return weight;
@@ -52,10 +56,11 @@ float IonField_Star(float3 pos)
 /// </summary>
 /// <param name="pos">输入的位置</param>
 /// <returns>返回计算后的权重</returns>
-float IonField_Crystal(float3 pos)
+float IonField_Crystal(float3 pos,float2 sctime = 0)
 {
     float weight = 0.;
     float3 c = pos;
+    c.xy = c.xy * sctime.x + float2(c.y, c.x) * sctime.y;
     for (int i = 0; i < 10; ++i)
     {
         pos =1.7*abs(pos) / dot(pos, pos) - 0.633;

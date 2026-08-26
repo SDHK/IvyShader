@@ -6,16 +6,15 @@ Shader "Ion/IonObjectTransparent"
 {
     Properties
     {
-        Input_MainTex            ("材质",                        2D)     = "white" {}
+        Input_MainTex            ("无用主材质",                        2D)     = "white" {}
+        [Space(20)]
         Input_SkinMask0          ("颜色遮罩0",   2D)     = "white" {}
         Input_SkinMask1          ("颜色遮罩1",   2D)     = "white" {}
         Input_SkinMask2          ("颜色遮罩2",   2D)     = "white" {}
         Input_SkinMask3          ("颜色遮罩3",   2D)     = "white" {}
-
         [Space(20)]
         Input_EmissiveIntensity  ("自发光强度",                       Range(0,1))  = 0.1
         Input_EmissiveTex        ("自发光遮罩",       2D)     = "white" {}
-
         
         //皮肤颜色
         [Space(20)]
@@ -135,7 +134,7 @@ Shader "Ion/IonObjectTransparent"
             ZTest LEqual
             Blend Off
             HLSLPROGRAM
-            #define IonArg_MainTex    Input_MainTex
+            // #define IonArg_MainTex    Input_MainTex
             #define IonArg_MainTex_ST Input_MainTex_ST
             #define Link_IonPassMain
             #include "../IonCoreUnity.hlsl"
@@ -192,7 +191,7 @@ Shader "Ion/IonObjectTransparent"
             ZWrite On
             ColorMask 0
             HLSLPROGRAM
-            #define IonArg_MainTex    Input_MainTex
+            // #define IonArg_MainTex    Input_MainTex
             #define IonArg_MainTex_ST Input_MainTex_ST
             #define IonArg_Cutoff     Input_Cutoff
             #define Link_IonPassDepthPre
@@ -216,7 +215,7 @@ Shader "Ion/IonObjectTransparent"
 
             HLSLPROGRAM
 
-            #define IonArg_MainTex           Input_MainTex
+            // #define IonArg_MainTex           Input_MainTex
             #define IonArg_MainTex_ST        Input_MainTex_ST
 
             #define IonArg_SkinMask0         Input_SkinMask0
@@ -306,7 +305,7 @@ Shader "Ion/IonObjectTransparent"
             ZWrite Off
             HLSLPROGRAM
 
-            #define IonArg_MainTex       Input_MainTex
+            // #define IonArg_MainTex       Input_MainTex
             #define IonArg_MainTex_ST    Input_MainTex_ST
             #define IonArg_SkinMask     Input_SkinMask
             #define IonArg_Color1        Input_SkinRgb1
