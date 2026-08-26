@@ -98,12 +98,11 @@ Shader "Ion/IonObjectTransparent"
 
         [Space(20)]
         [Header(SkyOs0 SkyWs1 CamVs2 Reflect3 NrmOs4 NrmWs5 NrmVs6)]
-        [IntRange] Input_DirMap0			 ("方向映射0",       Range(0,6))     = 0
-        [IntRange] Input_DirMap1			 ("方向映射1",       Range(0,6))     = 0
-        [IntRange] Input_DirMap2			 ("方向映射2",       Range(0,6))     = 0
-        [IntRange] Input_DirMap3			 ("方向映射3",       Range(0,6))     = 0
-        [IntRange] Input_DirMap4			 ("方向映射4",       Range(0,6))     = 0
-
+        [IntRange] Input_VecMap0			 ("向量映射0",       Range(0,6))     = 0
+        [IntRange] Input_VecMap1			 ("向量映射1",       Range(0,6))     = 0
+        [IntRange] Input_VecMap2			 ("向量映射2",       Range(0,6))     = 0
+        [IntRange] Input_VecMap3			 ("向量映射3",       Range(0,6))     = 0
+        [IntRange] Input_VecMap4			 ("向量映射4",       Range(0,6))     = 0
         [Space(20)]
         Input_Cutoff             ("透明度裁剪",                    Range(0,5)) = 0.5
     }
@@ -291,11 +290,11 @@ Shader "Ion/IonObjectTransparent"
             #define IonArg_EffectMap4 Input_EffectMap4
             #define IonArg_EffectMapInside Input_EffectMapInside
 
-            #define IonArg_DirMap0 Input_DirMap0
-            #define IonArg_DirMap1 Input_DirMap1
-            #define IonArg_DirMap2 Input_DirMap2
-            #define IonArg_DirMap3 Input_DirMap3
-            #define IonArg_DirMap4 Input_DirMap4
+            #define IonArg_VecMap0 Input_VecMap0
+            #define IonArg_VecMap1 Input_VecMap1
+            #define IonArg_VecMap2 Input_VecMap2
+            #define IonArg_VecMap3 Input_VecMap3
+            #define IonArg_VecMap4 Input_VecMap4
 
 
             #define Link_IonPassMainSimple

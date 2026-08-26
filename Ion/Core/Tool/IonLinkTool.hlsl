@@ -38,8 +38,8 @@
 #if Link(IonVertex)
 #include "IonVertex.hlsl"   // 顶点工具
 #endif
-#if Link(IonDirMap)
-#include "IonDirMap.hlsl"     // 坐标扭曲工具
+#if Link(IonVecMap)
+#include "IonVecMap.hlsl"     // 坐标扭曲工具
 #endif
 #if Link(IonField)
 #include "IonField.hlsl"     // 采样场工具

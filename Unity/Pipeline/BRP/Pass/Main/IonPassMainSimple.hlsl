@@ -9,7 +9,6 @@ float4 IonArg_MainTex_ST;
 // 抓取贴图：用于屏幕空间特效（如模糊、折射、后期等）
 sampler2D IonArg_GrabTexture;
 
-
 // ColorMask：RGBA 四通道权重分别对应 Color1 ~ Color4 区域
 sampler2D IonArg_SkinMask0;
 sampler2D IonArg_SkinMask1;
@@ -91,10 +90,10 @@ int IonArg_EffectMap4;
 int IonArg_EffectMapInside;
 
 // 映射图
-int IonArg_DirMap1;
-int IonArg_DirMap2;
-int IonArg_DirMap3;
-int IonArg_DirMap4;
+int IonArg_VecMap1;
+int IonArg_VecMap2;
+int IonArg_VecMap3;
+int IonArg_VecMap4;
 
 
 //色板暂定为：10*5 : 白 → 粉 → 红 → 橘 → 橙 → 黄 → 绿 → 青 → 蓝 → 紫
@@ -123,7 +122,7 @@ int IonArg_DirMap4;
 #define Link_IonMath
 #define Link_IonVertex
 #define Link_IonField
-#define Link_IonDirMap
+#define Link_IonVecMap
 #define Link_IonRamp
 #define Link_IonEffect
 #include "../../Core/IonCore.hlsl"
@@ -211,16 +210,16 @@ half4 frag(FragData fragData, float facing : VFACE) : SV_Target
     float3 nrmOs = fragData.Normal;
 
     // 世界相机到世界坐标的向量
-    float3 dirCamToPosWs = IonDirMap_LookTo(camWs, fragData.PositionWs);
+    float3 vecCamToPosWs = IonVecMap_LookTo(camWs, fragData.PositionWs);
     // 世界坐标到世界相机的向量
-    float3 dirPosToCamWs = -dirCamToPosWs;
+    float3 vecPosToCamWs = -vecCamToPosWs;
 
 
     float3 objWs = IonMatrix_PosOsToWs(float3(0, 0, 0));
     // 世界物体到世界相机的向量
-    float3 dirObjToCamWs = IonDirMap_LookTo(objWs, camWs);
+    float3 vecObjToCamWs = IonVecMap_LookTo(objWs, camWs);
     // 世界相机到世界物体的向量
-    float3 dirCamToObjWs = -dirObjToCamWs;
+    float3 vecCamToObjWs = -vecObjToCamWs;
 
     //===[自发光]===================================================
     float emissiveMask = tex2D(IonArg_EmissiveTex, fragData.UV).r;
@@ -288,14 +287,14 @@ half4 frag(FragData fragData, float facing : VFACE) : SV_Target
 
     //===[皮肤渐变喷涂]========================
     //当前皮肤色
-    float3 skinHsv = IonMath_RgbToHsv(saturate(skinRgb));
+    float3 skinHsv = IonMath_RgbToHsv(skinRgb);
     //渐变基准色
     float3 skinRampHsv = IonMath_RgbToHsv(IonArg_RampRgbBase.rgb);
 
     //===[边缘光颜色]====================================
     float3 rimDeltaHsv1 = IonMath_HsvDelta(IonMath_RgbToHsv(IonArg_RampRgb1.rgb), skinRampHsv);
     float3 rimRgb1 = IonMath_HsvToRgb(IonMath_ApplyHsvDelta(skinHsv , rimDeltaHsv1));
-    float3 viewDir = normalize(dirPosToCamWs);
+    float3 dirPosToCamWs = normalize(vecPosToCamWs);
 
     if(IonArg_SkinRampToggle != 0)
     {
@@ -315,9 +314,9 @@ half4 frag(FragData fragData, float facing : VFACE) : SV_Target
         skinObjRampRgb1);
 
         //重新计算当前皮肤色
-        skinHsv = IonMath_RgbToHsv(saturate(skinRgb));
+        skinHsv = IonMath_RgbToHsv(skinRgb);
 
-        float skinViewRampLambert = IonRamp_Lambert(normalWs,viewDir);
+        float skinViewRampLambert = IonRamp_Lambert(normalWs,dirPosToCamWs);
         float3 skinViewDeltaHsv0 = IonMath_HsvDelta(IonMath_RgbToHsv(IonArg_SkinViewRampRgb0.rgb), skinRampHsv);
         float3 skinViewDeltaHsv1 = IonMath_HsvDelta(IonMath_RgbToHsv(IonArg_SkinViewRampRgb1.rgb), skinRampHsv);
         float3 skinViewRampRgb0 = IonMath_HsvToRgb(IonMath_ApplyHsvDelta(skinHsv , skinViewDeltaHsv0));
@@ -340,15 +339,15 @@ half4 frag(FragData fragData, float facing : VFACE) : SV_Target
     float3 diffuseLight = mainLightColor * lightLambrtGray;
  
     //===[边缘光]====================================
-    float fresnel = IonRamp_Fresnel(normalWs,viewDir, IonArg_LightRimSoftness) * IonArg_RimIntensity * lightLuma;
+    float fresnel = IonRamp_Fresnel(normalWs,dirPosToCamWs, IonArg_LightRimSoftness) * IonArg_RimIntensity * lightLuma;
     half3 rimLight = fresnel * rimRgb1 * lightColor ;
 
     //===[背光]====================================
-    float backRim = IonRamp_BackRim(normalWs, viewDir, lightDirection, IonArg_BackLightRimSoftness) * IonArg_BackRimIntensity * lightLuma;
+    float backRim = IonRamp_BackRim(normalWs, dirPosToCamWs, lightDirection, IonArg_BackLightRimSoftness) * IonArg_BackRimIntensity * lightLuma;
     half3 backRimLight = backRim* rimRgb1 * lightColor ;
 
     //===[高光]====================================
-    float3 H1 = normalize(lightDirection + dirPosToCamWs);
+    float3 H1 = normalize(lightDirection + vecPosToCamWs);
     float high = IonRamp_HighLight(normalWs, H1,IonArg_HighLightRimSoftness) * IonArg_HighLightIntensity * lightLuma;
     half3 highLight = high * skinRgb * lightColor *  lightLambrtGray;// * light.ShadowAttenuation;
 
@@ -356,35 +355,35 @@ half4 frag(FragData fragData, float facing : VFACE) : SV_Target
     //===[特效向量映射]=====================================================
 
     // 0.物体空间视线方向（无限远天空盒，角度跟随物体旋转）
-    float3 skyOsDirMap = IonDirMap_SkyOs(camOs, posOs);
+    float3 skyOsVecMap = IonVecMap_SkyOs(camOs, posOs);
     // 1.世界空间视线方向（无限远天空盒，角度跟世界）
-    float3 skyWsDirMap = IonDirMap_SkyWs(camWs, posWs);
+    float3 skyWsVecMap = IonVecMap_SkyWs(camWs, posWs);
     // 2.摄像机视线
-    float3 camVsDirMap = IonDirMap_CamVs(dirCamToPosWs);
+    float3 camVsVecMap = IonVecMap_CamVs(vecCamToPosWs);
     // 3.镜面反射效果
-    float3 reflectDirMap = IonDirMap_Reflect(dirCamToPosWs, normalWs);
+    float3 reflectVecMap = IonVecMap_Reflect(vecCamToPosWs, normalWs);
     // 4.法线映射到物体表面，跟随物体移动和旋转
-    float3 nrmPosOsDirMap = IonDirMap_NrmPosOs(fragData.Normal, fragData.PositionOs);
+    float3 nrmPosOsVecMap = IonVecMap_NrmPosOs(fragData.Normal, fragData.PositionOs);
     // 5.法线映射到物体表面，跟随物体移动但不旋转
-    float3 nrmPosWsDirMap = IonDirMap_NrmPosWs(fragData.Normal, fragData.PositionOs);
+    float3 nrmPosWsVecMap = IonVecMap_NrmPosWs(fragData.Normal, fragData.PositionOs);
     // 6.法线映射到物体表面，跟随视角同步旋转
-    float3 nrmPosVsDirMap = IonDirMap_NrmPosVs(normalWs, fragData.PositionOs);
+    float3 nrmPosVsVecMap = IonVecMap_NrmPosVs(normalWs, fragData.PositionOs);
 
-    float3 dirMap, dirMap1, dirMap2, dirMap3, dirMap4;
+    float3 vecMap, vecMap1, vecMap2, vecMap3, vecMap4;
     float effectMask = 1;
 
-    dirMap1 = IonSwitch_Float3(IonArg_DirMap1, skyOsDirMap, skyWsDirMap, camVsDirMap, reflectDirMap, nrmPosOsDirMap, nrmPosWsDirMap, nrmPosVsDirMap);
-    dirMap2 = IonSwitch_Float3(IonArg_DirMap2, skyOsDirMap, skyWsDirMap, camVsDirMap, reflectDirMap, nrmPosOsDirMap, nrmPosWsDirMap, nrmPosVsDirMap);
-    dirMap3 = IonSwitch_Float3(IonArg_DirMap3, skyOsDirMap, skyWsDirMap, camVsDirMap, reflectDirMap, nrmPosOsDirMap, nrmPosWsDirMap, nrmPosVsDirMap);
-    dirMap4 = IonSwitch_Float3(IonArg_DirMap4, skyOsDirMap, skyWsDirMap, camVsDirMap, reflectDirMap, nrmPosOsDirMap, nrmPosWsDirMap, nrmPosVsDirMap);
+    vecMap1 = IonSwitch_Float3(IonArg_VecMap1, skyOsVecMap, skyWsVecMap, camVsVecMap, reflectVecMap, nrmPosOsVecMap, nrmPosWsVecMap, nrmPosVsVecMap);
+    vecMap2 = IonSwitch_Float3(IonArg_VecMap2, skyOsVecMap, skyWsVecMap, camVsVecMap, reflectVecMap, nrmPosOsVecMap, nrmPosWsVecMap, nrmPosVsVecMap);
+    vecMap3 = IonSwitch_Float3(IonArg_VecMap3, skyOsVecMap, skyWsVecMap, camVsVecMap, reflectVecMap, nrmPosOsVecMap, nrmPosWsVecMap, nrmPosVsVecMap);
+    vecMap4 = IonSwitch_Float3(IonArg_VecMap4, skyOsVecMap, skyWsVecMap, camVsVecMap, reflectVecMap, nrmPosOsVecMap, nrmPosWsVecMap, nrmPosVsVecMap);
 
-    dirMap = dirMap1;
-    dirMap += dirMap2 ;
-    dirMap += dirMap3 ;
-    dirMap += dirMap4 ;
+    vecMap = vecMap1;
+    vecMap += vecMap2 ;
+    vecMap += vecMap3 ;
+    vecMap += vecMap4 ;
 
     //===[对特效图的映射]==
-    float tHit = length(skyOsDirMap);
+    float tHit = length(skyOsVecMap);
     float tNear, tFar;
     float depth = 1;//假设厚度为1
     if (isFront)
@@ -398,7 +397,7 @@ half4 frag(FragData fragData, float facing : VFACE) : SV_Target
         // 体内看背面：从相机积到出口（背面片元）
         tNear = 0.0;
         tFar = tHit + 0.1;
-        dirMap = skyOsDirMap; // 内部强制渲染为体积云
+        vecMap = skyOsVecMap; // 内部强制渲染为体积云
     }
 
     //特效图强遮罩位图
@@ -421,9 +420,9 @@ half4 frag(FragData fragData, float facing : VFACE) : SV_Target
     // 位运算判断筛选特效
     //effectMapBitMask 为0和1则不启用特效图
     float3 vol1 = 0, vol2 = 0, vol3 = 0;
-    if(effectMapBitMask&(1<<1)) vol1 += IonEffect_VolumeStar(dirMap, camOs, tNear, tFar);
-    if(effectMapBitMask&(1<<2)) vol2 += IonEffect_VolumeCrystal(dirMap, camOs, tNear, tFar);
-    if(effectMapBitMask&(1<<3)) vol3 += IonEffect_StarNest(dirMap, IonParam_Time.x * 0.1, float2(1, 1));
+    if(effectMapBitMask&(1<<1)) vol1 += IonEffect_VolumeStar(vecMap, camOs, tNear, tFar);
+    if(effectMapBitMask&(1<<2)) vol2 += IonEffect_VolumeCrystal(vecMap, camOs, tNear, tFar);
+    if(effectMapBitMask&(1<<3)) vol3 += IonEffect_StarNest(vecMap, IonParam_Time.x * 0.1, float2(1, 1));
 
     // 通道特效混合
     float3 effectMapRgb = 0;
@@ -446,13 +445,13 @@ half4 frag(FragData fragData, float facing : VFACE) : SV_Target
     // 投影到平面（类似相机投影视差）
     //float2 tileUV = worldDir.xy / max(abs(worldDir.z), 1e-3);
     // 投影到球面（类似天空盒映射）
-    //float3 D1 = normalize(dirMap);
+    //float3 D1 = normalize(vecMap);
     //float2 tileUV;
     //tileUV.x = atan2(D1.x, D1.z) / (2.0 * 3.14159265) + 0.5;
     //tileUV.y = asin(clamp(D1.y, -1.0, 1.0)) / 3.14159265 + 0.5;
     //effectMapRgb = tex2D(IonArg_MetalMatCap, tileUV).rgb;
 
-    //DirMap是底色。金属是附加反射，不走DirMap的程序图，而是统一一张金属反射图。是否金属走Bool*colorWeight1。
+    //VecMap是底色。金属是附加反射，不走VecMap的程序图，而是统一一张金属反射图。是否金属走Bool*colorWeight1。
 
     //===[金属]=====================================================
     // MatCap贴图（VRChat 稳定）
@@ -468,13 +467,13 @@ half4 frag(FragData fragData, float facing : VFACE) : SV_Target
     float3 metalDiffuse = metalTint * ambient * IonArg_MetalDiffuseScale;
     metalDiffuse += metalTint * mainLightColor * lightLambrtGray  * IonArg_MetalDiffuseScale;
     // 2. 方向高光（Blinn-Phong）
-    float3 H = normalize(lightDirection + dirPosToCamWs);
+    float3 H = normalize(lightDirection + vecPosToCamWs);
     float NdotH = saturate(dot(normalWs, H));
     float specPower = lerp(256.0, 16.0, IonArg_MetalRoughness);
     float spec = pow(NdotH, specPower) * lightLambrtGray  * light.ShadowAttenuation;
     float3 specular = skinRgb * spec * mainLightColor * IonArg_MetalSpecularIntensity;
     // 3. 环境反射：MatCap 保底 + SpecCube 增色
-    float3 R = reflect(-dirPosToCamWs, normalWs);
+    float3 R = reflect(-vecPosToCamWs, normalWs);
     // BRP 反射探针（可选）
     // 粗糙度
     float mip = IonArg_MetalRoughness * 6.0;
@@ -483,7 +482,7 @@ half4 frag(FragData fragData, float facing : VFACE) : SV_Target
     // 探针混合
     float3 envReflect = lerp(matcapReflect, probeReflect, IonArg_MetalProbeInfluence);
     // 菲涅耳增强边缘反射
-    float fresnelMetal = IonRamp_Fresnel(envReflect, dirPosToCamWs, IonArg_LightRimSoftness);
+    float fresnelMetal = IonRamp_Fresnel(envReflect, vecPosToCamWs, IonArg_LightRimSoftness);
     envReflect *= lerp(1.0, 1.5, fresnelMetal);
     float3 metalReflect = envReflect * F0 * IonArg_MetalReflectIntensity;
     // 4. 金属合成
@@ -500,18 +499,6 @@ half4 frag(FragData fragData, float facing : VFACE) : SV_Target
     finalColor = lerp(finalColor, effectMapRgb , effectMapBitMask);
 
     // 后面最终混合处：
-
-    float a1 = saturate(dot(effectMapRgb, float3(0.299, 0.587, 0.114)));
-    // 亮度当透明度
-    a1 = pow(a1, 0.005);
-    // 可选：调曲线，让淡雾更明显/更透
-    //a1 *= baseAlpha2;  // 可选：总强度
-
-
-    //float3 rgb = lerp(bg, effectMapRgb, a1);
-    //return half4(effectMapRgb, a1);
-
-
     return half4(finalColor, finalAlpha);
 
 }

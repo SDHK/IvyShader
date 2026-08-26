@@ -36,6 +36,8 @@
 * Obj -> 是模型位置，例如ObjWs
 * Cam -> 是相机位置，例如CamWs
 * Org -> 是世界原点位置，例如OrgWs
+* Vec -> 是向量，例如VecWs
+* Dir -> 是方向，例如DirWs
 
 */
 
@@ -98,7 +100,7 @@ float3 IonMatrix_PosOsToWs(float3 posOs)
 /// </summary>
 /// <param name="posOs">物体坐标</param>
 /// <returns>世界向量</returns>
-float3 IonMatrix_DirOsToWs(float3 posOs)
+float3 IonMatrix_VecOsToWs(float3 posOs)
 {
     return mul((float3x3)IonParam_Matrix_M, posOs);
 }
@@ -119,7 +121,7 @@ float3 IonMatrix_PosOsToVs(float3 posOs)
 /// </summary>
 /// <param name="posOs">物体坐标</param>
 /// <returns>观察向量</returns>
-float3 IonMatrix_DirOsToVs(float3 posOs)
+float3 IonMatrix_VecOsToVs(float3 posOs)
 {
     return mul((float3x3)IonParam_Matrix_MV, posOs);
 }
@@ -151,7 +153,7 @@ float3 IonMatrix_PosWsToOs(float3 posWs)
 /// </summary>
 /// <param name="posWs">世界坐标</param>
 /// <returns>物体向量</returns>
-float3 IonMatrix_DirWsToOs(float3 posWs)
+float3 IonMatrix_VecWsToOs(float3 posWs)
 {
     return mul((float3x3)IonParam_Matrix_I_M, posWs);
 }
@@ -170,7 +172,7 @@ float3 IonMatrix_PosWsToVs(float3 posWs)
 /// </summary>
 /// <param name="posWs">世界坐标</param>
 /// <returns>观察向量</returns>
-float3 IonMatrix_DirWsToVs(float3 posWs)
+float3 IonMatrix_VecWsToVs(float3 posWs)
 {
     return mul((float3x3)IonParam_Matrix_V, posWs);
 }
@@ -201,7 +203,7 @@ float3 IonMatrix_PosVsToOs(float3 posVs)
 /// </summary>
 /// <param name="posVs">观察坐标</param>
 /// <returns>物体向量</returns>
-float3 IonMatrix_DirVsToOs(float3 posVs)
+float3 IonMatrix_VecVsToOs(float3 posVs)
 {
     return mul((float3x3)IonParam_Matrix_I_MV, posVs);
 }
@@ -220,7 +222,7 @@ float3 IonMatrix_PosVsToWs(float3 posVs)
 /// </summary>
 /// <param name="posVs">观察坐标</param>
 /// <returns>世界向量</returns>
-float3 IonMatrix_DirVsToWs(float3 posVs)
+float3 IonMatrix_VecVsToWs(float3 posVs)
 {
     return mul((float3x3)IonParam_Matrix_I_V, posVs);
 }

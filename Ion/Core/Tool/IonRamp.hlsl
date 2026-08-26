@@ -14,26 +14,26 @@
 /// <summary>
 /// 计算 Lambert 光照权重
 /// </summary>
-/// <param name="normalWS">世界空间法线</param>
-/// <param name="lightDirection">光源方向</param>
+/// <param name="nrmWs">世界空间法线</param>
+/// <param name="lightDirWs">光源方向</param>
 /// <param name="scale"> 缩放系数（默认 1.0）</param>
 /// <returns>光照权重（0~1）</returns>
-float3 IonRamp_Lambert(float3 normalWS, float3 lightDirection, float scale = 1.0)
+float3 IonRamp_Lambert(float3 nrmWs, float3 lightDirWs, float scale = 1.0)
 {
     // 映射：scale=1,offset=1 → 标准Lambert；scale=0.5,offset=0.5 → 半兰伯特
-    return saturate(dot(normalWS, lightDirection) * scale + 1 - scale);
+    return saturate(dot(nrmWs, lightDirWs) * scale + 1 - scale);
 }
 
 //===[菲涅耳边缘光]===
 
 // 计算菲涅耳边缘光强度（正对摄像机的面=0，侧边缘=1）
-// float3 normalWS  - 世界空间法线（已归一化）
-// float3 viewDir   - 视线方向（normalize(cameraPos - positionWS)）
+// float3 nrmWs  - 世界空间法线（已归一化）
+// float3 viewDirWs   - 视线方向（normalize(cameraPos - positionWS)）
 // float  softness  - 边缘集中度（低=细窄边，高=宽泛晕染）
 // float  return    - 菲涅耳强度（0~1）
-float IonRamp_Fresnel(float3 normalWS, float3 viewDir, float softness)
+float IonRamp_Fresnel(float3 nrmWs, float3 viewDirWs, float softness)
 {
-    float dotNv = saturate(dot(normalWS, viewDir));
+    float dotNv = saturate(dot(nrmWs, viewDirWs));
     return pow(1.0 - dotNv, 15 - softness * 15);
 }
 
@@ -54,17 +54,17 @@ float IonRamp_HighLight(float3 nrmWs,float3 lightDir, float softness)
 
 // 计算背光（逆光轮廓光）强度
 // 条件：法线背对光源（逆光）且处于视角边缘，才产生亮边
-// float3 normalWS  - 世界空间法线（已归一化）
-// float3 viewDir   - 视线方向（normalize(cameraPos - positionWS)）
+// float3 nrmWs  - 世界空间法线（已归一化）
+// float3 viewDirWs   - 视线方向（normalize(cameraPos - positionWS)）
 // float3 lightDir  - 光源方向（已归一化，由框架提供）
 // float  softness  - 边缘集中度（低=细窄，高=宽泛）
 // float  return    - 背光强度（0~1，仅逆光时非零）
-float IonRamp_BackRim(float3 normalWS, float3 viewDir, float3 lightDir, float softness)
+float IonRamp_BackRim(float3 nrmWs, float3 viewDirWs, float3 lightDir, float softness)
 {
     // 法线背对光源程度（0=正对光源 1=完全背光)
-    float backDotNl = saturate(-dot(normalWS, lightDir));
+    float backDotNl = saturate(-dot(nrmWs, lightDir));
     // 视角边缘遮罩
-    float rimMask = IonRamp_Fresnel(normalWS, viewDir, softness);
+    float rimMask = IonRamp_Fresnel(nrmWs, viewDirWs, softness);
     return backDotNl * rimMask;
 }
 
