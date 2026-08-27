@@ -78,6 +78,7 @@ float     IonArg_BackRimIntensity;
 #define Link_IonMath
 #define Link_IonRamp
 #define Link_IonVertex
+#define Link_IonUv
 #include "../../Core/IonCore.hlsl"
 
 
@@ -111,7 +112,7 @@ FragData vert(VertData vertData)
     FragData fragData;
     
     // 计算 UV 坐标
-    fragData.UV = IonMath_Transform2D(vertData.UV.xy, IonArg_MainTex_ST.xy, IonArg_MainTex_ST.zw);
+    fragData.UV = IonUv_Transform2D(vertData.UV.xy, IonArg_MainTex_ST.xy, IonArg_MainTex_ST.zw);
     
     // 计算裁剪空间位置
     fragData.PosCs = IonMatrix_PosOsToCs(vertData.PosOs);

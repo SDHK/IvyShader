@@ -30,6 +30,7 @@ float     IonArg_Cutoff;
 #define Link_IonBase
 #define Link_IonMatrix
 #define Link_IonMath
+#define Link_IonUv
 #include "../../Core/IonCore.hlsl"
 
 struct VertData
@@ -48,7 +49,7 @@ FragData vert(VertData vertData)
 {
     FragData fragData;
     fragData.PosCs = IonMatrix_PosOsToCs(vertData.PosOs);
-    fragData.UV         = IonMath_Transform2D(vertData.UV, IonArg_MainTex_ST.xy, IonArg_MainTex_ST.zw);
+    fragData.UV     = IonUv_Transform2D(vertData.UV, IonArg_MainTex_ST.xy, IonArg_MainTex_ST.zw);
     return fragData;
 }
 

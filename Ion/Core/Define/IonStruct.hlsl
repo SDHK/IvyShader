@@ -20,11 +20,11 @@ struct IonStruct_Light
     // 光源方向
     half3   Direction;
     // 光源颜色
-    half3   Color;
+    half3   Rgb;
     // 光源衰减
-    float   DistanceAttenuation; 
+    float   DistAtten; 
     // 阴影衰减
-    half    ShadowAttenuation;
+    half    ShadowAtten;
     // 阴影层级
     uint    LayerMask;
 };
@@ -33,7 +33,7 @@ struct IonStruct_Light
 // 顶点位置
 #define IonVar_PosOs float4 PosOs : POSITION;
 // 顶点颜色
-#define IonVar_Rgba float4 Rgba : COLOR;
+#define IonVar_Rgba half4 Rgba : COLOR;
 // 顶点法线
 #define IonVar_NrmOs float3 NrmOs : NORMAL;
 // 顶点切线

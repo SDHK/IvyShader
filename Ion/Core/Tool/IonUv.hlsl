@@ -7,15 +7,63 @@
 
 */
 
-#if DefPart(IonDistort, Tool) 
-#define Def_IonDistort_Tool
+#if DefPart(IonUv, Tool) 
+#define Def_IonUv_Tool
+
+
+// 2D坐标缩放偏移
+// float2 uv : 输入的二维坐标
+// float2 scale : 缩放值
+// float2 offset : 偏移值
+// float2 return : 变换后的二维坐标
+float2 IonUv_Transform2D(float2 uv, float2 scale, float2 offset)
+{
+    return uv * scale + offset;
+}
+
+/// <summary>
+/// 将方向向量映射到平面贴图坐标 
+/// </summary>
+/// <param name="dir">方向</param>
+/// <returns>平面贴图坐标</returns>
+float2 IonUv_DirToPlanar(float3 dir)
+{
+    dir = normalize(dir);
+    return dir.xy / max(abs(dir.z), 1e-3);
+    // 若要进 [0,1] 贴图，再 *0.5+0.5（按你贴图约定）
+}
+
+/// <summary>
+/// 将方向向量映射到球面贴图坐标 
+/// </summary>
+/// <param name="dir">方向</param>
+/// <returns>球面贴图坐标</returns>
+float2 IonUv_DirToSphere(float3 dir)
+{
+    dir = normalize(dir);
+    return float2(
+        atan2(dir.x, dir.z) * (0.5 / 3.14159265) + 0.5,
+        asin(clamp(dir.y, -1.0, 1.0)) * (1.0 / 3.14159265) + 0.5
+    );
+}
+
+/// <summary>
+/// 根据角度计算半径为的圆上的点 0~1
+/// </summary>
+/// <param name="angle">角度值</param>
+/// <returns>对应的二维坐标</returns>
+float2 IonUv_AngleToUV(float angle)
+{
+    angle %= 360;
+    return frac(float2(cos(angle) + 1, sin(angle) + 1) * 0.5);
+}
 
 // 极坐标扭曲 
 // float2 uv: 输入的UV坐标
 // float distortAngle: 扭曲的角度
 // float scale = 1: 扭曲的缩放比例
 // float2 return: 扭曲后的UV坐标
-float2 IonDistort_Polar(float2 uv, float distortAngle, float scale = 1)
+float2 IonUv_Polar(float2 uv, float distortAngle, float scale = 1)
 {
     // 定义中心点坐标
     float2 center = (0.5, 0.5);
@@ -46,7 +94,7 @@ float2 IonDistort_Polar(float2 uv, float distortAngle, float scale = 1)
 // float scale = 1: 扭曲的缩放比例
 // float2 center = (0.5, 0.5): 扭曲的中心点
 // float2 return: 扭曲后的UV坐标
-float2 IonDistort_Vortex(float2 uv, float distortAngle, float scale = 1, float2 center = (0.5, 0.5))
+float2 IonUv_Vortex(float2 uv, float distortAngle, float scale = 1, float2 center = (0.5, 0.5))
 {
     // 计算 UV 坐标相对于中心点的偏移量,中心指向uv的向量
     float2 offset = uv - center;
@@ -76,7 +124,7 @@ float2 IonDistort_Vortex(float2 uv, float distortAngle, float scale = 1, float2 
 // float radius: 扭曲的半径
 // float2 center = (0.5, 0.5): 扭曲的中心点
 // float2 return: 扭曲后的UV坐标
-float2 IonDistort_Sphere(float2 uv, float radius, float2 center = (0.5, 0.5))
+float2 IonUv_Sphere(float2 uv, float radius, float2 center = (0.5, 0.5))
 {
     // 计算 UV 坐标相对于中心点的偏移量
     float2 offset = uv - center;
@@ -106,7 +154,7 @@ float2 IonDistort_Sphere(float2 uv, float radius, float2 center = (0.5, 0.5))
 // float frequency: 波浪的频率
 // float phase: 波浪的相位
 // float2 return: 扭曲后的UV坐标
-float2 IonDistort_Wave(float2 uv, float amplitude, float frequency, float phase)
+float2 IonUv_Wave(float2 uv, float amplitude, float frequency, float phase)
 {
     uv.x += sin(uv.y * frequency + phase) * amplitude;
     uv.y += sin(uv.x * frequency + phase) * amplitude;

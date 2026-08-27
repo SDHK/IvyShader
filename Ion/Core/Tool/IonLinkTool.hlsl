@@ -32,8 +32,8 @@
 #if Link(IonNoise)
 #include "IonNoise.hlsl"     // 噪声函数（依赖 IonHash）
 #endif
-#if Link(IonDistort)
-#include "IonDistort.hlsl"   // 扭曲函数
+#if Link(IonUv)
+#include "IonUv.hlsl"   // UV 工具
 #endif
 #if Link(IonVertex)
 #include "IonVertex.hlsl"   // 顶点工具

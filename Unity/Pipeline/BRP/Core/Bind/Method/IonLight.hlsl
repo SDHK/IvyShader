@@ -43,7 +43,7 @@ IonStruct_Light IonLight_MainLight()
     {
         // 方向光：直接使用xyz作为方向向量
         light.Direction = lightPos.xyz;
-        light.DistanceAttenuation = 1.0; // 方向光无距离衰减
+        light.DistAtten = 1.0; // 方向光无距离衰减
     }
     else
     {
@@ -51,15 +51,15 @@ IonStruct_Light IonLight_MainLight()
         // 注意：点光源需要传入世界空间位置，这里提供一个默认实现
         // 实际使用时可能需要重载函数或传入位置参数
         light.Direction = lightPos.xyz;
-        light.DistanceAttenuation = 1.0; // 需要根据距离计算
+        light.DistAtten = 1.0; // 需要根据距离计算
     }
     
-    // BRP中 _LightColor0 的 RGB 是颜色，A 是强度
-    light.Color = IonParam_LightColor;
+    // BRP中 _LightColor0 的 RGB 是颜色，A 无用
+    light.Rgb = IonParam_LightColor;
 
     // BRP中阴影衰减需要采样阴影贴图，这里默认设为1.0
     // 如果需要阴影，需要使用带参数的版本
-    light.ShadowAttenuation = 1.0;
+    light.ShadowAtten = 1.0;
     
     // BRP中没有LayerMask概念，设为0
     light.LayerMask = 0;
@@ -77,26 +77,26 @@ IonStruct_Light IonLight_MainLight(float4 shadowCoord)
         // 屏幕空间阴影（不透明物体默认路径）
         #if defined(UNITY_NO_SCREENSPACE_SHADOWS)
             #if defined(SHADOWS_NATIVE)
-                light.ShadowAttenuation = UNITY_SAMPLE_SHADOW(_ShadowMapTexture, shadowCoord.xyz);
-                light.ShadowAttenuation = _LightShadowData.r + light.ShadowAttenuation * (1-_LightShadowData.r);
+                light.ShadowAtten = UNITY_SAMPLE_SHADOW(_ShadowMapTexture, shadowCoord.xyz);
+                light.ShadowAtten = _LightShadowData.r + light.ShadowAtten * (1-_LightShadowData.r);
             #else
                 unityShadowCoord dist = SAMPLE_DEPTH_TEXTURE(_ShadowMapTexture, shadowCoord.xy);
                 unityShadowCoord threshold = shadowCoord.z;
-                light.ShadowAttenuation = max(dist > threshold, _LightShadowData.x);
+                light.ShadowAtten = max(dist > threshold, _LightShadowData.x);
             #endif
         #else
-            light.ShadowAttenuation = UNITY_SAMPLE_SCREEN_SHADOW(_ShadowMapTexture, shadowCoord);
+            light.ShadowAtten = UNITY_SAMPLE_SCREEN_SHADOW(_ShadowMapTexture, shadowCoord);
         #endif
     #elif defined(SHADOWS_DEPTH) && !defined(SPOT) && !defined(UNITY_PASS_SHADOWCASTER)
         // Light-space 方向光级联阴影（透明物体兼容路径，不依赖屏幕深度缓冲）
         // UNITY_PASS_SHADOWCASTER 排除：ShadowCaster Pass 也带 SHADOWS_DEPTH，但不需要采样
         #if defined(SHADOWS_NATIVE)
-            light.ShadowAttenuation = UNITY_SAMPLE_SHADOW(_ShadowMapTexture, shadowCoord.xyz);
+            light.ShadowAtten = UNITY_SAMPLE_SHADOW(_ShadowMapTexture, shadowCoord.xyz);
         #else
             unityShadowCoord dist = SAMPLE_DEPTH_TEXTURE(_ShadowMapTexture, shadowCoord.xy);
-            light.ShadowAttenuation = max(dist > shadowCoord.z, _LightShadowData.x);
+            light.ShadowAtten = max(dist > shadowCoord.z, _LightShadowData.x);
         #endif
-        light.ShadowAttenuation = _LightShadowData.r + light.ShadowAttenuation * (1 - _LightShadowData.r);
+        light.ShadowAtten = _LightShadowData.r + light.ShadowAtten * (1 - _LightShadowData.r);
     #endif
     return light;
 }

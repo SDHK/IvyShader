@@ -27,6 +27,7 @@ float4 PassVar_MainTex_ST;
 #define Link_IonMatrix
 #define Link_IonMath
 #define Link_IonVertex
+#define Link_IonUv
 #include "../../Core/IonCore.hlsl"
 
 
@@ -52,7 +53,7 @@ FragData vert(VertData vertData)
 {
     FragData fragData;
     // 计算UV坐标
-    fragData.UV = IonMath_Transform2D(vertData.UV.xy, PassVar_MainTex_ST.xy,PassVar_MainTex_ST.zw);
+    fragData.UV = IonUv_Transform2D(vertData.UV.xy, PassVar_MainTex_ST.xy,PassVar_MainTex_ST.zw);
     // 计算世界空间位置
     fragData.PosCs = IonMatrix_PosOsToCs(vertData.PosOs);
     // 将法线转换到世界空间（使用法线专用函数）

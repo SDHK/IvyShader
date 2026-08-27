@@ -51,15 +51,14 @@ Shader "Ion/IonObjectTransparent"
         Input_SkinViewRampSoftness      ("视线渐变柔和度",                       Range(0,1)) = 0.5
 
         [Space(20)]
-        Input_LightInfluence      ("光照色影响",                        Range(0,1))  = 0.2
-        Input_LightMax 	    ("光照最大值",                       Range(0,1))  = 0.9
-        Input_LightMin 	    ("光照最小值",                       Range(0,1))  = 0.3
-        Input_LightRampThreshold      ("光照阈值",                        Range(0,1)) = 0.5
-        Input_LightRampSoftness       ("光照柔和度",                         Range(0,1)) = 0.25
+        Input_LightInfluence            ("光照色影响",                       Range(0,1))  = 0.2
+        Input_LightMin                  ("光照最小值",                       Range(0,1))  = 0.1
+        Input_LightMax 	                ("光照最大值",                       Range(0,1))  = 0.9
+        Input_LightShadowMin 	        ("光照阴影值",                       Range(0,1))  = 0.3
+        Input_LightRampThreshold        ("光照阈值",                         Range(0,1)) = 0.5
+        Input_LightRampSoftness         ("光照柔和度",                       Range(0,1)) = 0.25
 
         [Space(20)]
-        Input_RampRgb1 		        ("附加光",                        Color)  = (1, 1, 1, 1)
-        [Space(10)]
         Input_RimIntensity          ("边光强度",                        Range(0,1))  = 0.25
         Input_LightRimSoftness      ("边光柔和度",                            Range(0,1)) = 0.5
         [Space(10)]
@@ -74,12 +73,12 @@ Shader "Ion/IonObjectTransparent"
         Input_Metallic              ("金属度",              Range(0,1)) = 0
         Input_MetalMask             ("金属遮罩 R",          2D) = "white" {}
         Input_MetalSpecularPower    ("高光锐度",            Range(0,1)) = 64
-        Input_MetalSpecularIntensity("高光强度",            Range(0,10)) = 1
-        Input_MetalReflectIntensity ("反射强度",            Range(0,10)) = 0.8
-        Input_MetalRoughness        ("粗糙度",              Range(0,2)) = 0.2
+        Input_MetalSpecularIntensity("高光强度",            Range(0,1)) = 1
+        Input_MetalReflectIntensity ("反射强度",            Range(0,1)) = 0.8
+        Input_MetalRoughness        ("粗糙度",              Range(0,1)) = 0.2
         Input_MetalMatCap           ("MatCap 反射",         2D) = "gray" {}
         Input_MetalProbeInfluence   ("探针混合",            Range(0,1)) = 0.3
-        Input_MetalDiffuseScale     ("漫反射比例",          Range(-2,2)) = 0.05
+        Input_MetalDiffuseScale     ("漫反射比例",          Range(-1,1)) = 0.05
 
         [Space(20)]
         Input_OutlineColor              ("描边颜色",                           Color)  = (0, 0, 0, 1)
@@ -234,8 +233,9 @@ Shader "Ion/IonObjectTransparent"
 
 
             #define IonArg_LightInfluence   Input_LightInfluence
-            #define IonArg_LightMax        Input_LightMax
             #define IonArg_LightMin        Input_LightMin
+            #define IonArg_LightMax        Input_LightMax
+            #define IonArg_LightShadowMin        Input_LightShadowMin
 
             #define IonArg_EmissiveTex        Input_EmissiveTex
             #define IonArg_EmissiveIntensity  Input_EmissiveIntensity
@@ -246,8 +246,6 @@ Shader "Ion/IonObjectTransparent"
             #define IonArg_RampRgbBase     Input_RampRgbBase
             #define IonArg_SkinViewRampRgb0              Input_SkinViewRampRgb0
             #define IonArg_SkinViewRampRgb1              Input_SkinViewRampRgb1
-
-            #define IonArg_RampRgb1              Input_RampRgb1
 
             #define IonArg_SkinObjRampRgb0     Input_SkinObjRampRgb0
             #define IonArg_SkinObjRampRgb1     Input_SkinObjRampRgb1

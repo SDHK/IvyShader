@@ -15,6 +15,7 @@
 #define Link_IonMatrix
 #include "../IonEdit.hlsl"
 
+
 /// <summary>
 /// 向量：指向目标
 /// </summary>
@@ -26,18 +27,6 @@ float3 IonVecMap_LookTo(float3 origin,float3 target)
     return (target - origin);
 }
 
-///// <summary>
-///// 归一向量：指向目标
-///// </summary>
-///// <param name="origin">原点</param>
-///// <param name="target">目标</param>
-///// <returns>指向向量</returns>
-//float3 IonVecMap_LookTo(float3 origin,float3 target)
-//{
-//    return normalize(target - origin);
-//}
-
-//========
 
 /// <summary>
 /// 天空盒效果
