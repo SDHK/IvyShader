@@ -72,11 +72,11 @@ float IonArg_HighLightRimSoftness;// 高光边缘集中度（建议 2~8）
 
 float IonArg_Metallic;
 sampler2D IonArg_MetalMask;
-float IonArg_MetalSpecularPower;
-float IonArg_MetalSpecularIntensity;
+float IonArg_MetalRimIntensity;
+float IonArg_MetalHighLightIntensity;
 float IonArg_MetalReflectIntensity;
 float IonArg_MetalRoughness;
-sampler2D IonArg_MetalMatCap;
+sampler2D IonArg_MetalEnvTex;
 float IonArg_MetalProbeInfluence;
 float IonArg_MetalDiffuseScale;
 
@@ -196,45 +196,6 @@ FragOut Frag(FragIn fragIn)
     float3 bg = tex2D(IonArg_GrabTexture, zoomedUV).rgb;
     //======
 
-    //===[变量]===================================================
-    bool isFront = viewFace > 0.0;
-    float3 camWs = IonParam_CameraPosWs;
-    float3 camOs = IonMatrix_PosWsToOs(camWs);
-    float3 objWs = IonMatrix_PosOsToWs(float3(0, 0, 0));
-
-    // 向量世界相机到世界坐标
-    // 正交投影时，视线方向为相机前方
-     float3 vecCamToPosWs;
-    if (IonParam_OrthoParams.w > 0.5)
-    {
-        vecCamToPosWs = -IonParam_Matrix_V[2].xyz;
-    }
-    else
-    {
-        vecCamToPosWs = IonVecMap_LookTo(camWs, posWs);
-    }
-
-    float3 vecCamToPosOs = IonVecMap_LookTo(camOs, posOs);
-    // 向量世界坐标到世界相机
-    float3 vecPosToCamWs = -vecCamToPosWs;
-    // 向量世界物体到世界相机
-    float3 vecObjToCamWs = IonVecMap_LookTo(objWs, camWs);
-    // 向量世界相机到世界物体
-    float3 vecCamToObjWs = -vecObjToCamWs;
-    // 方向世界坐标到世界相机
-    float3 dirPosToCamWs = normalize(vecPosToCamWs);
-
-    //===[UV分区]===================================================
-    // uv: 模型 UV0，假设在 [0,1)
-    // 防止 uv==1 时落到第 3 格
-    uv = min(uv, 0.999999);// 防止 uv==1 时落到第 3 格
-    int col = (int)floor(uv.x * 2.0); // 0,1 → u0,u1
-    int row = (int)floor(uv.y * 2.0); // 0,1 → v0,v1（左下为 0）
-    int visualRow = 1 - row; // 把数学 row0(下) 翻成「上=0」
-    // 格子内局部 UV（采细节用）
-    float2 localUV = frac(uv * 2.0);
-    // uv的九宫格分区索引，0~3
-    int uvId = visualRow * 2 + col; // 0..3
 
     //===[自发光]===================================================
     float emissiveMask = tex2D(IonArg_EmissiveTex, uv).r;
@@ -265,6 +226,50 @@ FragOut Frag(FragIn fragIn)
     // 当光线消失时，保持固定头顶方向以维持阴影效果
     if(length(lightDir) == 0)lightDir = float3(0,1,0);
 
+
+    //===[变量]===================================================
+    bool isFront = viewFace > 0.0;
+    float3 camWs = IonParam_CameraPosWs;
+    float3 camOs = IonMatrix_PosWsToOs(camWs);
+    float3 objWs = IonMatrix_PosOsToWs(float3(0, 0, 0));
+
+    // 向量世界相机到世界坐标
+    // 正交投影时，视线方向为相机前方
+     float3 vecCamToPosWs;
+    if (IonParam_OrthoParams.w > 0.5)
+    {
+        vecCamToPosWs = -IonParam_Matrix_V[2].xyz;
+    }
+    else
+    {
+        vecCamToPosWs = IonVecMap_LookTo(camWs, posWs);
+    }
+
+    float3 vecCamToPosOs = IonVecMap_LookTo(camOs, posOs);
+    // 向量世界坐标到世界相机
+    float3 vecPosToCamWs = -vecCamToPosWs;
+    // 向量世界物体到世界相机
+    float3 vecObjToCamWs = IonVecMap_LookTo(objWs, camWs);
+    // 向量世界相机到世界物体
+    float3 vecCamToObjWs = -vecObjToCamWs;
+    // 方向世界坐标到世界相机
+    float3 dirPosToCamWs = normalize(vecPosToCamWs);
+    // 方向高光
+    float3 dirHighLight = normalize(lightDir + vecPosToCamWs);
+ 
+    //===[UV分区]===================================================
+    // uv: 模型 UV0，假设在 [0,1)
+    // 防止 uv==1 时落到第 3 格
+    uv = min(uv, 0.999999);// 防止 uv==1 时落到第 3 格
+    int col = (int)floor(uv.x * 2.0); // 0,1 → u0,u1
+    int row = (int)floor(uv.y * 2.0); // 0,1 → v0,v1（左下为 0）
+    int visualRow = 1 - row; // 把数学 row0(下) 翻成「上=0」
+    // 格子内局部 UV（采细节用）
+    float2 localUV = frac(uv * 2.0);
+    // uv的九宫格分区索引，0~3
+    int uvId = visualRow * 2 + col; // 0..3
+
+    
     //===[皮肤着色]=================================================
     //皮肤细节遮罩
     half4 skinMask = 0;
@@ -352,13 +357,12 @@ FragOut Frag(FragIn fragIn)
     //===[附加光照]====================================
     //边缘光
     half rimRamp = IonRamp_Fresnel(nrmWs,dirPosToCamWs, IonArg_LightRimSoftness) * IonArg_RimIntensity;
-    half3 rimLight = rimRamp * mainLightRgb ;
+    half3 rimLight = rimRamp *skinRgb* mainLightRgb ;
     //背光
     half backRimRamp = IonRamp_BackRim(nrmWs, dirPosToCamWs, lightDir, IonArg_BackLightRimSoftness) * IonArg_BackRimIntensity ;
-    half3 backRimLight = backRimRamp * mainLightRgb ;
+    half3 backRimLight = backRimRamp *skinRgb* mainLightRgb ;
     //高光
-    half3 highLightDir = normalize(lightDir + dirPosToCamWs);
-    half highLightRamp = IonRamp_HighLight(nrmWs, highLightDir,IonArg_HighLightRimSoftness) * IonArg_HighLightIntensity;
+    half highLightRamp = IonRamp_HighLight(nrmWs, dirHighLight,IonArg_HighLightRimSoftness) * IonArg_HighLightIntensity;
     half3 highLight = highLightRamp * skinRgb * mainLightRgb * lightLambrtGray;
 
     half3 addLight = rimLight + backRimLight + highLight;
@@ -429,8 +433,8 @@ FragOut Frag(FragIn fragIn)
     // 位运算判断筛选特效
     //effectMapBitMask 为0和1则不启用特效图
     float3 vol1 = 0, vol2 = 0, vol3 = 0;
-    float2 timecs = float2(cos(IonParam_Time.y),sin(IonParam_Time.y));
-    timecs =float2(1,1);
+    float2 timecs = float2(cos(IonParam_Time.x),sin(IonParam_Time.x));
+    //timecs =float2(1,1);
     float2 dir = IonParam_Time.x * 0.5* float2(1, 1);
     dir = float2(0,0);
     if(effectMapBitMask&(1<<1)) vol1 += IonEffect_VolumeStar(vecMap,skinRgb0,  camOs, tNear, tFar,dir,timecs);
@@ -451,57 +455,44 @@ FragOut Frag(FragIn fragIn)
         effectMapRgb += IonSwitch_Float3(IonArg_EffectMapInside, 0, vol1, vol2, vol3);
     }
 
-    effectMapRgb*=skinRgb0;
+    effectMapRgb *= skinRgb0;
 
-    //effectMapRgb = IonRamp_Rgb2(effectMapRgb,effectMapRgb*skinRgb0 ,0.5,0.5,effectMapRgb*skinRgb1);
 
     if(effectMapBitMask==1)effectMapBitMask = 0;
     if(effectMapBitMask>1)effectMapBitMask = 1;
 
-
-    //VecMap是底色。金属是附加反射，不走VecMap的程序图，而是统一一张金属反射图。是否金属走Bool*colorWeight1。
     //===[金属]=====================================================
-    // MatCap贴图（VRChat 稳定）
-    float2 matcapUV = IonUv_DirToSphere(reflectVecMap);
-    float3 matcapReflect = tex2D(IonArg_MetalMatCap, matcapUV).rgb;
 
-    float metalMask = saturate(IonArg_Metallic * tex2D(IonArg_MetalMask, uv).r);
-    // 金属 tint（金/银/铜来自 skinRgb / Color1）
-    float3 metalTint = skinRgb;
-    float3 F0 = metalTint;
-    // 金属 F0 ≈ 自身颜色
     // 1. 弱漫反射 + 环境底色
-    float3 metalDiffuse = metalTint * ambientLight * IonArg_MetalDiffuseScale;
-    metalDiffuse += metalTint * mainLightRgb * lightLambrtGray  * IonArg_MetalDiffuseScale;
+    float3 metalDiffuse = skinRgb * ambientLight * (1-IonArg_MetalReflectIntensity);//IonArg_MetalDiffuseScale;
+    metalDiffuse += skinRgb * mainLightRgb * lightLambrtGray  *  (1-IonArg_MetalReflectIntensity);// IonArg_MetalDiffuseScale;
+
     // 2. 方向高光（Blinn-Phong）
-    float3 H = normalize(lightDir + dirPosToCamWs);
-    float NdotH = saturate(dot(nrmWs, H));
-    float specPower = lerp(256.0, 16.0, IonArg_MetalRoughness);
-    float spec = pow(NdotH, specPower) * lightLambrtGray  * lightShadowAtten;
-    float3 specular = skinRgb * spec * mainLightRgb * IonArg_MetalSpecularIntensity;
-    // 3. 环境反射：MatCap 保底 + SpecCube 增色
-    float3 R = reflect(-dirPosToCamWs, nrmWs);
-    // BRP 反射探针（可选）
-    // 粗糙度
-    float mip = IonArg_MetalRoughness * 6.0;
-    float4 envRaw = UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, R, mip);
+    half metalHighLightRamp = IonRamp_HighLight(nrmWs, dirHighLight,IonArg_MetalRoughness) * IonArg_MetalHighLightIntensity;
+    half3 metalHighLight = metalHighLightRamp *  max(skinRgb,float3(0.2,0.2,0.2)) * mainLightRgb;
+
+    float mip = IonArg_MetalRoughness * 6.0; // 粗糙度
+    // MatCap贴图
+    float2 matcapUV = IonUv_DirToSphere(reflectVecMap);
+    float3 matcapReflect = tex2Dlod(IonArg_MetalEnvTex, float4(matcapUV, 0, mip)).rgb;
+    // BRP 环境反射探针（可选）
+    float4 envRaw = UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, reflectVecMap, mip);
     float3 probeReflect = DecodeHDR(envRaw, unity_SpecCube0_HDR);
+
     // 探针混合
-    float3 envReflect = lerp(matcapReflect, probeReflect, IonArg_MetalProbeInfluence);
+    float3 envReflect = lerp(probeReflect ,matcapReflect , IonArg_MetalProbeInfluence);
+
     // 菲涅耳增强边缘反射
-    float fresnelMetal = IonRamp_Fresnel(nrmWs, dirPosToCamWs, IonArg_MetalSpecularPower);
-    envReflect *= lerp(1.0, 1.5, fresnelMetal);
-    float3 metalReflect = envReflect * F0 * IonArg_MetalReflectIntensity;
+    float fresnelMetal = IonRamp_Fresnel(nrmWs,dirPosToCamWs, IonArg_MetalRimIntensity);
+    float3 metalReflect = max(skinRgb,float3(0.2,0.2,0.2)) * envReflect  * lerp(IonArg_MetalReflectIntensity, 1, fresnelMetal);
+
     // 4. 金属合成
-    half3 metalColor = metalDiffuse + specular + metalReflect;
-    // 可选：金属上保留弱 Rim
-    metalColor += rimLight * metalMask * 0.5;
-
-
+    half3 metalColor =  metalDiffuse + metalHighLight + metalReflect;
+    
     //===[最终混合]=================================================
     half3 dielectric = skinRgb *  diffuseLight + addLight;
 
-    half3 finalColor = lerp(dielectric, metalColor, metalMask);
+    half3 finalColor = lerp(dielectric, metalColor, IonArg_Metallic);
     finalColor = lerp(finalColor, effectMapRgb , effectMapBitMask);
 
     // 后面最终混合处：

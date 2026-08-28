@@ -68,22 +68,21 @@ Shader "Ion/IonObjectTransparent"
         Input_HighLightIntensity 	("高光强度",                        Range(0,1))  = 0.25
         Input_HighLightRimSoftness  ("高光柔和度",                      Range(0,1)) = 0.5
 
-        [Space(20)]
+    
         [Header(Metal)]
+        [Space(10)]
         Input_Metallic              ("金属度",              Range(0,1)) = 0
-        Input_MetalMask             ("金属遮罩 R",          2D) = "white" {}
-        Input_MetalSpecularPower    ("高光锐度",            Range(0,1)) = 64
-        Input_MetalSpecularIntensity("高光强度",            Range(0,1)) = 1
+
+        Input_MetalRimIntensity    ("边缘反射",            Range(0,1)) = 0
         Input_MetalReflectIntensity ("反射强度",            Range(0,1)) = 0.8
+        Input_MetalHighLightIntensity("高光强度",            Range(0,1)) = 1
         Input_MetalRoughness        ("粗糙度",              Range(0,1)) = 0.2
-        Input_MetalMatCap           ("MatCap 反射",         2D) = "gray" {}
-        Input_MetalProbeInfluence   ("探针混合",            Range(0,1)) = 0.3
-        Input_MetalDiffuseScale     ("漫反射比例",          Range(-1,1)) = 0.05
 
         [Space(20)]
-        Input_OutlineColor              ("描边颜色",                           Color)  = (0, 0, 0, 1)
-        Input_OutlineScale              ("描边大小",                           Float)  = 0
+        Input_MetalEnvTex           ("环境反射图",         2D) = "gray" {}
+        Input_MetalProbeInfluence   ("环境图混合",            Range(0,1)) = 0.5
 
+        //Input_MetalDiffuseScale     ("金属漫反射比例",          Range(0,1)) = 0.05
        
         [Space(20)]
         [Header(Null0 Star3d1 Crystal3d2 Star2d3)]
@@ -101,6 +100,11 @@ Shader "Ion/IonObjectTransparent"
         [IntRange] Input_VecMap3			 ("向量映射3",       Range(0,6))     = 0
         [Space(20)]
         Input_Cutoff             ("透明度裁剪",                    Range(0,5)) = 0.5
+    
+        [Space(20)]
+        Input_OutlineColor              ("描边颜色",                           Color)  = (0, 0, 0, 1)
+        Input_OutlineScale              ("描边大小",                           Float)  = 0
+
     }
 
     //===[URP 管线]===================================================
@@ -269,12 +273,11 @@ Shader "Ion/IonObjectTransparent"
             #define IonArg_HighLightIntensity       Input_HighLightIntensity
 
             #define IonArg_Metallic              Input_Metallic
-            #define IonArg_MetalMask             Input_MetalMask
-            #define IonArg_MetalSpecularPower    Input_MetalSpecularPower
-            #define IonArg_MetalSpecularIntensity Input_MetalSpecularIntensity
+            #define IonArg_MetalRimIntensity    Input_MetalRimIntensity
+            #define IonArg_MetalHighLightIntensity Input_MetalHighLightIntensity
             #define IonArg_MetalReflectIntensity Input_MetalReflectIntensity
             #define IonArg_MetalRoughness        Input_MetalRoughness
-            #define IonArg_MetalMatCap           Input_MetalMatCap
+            #define IonArg_MetalEnvTex           Input_MetalEnvTex
             #define IonArg_MetalProbeInfluence   Input_MetalProbeInfluence
             #define IonArg_MetalDiffuseScale     Input_MetalDiffuseScale
 

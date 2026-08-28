@@ -34,7 +34,7 @@ float3 IonRamp_Lambert(float3 nrmWs, float3 lightDirWs, float scale = 1.0)
 float IonRamp_Fresnel(float3 nrmWs, float3 viewDirWs, float softness)
 {
     float dotNv = saturate(dot(nrmWs, viewDirWs));
-    return pow(1.0 - dotNv, 15 - softness * 15);
+    return pow(1.0 - dotNv,20 - softness * 20);
 }
 
 /// <summary>
@@ -46,8 +46,8 @@ float IonRamp_Fresnel(float3 nrmWs, float3 viewDirWs, float softness)
 /// <returns>高光强度（0~1）</returns>
 float IonRamp_HighLight(float3 nrmWs,float3 lightDir, float softness)
 {
-    float dotNl = saturate(dot(nrmWs, lightDir));
-    return pow(dotNl, 256 - softness * 255);
+    float dotNl = saturate(dot(nrmWs, lightDir)*0.5+0.5);
+    return pow(dotNl, 50 - softness * 50);
 }
 
 //===[背光边缘光]===
