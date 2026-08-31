@@ -51,16 +51,16 @@ Shader "Ion/IonObjectTransparent"
         Input_SkinViewRampSoftness      ("视线渐变柔和度",                       Range(0,1)) = 0.5
 
         [Space(20)]
+        Input_LightMin                  ("光照下限",                       Range(0,1))  = 0.1
+        Input_LightMax 	                ("光照上限",                       Range(0,1))  = 0.9
         Input_LightInfluence            ("光照色影响",                       Range(0,1))  = 0.2
-        Input_LightMin                  ("光照最小值",                       Range(0,1))  = 0.1
-        Input_LightMax 	                ("光照最大值",                       Range(0,1))  = 0.9
         Input_LightShadowMin 	        ("光照阴影值",                       Range(0,1))  = 0.3
-        Input_LightRampThreshold        ("光照阈值",                         Range(0,1)) = 0.5
-        Input_LightRampSoftness         ("光照柔和度",                       Range(0,1)) = 0.25
+        Input_LightRampThreshold        ("光影阈值",                         Range(0,1)) = 0.5
+        Input_LightRampSoftness         ("光影柔和度",                       Range(0,1)) = 0.25
 
         [Space(20)]
-        Input_RimIntensity          ("边光强度",                        Range(0,1))  = 0.25
-        Input_LightRimSoftness      ("边光柔和度",                            Range(0,1)) = 0.5
+        Input_RimIntensity          ("边光强度（伪次表面散射）",                        Range(0,1))  = 0.25
+        Input_LightRimSoftness      ("边光柔和度（伪次表面散射）",                            Range(0,1)) = 0.5
         [Space(10)]
         Input_BackRimIntensity      ("背光强度",                        Range(0,1))  = 0.25
         Input_BackLightRimSoftness  ("背光柔和度",                            Range(0,1)) = 0.5
@@ -72,32 +72,38 @@ Shader "Ion/IonObjectTransparent"
         [Header(Metal)]
         [Space(10)]
         Input_Metallic              ("金属度",              Range(0,1)) = 0
+        Input_MetallicSmoothness    ("金属光滑度",          Range(0,1)) = 0
 
         Input_MetalRimIntensity    ("边缘反射",            Range(0,1)) = 0
         Input_MetalReflectIntensity ("反射强度",            Range(0,1)) = 0.8
         Input_MetalHighLightIntensity("高光强度",            Range(0,1)) = 1
-        Input_MetalRoughness        ("粗糙度",              Range(0,1)) = 0.2
+        Input_MetalHighLightRimSoftness("高光柔和度",        Range(0,1)) = 0.5
+        
+        Input_MetalSmoothness        ("光滑度",              Range(0,1)) = 0.2
 
         [Space(20)]
-        Input_MetalEnvTex           ("环境反射图",         2D) = "gray" {}
-        Input_MetalProbeInfluence   ("环境图混合",            Range(0,1)) = 0.5
+        Input_EnvMapTex           ("环境反射图",         2D) = "gray" {}
+        Input_EnvMapInfluence     ("环境图混合",            Range(0,1)) = 0.5
+        [Space(20)]
+        Input_MatCapTex             ("MatCap",               2D) = "gray" {}
+        Input_MatCapInfluence       ("MatCap混合",            Range(0,1)) = 0.5       
 
         //Input_MetalDiffuseScale     ("金属漫反射比例",          Range(0,1)) = 0.05
        
         [Space(20)]
-        [Header(Null0 Star3d1 Crystal3d2 Star2d3)]
-        [IntRange] Input_EffectMap0 ("特效图0",       Range(0,3))     = 0
-        [IntRange] Input_EffectMap1 ("特效图1",       Range(0,3))     = 0
-        [IntRange] Input_EffectMap2 ("特效图2",       Range(0,3))     = 0
-        [IntRange] Input_EffectMap3 ("特效图3",       Range(0,3))     = 0
-        [IntRange] Input_EffectMapInside ("内部特效", Range(0,3))     = 0
+        [Header(Null Star3d Crystal3d Star2d)]
+        [IntRange] Input_EffectMap  ("特效",                Range(0,3))     = 0
+        //扰动，移动
+        [Header(Null white black all)]
+        [IntRange] Input_EffectMap0 ("特效注入0",           Range(0,3))     = 0
+        [IntRange] Input_EffectMap1 ("特效注入1",           Range(0,3))     = 0
+        [IntRange] Input_EffectMap2 ("特效注入2",           Range(0,3))     = 0
+        [IntRange] Input_EffectMap3 ("特效注入3",           Range(0,3))     = 0
+        [Toggle]   Input_EffectMapInside ("内部特效",       Int)            = 0
 
         [Space(20)]
         [Header(SkyOs0 SkyWs1 CamVs2 Reflect3 NrmOs4 NrmWs5 NrmVs6)]
         [IntRange] Input_VecMap0			 ("向量映射0",       Range(0,6))     = 0
-        [IntRange] Input_VecMap1			 ("向量映射1",       Range(0,6))     = 0
-        [IntRange] Input_VecMap2			 ("向量映射2",       Range(0,6))     = 0
-        [IntRange] Input_VecMap3			 ("向量映射3",       Range(0,6))     = 0
         [Space(20)]
         Input_Cutoff             ("透明度裁剪",                    Range(0,5)) = 0.5
     
@@ -163,10 +169,10 @@ Shader "Ion/IonObjectTransparent"
     //===[BRP 管线]===================================================
     SubShader
     {
+
         Tags { "RenderType" = "Transparent" "Queue" = "Transparent" }
         LOD 100
 
-        
 
         // ===[描边]===
         Pass
@@ -202,6 +208,8 @@ Shader "Ion/IonObjectTransparent"
             ENDHLSL
         }
 
+
+
         // ===[GrabPass]===
         GrabPass { "IonArg_GrabTexture" }
         // ===[主光照 ForwardBase]===
@@ -209,9 +217,10 @@ Shader "Ion/IonObjectTransparent"
         {
             Name "FORWARD"
             Tags { "LightMode" = "ForwardBase" }
-             Cull Off  
+            Cull Off  
 
-            ZWrite Off
+            ZWrite On
+            // ZTest Always
             ZTest LEqual
             //Offset 0, -1    // 固定单位偏移（不含斜率项），轻推深度避免 Z-Fighting
             Blend SrcAlpha OneMinusSrcAlpha
@@ -273,14 +282,22 @@ Shader "Ion/IonObjectTransparent"
             #define IonArg_HighLightIntensity       Input_HighLightIntensity
 
             #define IonArg_Metallic              Input_Metallic
+            #define IonArg_MetallicSmoothness    Input_MetallicSmoothness
             #define IonArg_MetalRimIntensity    Input_MetalRimIntensity
             #define IonArg_MetalHighLightIntensity Input_MetalHighLightIntensity
+            #define IonArg_MetalHighLightRimSoftness Input_MetalHighLightRimSoftness
             #define IonArg_MetalReflectIntensity Input_MetalReflectIntensity
-            #define IonArg_MetalRoughness        Input_MetalRoughness
-            #define IonArg_MetalEnvTex           Input_MetalEnvTex
-            #define IonArg_MetalProbeInfluence   Input_MetalProbeInfluence
+            #define IonArg_MetalSmoothness        Input_MetalSmoothness
+
+            #define IonArg_MatCapTex            Input_MatCapTex
+            #define IonArg_MatCapInfluence      Input_MatCapInfluence
+            
+            #define IonArg_EnvMapTex           Input_EnvMapTex
+            #define IonArg_EnvMapInfluence   Input_EnvMapInfluence
+
             #define IonArg_MetalDiffuseScale     Input_MetalDiffuseScale
 
+            #define IonArg_EffectMap            Input_EffectMap
             #define IonArg_EffectMap0           Input_EffectMap0
             #define IonArg_EffectMap1           Input_EffectMap1
             #define IonArg_EffectMap2           Input_EffectMap2
@@ -288,9 +305,6 @@ Shader "Ion/IonObjectTransparent"
             #define IonArg_EffectMapInside      Input_EffectMapInside
 
             #define IonArg_VecMap0 Input_VecMap0
-            #define IonArg_VecMap1 Input_VecMap1
-            #define IonArg_VecMap2 Input_VecMap2
-            #define IonArg_VecMap3 Input_VecMap3
 
             #define Link_IonPassMainSimple
             #include "../IonCoreUnity.hlsl"
@@ -354,6 +368,8 @@ Shader "Ion/IonObjectTransparent"
             #include "../IonCoreUnity.hlsl"
             ENDHLSL
         }
+
+
     }
     //FallBack "Diffuse"
 

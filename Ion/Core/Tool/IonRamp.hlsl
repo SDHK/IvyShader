@@ -46,8 +46,15 @@ float IonRamp_Fresnel(float3 nrmWs, float3 viewDirWs, float softness)
 /// <returns>高光强度（0~1）</returns>
 float IonRamp_HighLight(float3 nrmWs,float3 lightDir, float softness)
 {
-    float dotNl = saturate(dot(nrmWs, lightDir)*0.5+0.5);
-    return pow(dotNl, 50 - softness * 50);
+    nrmWs = normalize(nrmWs);
+    float nh = saturate(dot(nrmWs, lightDir));
+    // softness 0=镜面, 1=粗糙；指数别落到 0
+    float specPower = exp2(lerp(15.0, 1, saturate(softness))); // ≈ 1024 → 2
+    // 或: lerp(512, 8, softness) 自己拧
+    float spec = pow(nh, specPower*0.5);
+    // 关键：越尖越亮（近似能量守恒）
+    spec *= (specPower ) * 0.125;  // 系数可调：0.5~0.25 之间试亮度
+    return saturate(spec); // 若觉得不够亮，可先不 saturate，后面再 tonemap
 }
 
 //===[背光边缘光]===

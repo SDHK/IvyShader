@@ -189,7 +189,7 @@ float3 IonEffect_StarNest(float3 map, float3 camOs, float near, float far,float2
 /// <param name="camOs">物体相机</param>
 /// <param name="depth">深度</param>
 /// <returns>返回计算后的颜色值</returns>
-float3 IonEffect_VolumeStar( float3 skyOsDirMap,float3 rgb, float3 camOs, float near, float far,float2 dir,float2 time = 0)
+float3 IonEffect_VolumeStar( float3 skyOsDirMap, float3 camOs, float near, float far,float2 dir,float2 time = 0)
 {
     // 归一化方向向量
     skyOsDirMap = normalize(skyOsDirMap);
@@ -223,7 +223,7 @@ float3 IonEffect_VolumeStar( float3 skyOsDirMap,float3 rgb, float3 camOs, float 
 /// <param name="camOs">物体相机</param>
 /// <param name="depth">深度</param>
 /// <returns>返回计算后的颜色值</returns>
-float3 IonEffect_VolumeCrystal(float3 skyOsDirMap,float3 rgb, float3 camOs, float near, float far,float2 dir,float2 time = 0)
+float3 IonEffect_VolumeCrystal(float3 skyOsDirMap, float3 camOs, float near, float far,float2 dir,float2 time = 0)
 {
     float3 pos;
     // 归一化方向向量

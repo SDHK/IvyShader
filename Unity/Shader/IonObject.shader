@@ -147,7 +147,7 @@ Shader "Ion/IonObject"
             #define IonArg_Color Input_OutlineColor
             #define IonArg_Scale Input_OutlineScale
             #define Link_IonPassOutline
-            #include "../IonCoreUnity.hlsl"
+            // #include "../IonCoreUnity.hlsl"
             ENDHLSL
         }
 

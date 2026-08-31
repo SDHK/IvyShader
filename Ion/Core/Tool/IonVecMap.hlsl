@@ -27,7 +27,6 @@ float3 IonVecMap_LookTo(float3 origin,float3 target)
     return (target - origin);
 }
 
-
 /// <summary>
 /// 天空盒效果
 /// </summary>
@@ -155,6 +154,74 @@ float3 IonVecMap_NrmPosVs(float3 nrmWs, float3 posOs)
     float3 vecPosVs = IonMatrix_VecWsToVs(vecPosWs);
     vecPosVs = normalize(vecPosVs);
     return vecVs + vecPosVs;
+}
+
+
+/// <summary>
+/// 将世界空间向量转到以 dirFrontWs 为前方的 look-at 坐标系
+/// （世界上为参考，无镜头 roll；MatCap 时 dirFrontWs 传点→相机）
+/// </summary>
+/// <param name="vecWs">世界空间向量（法线等；调用方宜先归一化）</param>
+/// <param name="dirFrontWs">新坐标系前方（建议归一化，建正交基需要）</param>
+/// <returns>look-at 空间向量，xy 可直接做 MatCap</returns>
+float3 IonVecMap_VecLookAt(float3 vecWs, float3 dirFrontWs)
+{
+    float3 v = vecWs;
+    float3 front = normalize(dirFrontWs);
+
+    float3 up = float3(0.0, 1.0, 0.0);
+    float3 right = cross(up, front);
+    float rightLen = length(right);
+    // 前方几乎平行世界 up（正上/正下）时换一个 up
+    if (rightLen < 1e-5)
+    {
+        up = float3(0.0, 0.0, 1.0);
+        right = cross(up, front);
+        rightLen = length(right);
+    }
+    right /= rightLen;
+    float3 upOrtho = cross(front, right);
+
+    return float3(
+        dot(v, right),
+        dot(v, upOrtho),
+        dot(v, front)
+    );
+}
+
+/// <summary>
+/// 用欧拉角旋转世界空间向量
+/// 约定：R = Rz * Ry * Rx（先 X 后 Y 后 Z）
+/// </summary>
+/// <param name="vecWs">被旋转的向量</param>
+/// <param name="eulerAngle">欧拉角（角度°），xyz = 绕 X/Y/Z 的转角</param>
+float3 IonVecMap_VecRotateEuler(float3 vecWs, float3 eulerAngle)
+{
+    float3 eulerRad = -eulerAngle * (3.14159265 / 180.0);
+    float cx = cos(eulerRad.x), sx = sin(eulerRad.x);
+    float cy = cos(eulerRad.y), sy = sin(eulerRad.y);
+    float cz = cos(eulerRad.z), sz = sin(eulerRad.z);
+
+
+    // R = Rz * Ry * Rx（先 X 后 Y 后 Z）
+    float3x3 Rx = float3x3(
+        1, 0, 0,
+        0, cx, -sx,
+        0, sx,  cx
+    );
+    float3x3 Ry = float3x3(
+         cy, 0, sy,
+          0, 1, 0,
+        -sy, 0, cy
+    );
+    float3x3 Rz = float3x3(
+        cz, -sz, 0,
+        sz,  cz, 0,
+         0,   0, 1
+    );
+
+    float3x3 R = mul(Rz, mul(Ry, Rx));
+    return mul(R, vecWs);
 }
 
 #endif

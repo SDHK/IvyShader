@@ -40,6 +40,7 @@ FragData vert(VertData vertData)
     FragData fragData;
     
     float3 position3 = vertData.PosOs.xyz + vertData.NrmOs * IonArg_Scale;
+    //float3 position3 = vertData.PosOs.xyz  * IonArg_Scale;
     float4 positionOs = float4(position3, vertData.PosOs.w);
     fragData.PosCs = IonShadowCaster_PositionCS(positionOs, vertData.NrmOs); 
     fragData.LightVector3 = IonShadowCaster_Vector(positionOs);

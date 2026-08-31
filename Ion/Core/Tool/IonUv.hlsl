@@ -11,6 +11,7 @@
 #define Def_IonUv_Tool
 
 
+
 // 2D坐标缩放偏移
 // float2 uv : 输入的二维坐标
 // float2 scale : 缩放值
@@ -20,6 +21,21 @@ float2 IonUv_Transform2D(float2 uv, float2 scale, float2 offset)
 {
     return uv * scale + offset;
 }
+
+/// <summary>
+/// 将方向/法线映射到方图 MatCap UV（1:1，中间为金属球那种）
+/// 输入应为视角空间（View Space）的方向或法线；用 xy 对应球正面圆盘
+/// </summary>
+/// <param name="dirVs">视角空间方向或法线</param>
+/// <returns>MatCap 贴图 UV [0,1]</returns>
+float2 IonUv_DirToMatCap(float3 dirVs)
+{
+    dirVs = normalize(dirVs);
+    // 可选：避免背面/极值撑出圆外（多数 MatCap 球在圆内）
+    // float2 xy = dirVs.xy / (dirVs.z + 1.0); // 另一种球面投影，一般不用
+    return dirVs.xy * 0.45 + 0.5;
+}
+
 
 /// <summary>
 /// 将方向向量映射到平面贴图坐标 
