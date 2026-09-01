@@ -24,6 +24,7 @@ float4 IonArg_SkinRgb30;
 float4 IonArg_SkinRgb31;
 
 float IonArg_LightInfluence;
+float IonArg_EnvLightInfluence;
 float IonArg_LightMin;
 float IonArg_LightMax;
 float IonArg_LightShadowMin;
@@ -210,12 +211,11 @@ FragOut Frag(FragIn fragIn)
     float emissiveWeight = saturate(emissiveMask * IonArg_EmissiveIntensity);
     //===[场景光照]================================================
     // 环境光球谐光照，晚上没有球谐光照。
-    half3 ambientLight = ShadeSH9(float4(nrmWs, 1));
-    ambientLight = lerp(IonMath_Luma(ambientLight), saturate(ambientLight), IonArg_LightInfluence);
-
-    //环境色影响未完。
-
-
+    half3 envLight = ShadeSH9(float4(nrmWs, 1));
+    // 环境光影响度
+    envLight = lerp(IonMath_Luma(envLight), envLight, IonArg_EnvLightInfluence);
+    // 环境光钳制，避免发光过亮导致溢出
+    envLight = clamp(envLight , IonArg_LightMin, IonArg_LightMax);
 
     // 主光源信息
     IonStruct_Light light = IonLight_MainLight(shadowCoord);
@@ -223,26 +223,24 @@ FragOut Frag(FragIn fragIn)
     half3 lightDir = light.Direction;
     float lightDistAtten = light.DistAtten;
     half lightShadowAtten = light.ShadowAtten;
-    // 光照钳制，避免发光过亮导致溢出
-    float sunUp = clamp(lightDir.y, 0 , 1);
-    half3 lightBaseRgb = clamp(lightRgb * sunUp, IonArg_LightMin, IonArg_LightMax);
+    // 光照钳制，避免发光过亮导致溢出,但y可能达不到1
+    float sunUp = clamp(lightDir.y, 0 , 1)*2;
+    half3 lightBaseRgb = clamp(lightRgb * sunUp,IonArg_LightMin, IonArg_LightMax);
 
-    // 环境光钳制，避免发光过亮导致溢出
-    ambientLight = clamp(ambientLight * sunUp , IonArg_LightMin, IonArg_LightMax);
 
     // 综合距离衰减和阴影衰减，得到最终光照颜色
     lightRgb = lightBaseRgb * lightDistAtten * lightShadowAtten;
-    // 计算光照亮度（灰度）
-    half lightLuma = IonMath_Luma(lightRgb);
     // 主体光照色影响度，防止过度受光源颜色调制
-    half3 mainLightRgb = lerp(lightLuma, saturate(lightRgb), IonArg_LightInfluence);
+    half3 mainLightRgb = lerp(IonMath_Luma(lightBaseRgb), lightBaseRgb, IonArg_LightInfluence);
+
 
     // 如果光线向下，则反转光线方向，让光线始终在上方，保证阴影效果
-    if( lightDir.y <= 0 )lightDir.y = -lightDir.y;
+    if(lightDir.y <= 0 )lightDir.y = -lightDir.y;
     // 当光线消失时，保持固定头顶方向以维持阴影效果
     if(length(lightDir) == 0)lightDir = float3(0,1,0);
 
-
+    // 计算光照亮度（灰度）
+    half lightLuma = IonMath_Luma(lightRgb);
     //===[变量]===================================================
     bool isFront = viewFace > 0.0;
     float3 camWs = IonParam_CameraPosWs;
@@ -372,21 +370,20 @@ FragOut Frag(FragIn fragIn)
     // 光照强度映射到指定范围，避免过暗或过亮
     lightLambrtGray  = lightLambrtGray  * (IonArg_LightMax - IonArg_LightShadowMin) + IonArg_LightShadowMin;
     //漫反射光照颜色（随光源方向变化）
-    half3 diffuseLight = skinRgb * (ambientLight + mainLightRgb * lightLambrtGray);
-    
+    half3 diffuseLight = envLight + mainLightRgb * lightLambrtGray;
     //===[附加光照]====================================
     //边缘光
     half rimRamp = IonRamp_Fresnel(nrmWs,dirPosToCamWs, IonArg_LightRimSoftness) * IonArg_RimIntensity;
-    half3 rimLight = rimRamp *skinRgb* mainLightRgb ;
+    half3 rimLight = rimRamp * mainLightRgb ;
     //背光
     half backRimRamp = IonRamp_BackRim(nrmWs, dirPosToCamWs, lightDir, IonArg_BackLightRimSoftness) * IonArg_BackRimIntensity ;
-    half3 backRimLight = backRimRamp *skinRgb* mainLightRgb ;
+    half3 backRimLight = backRimRamp * mainLightRgb ;
     //高光
     //half highLightRamp = IonRamp_HighLight(nrmWs, dirHighLight,IonArg_HighLightRimSoftness) * IonArg_HighLightIntensity;
-    //half3 highLight = highLightRamp * skinRgb * mainLightRgb * lightLambrtGray;
+    //half3 highLight = highLightRamp *  mainLightRgb * lightLambrtGray;
 
     half highLightRamp = IonRamp_HighLight(nrmWs, dirHighLight, IonArg_HighLightRimSoftness) * IonArg_HighLightIntensity;
-    half3 highLight = highLightRamp * skinRgb * mainLightRgb * lightLambrtGray;
+    half3 highLight = highLightRamp * mainLightRgb * lightLambrtGray;
 
 
     half3 addLight = rimLight + backRimLight + highLight;
@@ -491,25 +488,17 @@ FragOut Frag(FragIn fragIn)
     // 用 Metallic + Smoothness 覆盖原先 5 个参数（后面代码保持原样）
     float metal  = IonArg_Metallic;
     float smooth = IonArg_MetallicSmoothness; // 需在 Properties / 顶部声明；临时可先写死 float smooth = 0.8;
+    //粗糙度
     float rough  = 1.0 - smooth;
-    IonArg_MetalSmoothness = 1-IonArg_MetalSmoothness;//光滑度
-    //IonArg_MetalSmoothness          = rough;
-    //IonArg_MetalHighLightIntensity = smooth * smooth;
-    //IonArg_MetalReflectIntensity   = lerp(0.04, 1.0, metal) * lerp(0.25, 1.0, smooth);
-    //IonArg_MetalRimIntensity       = lerp(0.1, 0.8, metal) * lerp(0.5, 1.0, smooth);
-    // Probe 混合可先不动，或写死：
-    // IonArg_EnvMapInfluence  = 0; // 0=探针, 1=MatCap
-
-
-    // 1. 弱漫反射 + 环境底色
-    float3 metalDiffuse = skinRgb * ambientLight * (1-IonArg_MetalReflectIntensity);//IonArg_MetalDiffuseScale;
-    metalDiffuse += skinRgb * mainLightRgb * lightLambrtGray  *  (1-IonArg_MetalReflectIntensity);// IonArg_MetalDiffuseScale;
+    
+    IonArg_MetalHighLightIntensity = 1;
+    IonArg_MetalHighLightRimSoftness = lerp(0.0, 1.0, rough);
 
     // 2. 方向高光（Blinn-Phong）
     half metalHighLightRamp = IonRamp_HighLight(nrmWs, dirHighLight, IonArg_MetalHighLightRimSoftness) * IonArg_MetalHighLightIntensity;
-    half3 metalHighLight = metalHighLightRamp *  max(skinRgb,float3(0.2,0.2,0.2)) * mainLightRgb;
+    half3 metalHighLight = metalHighLightRamp * mainLightRgb;
 
-    float mip = IonArg_MetalSmoothness * 6.0; // 光滑度
+    float mip = rough * 8.0; // 光滑度
 
     //反射需要结合光照强度
     float3 metalReflect = 0;
@@ -531,24 +520,45 @@ FragOut Frag(FragIn fragIn)
 
     // 菲涅耳边缘反射
     float fresnelMetal = IonRamp_Fresnel(nrmWs,dirPosToCamWs, IonArg_MetalRimIntensity);
-    metalReflect = max(skinRgb,float3(0.2,0.2,0.2)) * metalReflect  * lerp(IonArg_MetalReflectIntensity, 1, fresnelMetal);
 
     // 4. 金属合成
-    half3 metalColor =  metalDiffuse + metalHighLight + metalReflect;
+    half3 metalColor = metalHighLight + metalReflect;
     
     //===[最终混合]=================================================
 
+    half notMetallic = 1.0 - IonArg_Metallic;
 
-    half3 dielectric = skinRgb *  diffuseLight + addLight;
+    // 金属高光可用 max(skinRgb,0.2) 防止暗色 albedo 高光过黑（保留原逻辑）
+    half3 specAlbedo = lerp(skinRgb, max(skinRgb, float3(0.2, 0.2, 0.2)), IonArg_Metallic);
 
+    //当金属光滑度为0时，仍然有漫反射
+    half minus = lerp(0.2,0.0,IonArg_MetallicSmoothness);
+    notMetallic = max(notMetallic, minus);
 
-    half3 finalColor = lerp(dielectric, metalColor, IonArg_Metallic);
-    //finalColor = metalColor;
-    //finalColor = lerp(finalColor, effectMapRgb , effectMapMask);
+    // ① 漫反射：金属 → 0
+    half3 diffusePart = skinRgb * diffuseLight * notMetallic ;
+    // ② NPR 附加：rim / 背光（不含 highLight，避免和主光高光重复）
+    half3 addPart = skinRgb *(rimLight + backRimLight) * notMetallic;
+    // 若希望金属仍有一点 rim：* lerp(1.0, 0.2, m)
 
+    // ③ 主光高光：dielectric ↔ metal 一条 lerp（都吃 shadow）
+    //half3 directSpec =specAlbedo* lerp(highLight, metalHighLight, IonArg_Metallic);
+     metalHighLight =specAlbedo* metalHighLight;
+
+    // ④ 环境反射：仅金属侧，× albedo，× 粗糙衰减
+    //粗糙衰减
+    float roughLuma = 1.0 / (rough * rough + 1.0);
+    half3 envSpec = skinRgb * metalReflect * roughLuma * IonArg_Metallic;
+
+    // ⑤ 合成
+    half3 finalColor = envSpec + diffusePart + addPart + metalHighLight  ;
+    finalColor =  envSpec;
+
+    //金属为粗糙时需要阴影，边缘反射为瓷器和塑料
+
+    //finalColor = diffusePart;
     // 后面最终混合处：
     FragOut fragOut;
-    //finalColor = lerp( bg , finalColor,finalAlpha);
     fragOut.TargetRgba = half4(finalColor, finalAlpha);
     return fragOut;
 

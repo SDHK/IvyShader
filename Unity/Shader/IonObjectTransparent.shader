@@ -54,6 +54,8 @@ Shader "Ion/IonObjectTransparent"
         Input_LightMin                  ("光照下限",                       Range(0,1))  = 0.1
         Input_LightMax 	                ("光照上限",                       Range(0,1))  = 0.9
         Input_LightInfluence            ("光照色影响",                       Range(0,1))  = 0.2
+        Input_EnvLightInfluence 	    ("环境光影响",                       Range(0,1))  = 1
+
         Input_LightShadowMin 	        ("光照阴影值",                       Range(0,1))  = 0.3
         Input_LightRampThreshold        ("光影阈值",                         Range(0,1)) = 0.5
         Input_LightRampSoftness         ("光影柔和度",                       Range(0,1)) = 0.25
@@ -246,6 +248,7 @@ Shader "Ion/IonObjectTransparent"
 
 
             #define IonArg_LightInfluence   Input_LightInfluence
+            #define IonArg_EnvLightInfluence   Input_EnvLightInfluence
             #define IonArg_LightMin        Input_LightMin
             #define IonArg_LightMax        Input_LightMax
             #define IonArg_LightShadowMin        Input_LightShadowMin
@@ -283,6 +286,7 @@ Shader "Ion/IonObjectTransparent"
 
             #define IonArg_Metallic              Input_Metallic
             #define IonArg_MetallicSmoothness    Input_MetallicSmoothness
+            
             #define IonArg_MetalRimIntensity    Input_MetalRimIntensity
             #define IonArg_MetalHighLightIntensity Input_MetalHighLightIntensity
             #define IonArg_MetalHighLightRimSoftness Input_MetalHighLightRimSoftness
