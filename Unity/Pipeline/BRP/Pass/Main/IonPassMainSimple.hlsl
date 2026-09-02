@@ -495,10 +495,12 @@ FragOut Frag(FragIn fragIn)
     metalReflect = lerp(metalReflect ,matCapReflect , IonArg_MatCapInfluence);
 
     // 菲涅耳边缘反射
+    half fresnelMetal = IonRamp_Fresnel(nrmWs, dirPosToCamWs, 0.5) ;
+
     float phaseUniform = saturate(IonArg_MetalRimIntensity * 2.0 - 1.0); // 0.5~1 → 0~1：均匀化
-    half fresnelRim = IonRamp_Lambert(nrmWs,dirPosToCamWs,0.5);
-    half fresnelMetal = 1-IonRamp_Gray(fresnelRim,  IonArg_MetalRimIntensity,0.5);
-    fresnelMetal = lerp(fresnelMetal , 1.0, phaseUniform);
+    half reflectRim = IonRamp_Lambert(nrmWs,dirPosToCamWs,0.5);
+    reflectRim = 1-IonRamp_Gray(reflectRim,  IonArg_MetalRimIntensity,0.5);
+    reflectRim = lerp( reflectRim , 1.0, phaseUniform);
 
 
     //===[最终混合]=================================================
@@ -506,14 +508,13 @@ FragOut Frag(FragIn fragIn)
     half notMetal = 1.0 - IonArg_Metal;
 
     // 金属高光可用 max(skinRgb,0.2) 防止暗色 albedo 高光过黑（保留原逻辑）
-    half3 specColor = lerp(half3(0.2, 0.2, 0.2), max(skinRgb,0.1), IonArg_Metal);
+    half3 specColor = lerp(half3(0.05, 0.05, 0.05), max(skinRgb,0.1), IonArg_Metal);
 
     // 粗糙度平方：光滑越低，越接近漫反射
     half metalRoughSquared = rough * rough;
 
     // 1 非金属漫反射
     half3 diffusePart = skinRgb * diffuseLight * notMetal;
-
 
     // 金属共用的漫射光照（已含 Metal）
     half3 metalLight = skinRgb * diffuseLight * IonArg_Metal;
@@ -522,7 +523,7 @@ FragOut Frag(FragIn fragIn)
     half roughDiffuseWeight = metalRoughSquared;
 
     // ② 光滑：菲涅尔弱的地方补漫射（填中心变黑），边缘留给 reflectSpec
-    half smoothCenterFillWeight = (1.0 - fresnelMetal) * IonArg_MetalSmoothness;
+    half smoothCenterFillWeight = (1.0 - reflectRim) * IonArg_MetalSmoothness;
 
     half3 metalDiffusePart = metalLight * (roughDiffuseWeight + smoothCenterFillWeight);
 
@@ -533,13 +534,13 @@ FragOut Frag(FragIn fragIn)
     half3 highLightPart = specColor * highLightRamp * mainLightRgb;
 
     // 5 环境反射
-    //粗糙衰减
-    float roughLuma = 1.0 / (metalRoughSquared + 1.0);
-    half metalEnvReflectWeight = (1.0 - metalRoughSquared) * IonArg_Metal;
-    half3 reflectSpec = specColor * metalReflect * fresnelMetal;//* roughLuma
+    float3 reflectSpec = metalReflect * lerp(skinRgb, 1, fresnelMetal) * reflectRim;
 
     //合成
-    half3 finalColor = diffusePart+ metalDiffusePart  + reflectSpec + addPart + highLightPart;
+    float3 finalColor = diffusePart+ metalDiffusePart + reflectSpec + addPart + highLightPart;
+    //finalColor = skinRgb * metalReflectLuma;
+
+
     FragOut fragOut;
     fragOut.TargetRgba = half4(finalColor, finalAlpha);
     return fragOut;
