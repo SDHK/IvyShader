@@ -9,6 +9,7 @@ Shader "Ion/DecalSimpleTopDown"
     {
         Tags { "Queue"="Transparent" "RenderType"="Transparent" }
 
+        //印花可以用于360度星空投影仪。
         //-------------------------------------------------------------------
         // 代理几何 = 场景里挂这个材质的 Cube
         // - Frag 仍然只跑在「Cube 三角形盖住的屏幕像素」上（没有无网格开像素）

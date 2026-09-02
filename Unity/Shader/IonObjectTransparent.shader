@@ -6,12 +6,14 @@ Shader "Ion/IonObjectTransparent"
 {
     Properties
     {
-        Input_MainTex            ("无用主材质",                        2D)     = "white" {}
+        
+        // Input_MainTex            ("无用主材质",                        2D)     = "white" {}
         [Space(20)]
-        Input_SkinMask0          ("颜色遮罩0",   2D)     = "white" {}
-        Input_SkinMask1          ("颜色遮罩1",   2D)     = "white" {}
-        Input_SkinMask2          ("颜色遮罩2",   2D)     = "white" {}
-        Input_SkinMask3          ("颜色遮罩3",   2D)     = "white" {}
+        Input_SkinMask0          ("花纹0",   2D)     = "white" {}
+        Input_SkinMask1          ("花纹1",   2D)     = "white" {}
+        Input_SkinMask2          ("花纹2",   2D)     = "white" {}
+        Input_SkinMask3          ("花纹3",   2D)     = "white" {}
+        
         [Space(20)]
         Input_EmissiveIntensity  ("自发光强度",                       Range(0,1))  = 0.1
         Input_EmissiveTex        ("自发光遮罩",       2D)     = "white" {}
@@ -66,22 +68,12 @@ Shader "Ion/IonObjectTransparent"
         [Space(10)]
         Input_BackRimIntensity      ("背光强度",                        Range(0,1))  = 0.25
         Input_BackLightRimSoftness  ("背光柔和度",                            Range(0,1)) = 0.5
-        [Space(10)]
-        Input_HighLightIntensity 	("高光强度",                        Range(0,1))  = 0.25
-        Input_HighLightRimSoftness  ("高光柔和度",                      Range(0,1)) = 0.5
-
     
         [Header(Metal)]
         [Space(10)]
-        Input_Metallic              ("金属度",              Range(0,1)) = 0
-        Input_MetallicSmoothness    ("金属光滑度",          Range(0,1)) = 0
-
+        Input_Metal              ("金属度",              Range(0,1)) = 0
+        Input_MetalSmoothness    ("金属光滑度",          Range(0,1)) = 0
         Input_MetalRimIntensity    ("边缘反射",            Range(0,1)) = 0
-        Input_MetalReflectIntensity ("反射强度",            Range(0,1)) = 0.8
-        Input_MetalHighLightIntensity("高光强度",            Range(0,1)) = 1
-        Input_MetalHighLightRimSoftness("高光柔和度",        Range(0,1)) = 0.5
-        
-        Input_MetalSmoothness        ("光滑度",              Range(0,1)) = 0.2
 
         [Space(20)]
         Input_EnvMapTex           ("环境反射图",         2D) = "gray" {}
@@ -281,17 +273,9 @@ Shader "Ion/IonObjectTransparent"
             #define IonArg_BackLightRimSoftness        Input_BackLightRimSoftness
             #define IonArg_BackRimIntensity    Input_BackRimIntensity
 
-            #define IonArg_HighLightRimSoftness     Input_HighLightRimSoftness
-            #define IonArg_HighLightIntensity       Input_HighLightIntensity
-
-            #define IonArg_Metallic              Input_Metallic
-            #define IonArg_MetallicSmoothness    Input_MetallicSmoothness
-            
+            #define IonArg_Metal              Input_Metal
+            #define IonArg_MetalSmoothness    Input_MetalSmoothness
             #define IonArg_MetalRimIntensity    Input_MetalRimIntensity
-            #define IonArg_MetalHighLightIntensity Input_MetalHighLightIntensity
-            #define IonArg_MetalHighLightRimSoftness Input_MetalHighLightRimSoftness
-            #define IonArg_MetalReflectIntensity Input_MetalReflectIntensity
-            #define IonArg_MetalSmoothness        Input_MetalSmoothness
 
             #define IonArg_MatCapTex            Input_MatCapTex
             #define IonArg_MatCapInfluence      Input_MatCapInfluence

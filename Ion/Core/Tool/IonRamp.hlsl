@@ -33,28 +33,38 @@ float3 IonRamp_Lambert(float3 nrmWs, float3 lightDirWs, float scale = 1.0)
 // float  return    - 菲涅耳强度（0~1）
 float IonRamp_Fresnel(float3 nrmWs, float3 viewDirWs, float softness)
 {
-    float dotNv = saturate(dot(nrmWs, viewDirWs));
-    return pow(1.0 - dotNv,20 - softness * 20);
+    float fresnel = 1.0 - saturate(dot(nrmWs, viewDirWs));
+    float power = lerp(12.0, 2.0, saturate(softness)); // 细边 → 宽边，但不均匀铺满
+    return pow(max(fresnel, 1e-5), power);
 }
 
 /// <summary>
-/// 计算高光强度
+/// 计算主光高光强度（Unity Standard 风格 GGX 分布项 D）
+/// 用法与原先 Blinn-Phong 版相同：传入法线、半程向量、softness，只换了曲线。
+/// 峰值可大于 1，亮度由调用方强度参数（如 MetalHighLightIntensity）控制，勿在此 saturate。
 /// </summary>
 /// <param name="nrmWs">世界空间法线（已归一化）</param>
-/// <param name="lightDir">光源方向（已归一化）</param>
-/// <param name="softness">边缘集中度（低=细窄，高=宽泛）</param>
-/// <returns>高光强度（0~1）</returns>
-float IonRamp_HighLight(float3 nrmWs,float3 lightDir, float softness)
+/// <param name="lightDir">半程向量 halfDir = normalize(lightDir + viewDir)（命名保留兼容，实际不是纯光源方向）</param>
+/// <param name="softness">感知粗糙度：0=镜面细窄，1=粗糙宽泛；对应 1 - MetallicSmoothness</param>
+/// <returns>GGX 分布强度（光滑时峰值可很大）</returns>
+float IonRamp_HighLight(float3 nrmWs, float3 lightDir, float softness)
 {
     nrmWs = normalize(nrmWs);
-    float nh = saturate(dot(nrmWs, lightDir));
-    // softness 0=镜面, 1=粗糙；指数别落到 0
-    float specPower = exp2(lerp(15.0, 1, saturate(softness))); // ≈ 1024 → 2
-    // 或: lerp(512, 8, softness) 自己拧
-    float spec = pow(nh, specPower*0.5);
-    // 关键：越尖越亮（近似能量守恒）
-    spec *= (specPower ) * 0.125;  // 系数可调：0.5~0.25 之间试亮度
-    return saturate(spec); // 若觉得不够亮，可先不 saturate，后面再 tonemap
+    float normalDotHalf = saturate(dot(nrmWs, lightDir));
+
+    // softness → 感知粗糙度；下限 0.05 接近旧 Blinn 最光宽度，避免低模露网格棱角
+    // （Unity 防除零用 0.002，会比旧版尖很多）
+    float perceptualRoughness = max(saturate(softness), 0.05);
+
+    // alpha = roughness^2（Unity perceptualRoughness → alpha 映射）
+    float roughnessAlpha = perceptualRoughness * perceptualRoughness;
+    float roughnessAlphaSquared = roughnessAlpha * roughnessAlpha;
+
+    // GGXTerm：D(N·H) = a^2 / (π * ((N·H)^2*(a^2-1)+1)^2)
+    float denominator = (normalDotHalf * roughnessAlphaSquared - normalDotHalf) * normalDotHalf + 1.0;
+    float ggxDistribution = roughnessAlphaSquared / (UNITY_PI * denominator * denominator + 1e-7);
+
+    return ggxDistribution;
 }
 
 //===[背光边缘光]===
