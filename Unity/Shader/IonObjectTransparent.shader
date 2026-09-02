@@ -71,9 +71,8 @@ Shader "Ion/IonObjectTransparent"
     
         [Header(Metal)]
         [Space(10)]
-        Input_Metal              ("金属度",              Range(0,1)) = 0
-        Input_MetalSmoothness    ("金属光滑度",          Range(0,1)) = 0
-        Input_MetalRimIntensity    ("边缘反射",            Range(0,1)) = 0
+        Input_MetalSmoothness      ("镜面柔和度",          Range(0,1)) = 0
+        Input_MetalRimIntensity    ("镜面强度",            Range(0,1)) = 0
 
         [Space(20)]
         Input_EnvMapTex           ("环境反射图",         2D) = "gray" {}
@@ -82,8 +81,6 @@ Shader "Ion/IonObjectTransparent"
         Input_MatCapTex             ("MatCap",               2D) = "gray" {}
         Input_MatCapInfluence       ("MatCap混合",            Range(0,1)) = 0.5       
 
-        //Input_MetalDiffuseScale     ("金属漫反射比例",          Range(0,1)) = 0.05
-       
         [Space(20)]
         [Header(Null Star3d Crystal3d Star2d)]
         [IntRange] Input_EffectMap  ("特效",                Range(0,3))     = 0
@@ -273,7 +270,6 @@ Shader "Ion/IonObjectTransparent"
             #define IonArg_BackLightRimSoftness        Input_BackLightRimSoftness
             #define IonArg_BackRimIntensity    Input_BackRimIntensity
 
-            #define IonArg_Metal              Input_Metal
             #define IonArg_MetalSmoothness    Input_MetalSmoothness
             #define IonArg_MetalRimIntensity    Input_MetalRimIntensity
 
@@ -282,8 +278,6 @@ Shader "Ion/IonObjectTransparent"
             
             #define IonArg_EnvMapTex           Input_EnvMapTex
             #define IonArg_EnvMapInfluence   Input_EnvMapInfluence
-
-            #define IonArg_MetalDiffuseScale     Input_MetalDiffuseScale
 
             #define IonArg_EffectMap            Input_EffectMap
             #define IonArg_EffectMap0           Input_EffectMap0

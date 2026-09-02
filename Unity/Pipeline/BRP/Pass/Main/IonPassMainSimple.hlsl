@@ -69,7 +69,6 @@ float IonArg_BackRimIntensity;// 背光强度（0=关闭）
 float IonArg_BackLightRimSoftness;// 边缘集中度（建议 2~8）
 
 
-float IonArg_Metal;
 float IonArg_MetalSmoothness;
 float IonArg_MetalRimIntensity;
 
@@ -79,8 +78,6 @@ float IonArg_EnvMapInfluence;
 
 sampler2D IonArg_MatCapTex;
 float IonArg_MatCapInfluence;
-
-float IonArg_MetalDiffuseScale;
 
 // 特效图
 int IonArg_EffectMap0;
@@ -505,19 +502,17 @@ FragOut Frag(FragIn fragIn)
 
     //===[最终混合]=================================================
 
-    half notMetal = 1.0 - IonArg_Metal;
-
     // 金属高光可用 max(skinRgb,0.2) 防止暗色 albedo 高光过黑（保留原逻辑）
-    half3 specColor = lerp(half3(0.05, 0.05, 0.05), max(skinRgb,0.1), IonArg_Metal);
+    half3 specColor =  max(skinRgb,0.1);
+
+    // NPR 附加：rim / 背光（不含 highLight，避免和主光高光重复）
+    half3 addPart = specColor * addLight;//*notMetal 光滑度代替。
 
     // 粗糙度平方：光滑越低，越接近漫反射
     half metalRoughSquared = rough * rough;
 
-    // 1 非金属漫反射
-    half3 diffusePart = skinRgb * diffuseLight * notMetal;
-
     // 金属共用的漫射光照（已含 Metal）
-    half3 metalLight = skinRgb * diffuseLight * IonArg_Metal;
+    half3 metalLight = skinRgb * diffuseLight;// * IonArg_Metal
 
     // ① 粗糙：整面漫射底
     half roughDiffuseWeight = metalRoughSquared;
@@ -527,9 +522,6 @@ FragOut Frag(FragIn fragIn)
 
     half3 metalDiffusePart = metalLight * (roughDiffuseWeight + smoothCenterFillWeight);
 
-    // 3 NPR 附加：rim / 背光（不含 highLight，避免和主光高光重复）
-    half3 addPart = specColor * addLight * notMetal;
-
     // 4 直射 spec：金属/非金属共用，不再 specAlbedo * metalHighLight
     half3 highLightPart = specColor * highLightRamp * mainLightRgb;
 
@@ -537,9 +529,7 @@ FragOut Frag(FragIn fragIn)
     float3 reflectSpec = metalReflect * lerp(skinRgb, 1, fresnelMetal) * reflectRim;
 
     //合成
-    float3 finalColor = diffusePart+ metalDiffusePart + reflectSpec + addPart + highLightPart;
-    //finalColor = skinRgb * metalReflectLuma;
-
+    float3 finalColor =  metalDiffusePart + reflectSpec + addPart + highLightPart;//diffusePart+
 
     FragOut fragOut;
     fragOut.TargetRgba = half4(finalColor, finalAlpha);
