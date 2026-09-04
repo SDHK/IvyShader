@@ -69,8 +69,8 @@ float IonArg_BackRimIntensity;// 背光强度（0=关闭）
 float IonArg_BackLightRimSoftness;// 边缘集中度（建议 2~8）
 
 
-float IonArg_MetalSmoothness;
-float IonArg_MetalRimIntensity;
+float IonArg_ReflectSmoothness;
+float IonArg_ReflectIntensity;
 
 // 金属环境贴图（CubeMap 和 2D equirectangular）
 sampler2D IonArg_EnvMapTex;
@@ -184,6 +184,13 @@ FragOut Frag(FragIn fragIn)
     float4 shadowCoord = fragIn.VertOut.ShadowCoord;
     float4 grabPos = fragIn.VertOut.GrabPos;
     float viewFace = fragIn.ViewFace;
+    bool isFront = viewFace > 0.0;
+
+    if(!isFront)
+    {
+        nrmOs = -nrmOs;
+        nrmWs = -nrmWs;
+    }
 
     //===[透镜折射效果]===================================================
     float2 grabUV = grabPos.xy / grabPos.w;
@@ -232,7 +239,6 @@ FragOut Frag(FragIn fragIn)
     // 计算光照亮度（灰度）
     half lightLuma = IonMath_Luma(lightRgb);
     //===[变量]===================================================
-    bool isFront = viewFace > 0.0;
     float3 camWs = IonParam_CameraPosWs;
     float3 camOs = IonMatrix_PosWsToOs(camWs);
     float3 objWs = IonMatrix_PosOsToWs(float3(0, 0, 0));
@@ -312,6 +318,7 @@ FragOut Frag(FragIn fragIn)
     skinMaskLuma = IonMath_Luma(skinMask.rgb);// * skinMask.a
     //渐变着色
     skinRgb = lerp(skinRgb0.rgb, skinRgb1.rgb,  skinMaskLuma);
+
     //最终透明度
     finalAlpha = skinMask.a;
 
@@ -320,7 +327,7 @@ FragOut Frag(FragIn fragIn)
     half3 skinHsv = IonMath_RgbToHsv(skinRgb);
     //渐变基准色
     half3 skinRampHsv = IonMath_RgbToHsv(IonArg_RampRgbBase.rgb);
-
+    float3 skinRgbTest = 0;
     //===[边缘光颜色]====================================
     if(IonArg_SkinRampToggle != 0)
     {
@@ -338,6 +345,9 @@ FragOut Frag(FragIn fragIn)
         skinObjRampRgb0, IonArg_SkinObjRampThreshold0, IonArg_SkinObjRampSoftness,
         skinRgb, 1 - IonArg_SkinObjRampThreshold1, IonArg_SkinObjRampSoftness,
         skinObjRampRgb1);
+
+        //skinRgbTest = skinObjRampLambert;
+
 
         //重新计算当前皮肤色
         skinHsv = IonMath_RgbToHsv(skinRgb);
@@ -470,9 +480,9 @@ FragOut Frag(FragIn fragIn)
     //金属为粗糙时需要阴影，边缘反射为瓷器和塑料
     //===[金属]=====================================================
     //粗糙度
-    half rough  = 1.0 - IonArg_MetalSmoothness;
+    half rough  = 1.0 - IonArg_ReflectSmoothness;
 
-    // 2. 方向高光（Blinn-Phong）
+    //  方向高光（Blinn-Phong）
     //高光遮罩
     half highLightFacingMask = IonRamp_Lambert(nrmWs, lightDir);
     half highLightRamp = IonRamp_HighLight(nrmWs, dirHighLight, rough) * highLightFacingMask;
@@ -494,45 +504,31 @@ FragOut Frag(FragIn fragIn)
     // 菲涅耳边缘反射
     half fresnelMetal = IonRamp_Fresnel(nrmWs, dirPosToCamWs, 0.5) ;
 
-    float phaseUniform = saturate(IonArg_MetalRimIntensity * 2.0 - 1.0); // 0.5~1 → 0~1：均匀化
+    float phaseUniform = saturate(IonArg_ReflectIntensity * 2.0 - 1.0); // 0.5~1 → 0~1：均匀化
     half reflectRim = IonRamp_Lambert(nrmWs,dirPosToCamWs,0.5);
-    reflectRim = 1-IonRamp_Gray(reflectRim,  IonArg_MetalRimIntensity,0.5);
+    reflectRim = 1-IonRamp_Gray(reflectRim,  IonArg_ReflectIntensity,0.5);
     reflectRim = lerp( reflectRim , 1.0, phaseUniform);
-
-
-    //===[最终混合]=================================================
 
     // 金属高光可用 max(skinRgb,0.2) 防止暗色 albedo 高光过黑（保留原逻辑）
     half3 specColor =  max(skinRgb,0.1);
-
     // NPR 附加：rim / 背光（不含 highLight，避免和主光高光重复）
     half3 addPart = specColor * addLight;//*notMetal 光滑度代替。
-
-    // 粗糙度平方：光滑越低，越接近漫反射
-    half metalRoughSquared = rough * rough;
-
     // 金属共用的漫射光照（已含 Metal）
-    half3 metalLight = skinRgb * diffuseLight;// * IonArg_Metal
-
-    // ① 粗糙：整面漫射底
-    half roughDiffuseWeight = metalRoughSquared;
-
-    // ② 光滑：菲涅尔弱的地方补漫射（填中心变黑），边缘留给 reflectSpec
-    half smoothCenterFillWeight = (1.0 - reflectRim) * IonArg_MetalSmoothness;
-
+    half3 metalLight = skinRgb * diffuseLight;
+    //粗糙：整面漫射底
+    half roughDiffuseWeight = rough * rough;
+    //光滑：菲涅尔弱的地方补漫射（填中心变黑），边缘留给 reflectSpec
+    half smoothCenterFillWeight = (1.0 - reflectRim) * IonArg_ReflectSmoothness;
     half3 metalDiffusePart = metalLight * (roughDiffuseWeight + smoothCenterFillWeight);
-
     // 4 直射 spec：金属/非金属共用，不再 specAlbedo * metalHighLight
     half3 highLightPart = specColor * highLightRamp * mainLightRgb;
-
     // 5 环境反射
     float3 reflectSpec = metalReflect * lerp(skinRgb, 1, fresnelMetal) * reflectRim;
-
-    //合成
-    float3 finalColor =  metalDiffusePart + reflectSpec + addPart + highLightPart;//diffusePart+
+    float3 finalColor =  metalDiffusePart + reflectSpec + addPart + highLightPart;
 
     FragOut fragOut;
-    fragOut.TargetRgba = half4(finalColor, finalAlpha);
+    fragOut.TargetRgba = half4(finalColor, 1);
+    //fragOut.TargetRgba = half4(skinRgbTest.rgb, 0.5);
     return fragOut;
 
 }

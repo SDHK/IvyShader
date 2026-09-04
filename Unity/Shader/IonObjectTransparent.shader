@@ -6,6 +6,7 @@ Shader "Ion/IonObjectTransparent"
 {
     Properties
     {
+        [Header(Ion)]
         
         // Input_MainTex            ("无用主材质",                        2D)     = "white" {}
         [Space(20)]
@@ -69,10 +70,10 @@ Shader "Ion/IonObjectTransparent"
         Input_BackRimIntensity      ("背光强度",                        Range(0,1))  = 0.25
         Input_BackLightRimSoftness  ("背光柔和度",                            Range(0,1)) = 0.5
     
-        [Header(Metal)]
         [Space(10)]
-        Input_MetalSmoothness      ("镜面柔和度",          Range(0,1)) = 0
-        Input_MetalRimIntensity    ("镜面强度",            Range(0,1)) = 0
+        Input_ReflectIntensity       ("反射强度",            Range(0,1)) = 0
+        Input_ReflectSmoothness      ("反射光滑度",          Range(0,1)) = 0
+
 
         [Space(20)]
         Input_EnvMapTex           ("环境反射图",         2D) = "gray" {}
@@ -183,108 +184,108 @@ Shader "Ion/IonObjectTransparent"
 
         // ===[深度预写 Pass]===
         // 先把前面深度写入缓冲区，内部面 ZTest 时失败，不会错误覆盖外面。
-        Pass
-        {
-            Name "DEPTH_PREPASS"
-            Tags { "LightMode" = "Always" }
-            Cull Off
-            ZWrite On
-            ColorMask 0
-            HLSLPROGRAM
-            // #define IonArg_MainTex    Input_MainTex
-            #define IonArg_MainTex_ST Input_MainTex_ST
-            #define IonArg_Cutoff     Input_Cutoff
-            #define Link_IonPassDepthPre
-            #include "../IonCoreUnity.hlsl"
-            ENDHLSL
-        }
+        // Pass
+        // {
+        //     Name "DEPTH_PREPASS"
+        //     Tags { "LightMode" = "Always" }
+        //     Cull Off
+        //     ZWrite On
+        //     ColorMask 0
+        //     HLSLPROGRAM
+        //     // #define IonArg_MainTex    Input_MainTex
+        //     #define IonArg_MainTex_ST Input_MainTex_ST
+        //     #define IonArg_Cutoff     Input_Cutoff
+        //     #define Link_IonPassDepthPre
+        //     #include "../IonCoreUnity.hlsl"
+        //     ENDHLSL
+        // } //开启后内部消失
 
 
 
         // ===[GrabPass]===
         GrabPass { "IonArg_GrabTexture" }
         // ===[主光照 ForwardBase]===
+
         Pass
         {
             Name "FORWARD"
             Tags { "LightMode" = "ForwardBase" }
-            Cull Off  
-
             ZWrite On
-            // ZTest Always
+            Cull Off  
+            // Cull Back
+            // Cull Front
+            // ZWrite Off
             ZTest LEqual
-            //Offset 0, -1    // 固定单位偏移（不含斜率项），轻推深度避免 Z-Fighting
             Blend SrcAlpha OneMinusSrcAlpha
 
             HLSLPROGRAM
 
             // #define IonArg_MainTex           Input_MainTex
-            #define IonArg_MainTex_ST        Input_MainTex_ST
+            #define IonArg_MainTex_ST                   Input_MainTex_ST
 
-            #define IonArg_SkinMask0         Input_SkinMask0
-            #define IonArg_SkinMask1         Input_SkinMask1
-            #define IonArg_SkinMask2         Input_SkinMask2
-            #define IonArg_SkinMask3         Input_SkinMask3
+            #define IonArg_SkinMask0                    Input_SkinMask0
+            #define IonArg_SkinMask1                    Input_SkinMask1
+            #define IonArg_SkinMask2                    Input_SkinMask2
+            #define IonArg_SkinMask3                    Input_SkinMask3
 
-            #define IonArg_SkinRgb00          Input_SkinRgb00
-            #define IonArg_SkinRgb01		  Input_SkinRgb01
-            #define IonArg_SkinRgb10          Input_SkinRgb10
-            #define IonArg_SkinRgb11          Input_SkinRgb11
-            #define IonArg_SkinRgb20          Input_SkinRgb20
-            #define IonArg_SkinRgb21          Input_SkinRgb21
-            #define IonArg_SkinRgb30          Input_SkinRgb30
-            #define IonArg_SkinRgb31          Input_SkinRgb31
+            #define IonArg_SkinRgb00                    Input_SkinRgb00
+            #define IonArg_SkinRgb01                    Input_SkinRgb01
+            #define IonArg_SkinRgb10                    Input_SkinRgb10
+            #define IonArg_SkinRgb11                    Input_SkinRgb11
+            #define IonArg_SkinRgb20                    Input_SkinRgb20
+            #define IonArg_SkinRgb21                    Input_SkinRgb21
+            #define IonArg_SkinRgb30                    Input_SkinRgb30
+            #define IonArg_SkinRgb31                    Input_SkinRgb31
 
 
-            #define IonArg_LightInfluence   Input_LightInfluence
-            #define IonArg_EnvLightInfluence   Input_EnvLightInfluence
-            #define IonArg_LightMin        Input_LightMin
-            #define IonArg_LightMax        Input_LightMax
-            #define IonArg_LightShadowMin        Input_LightShadowMin
+            #define IonArg_LightInfluence               Input_LightInfluence
+            #define IonArg_EnvLightInfluence            Input_EnvLightInfluence
+            #define IonArg_LightMin                     Input_LightMin
+            #define IonArg_LightMax                     Input_LightMax
+            #define IonArg_LightShadowMin               Input_LightShadowMin
 
-            #define IonArg_EmissiveTex        Input_EmissiveTex
-            #define IonArg_EmissiveIntensity  Input_EmissiveIntensity
+            #define IonArg_EmissiveTex                  Input_EmissiveTex
+            #define IonArg_EmissiveIntensity            Input_EmissiveIntensity
+            #define IonArg_SkinRampToggle               Input_SkinRampToggle
+            #define IonArg_StarNestEnable               Input_StarNestEnable
+            #define IonArg_SkinObjRampPos               Input_SkinObjRampPos
+            #define IonArg_RampRgbBase                  Input_RampRgbBase
+            #define IonArg_SkinViewRampRgb0             Input_SkinViewRampRgb0
+            #define IonArg_SkinViewRampRgb1             Input_SkinViewRampRgb1
 
-            #define IonArg_SkinRampToggle       Input_SkinRampToggle
-            #define IonArg_StarNestEnable       Input_StarNestEnable
-            #define IonArg_SkinObjRampPos        Input_SkinObjRampPos
-            #define IonArg_RampRgbBase     Input_RampRgbBase
-            #define IonArg_SkinViewRampRgb0              Input_SkinViewRampRgb0
-            #define IonArg_SkinViewRampRgb1              Input_SkinViewRampRgb1
+            #define IonArg_SkinObjRampRgb0              Input_SkinObjRampRgb0
+            #define IonArg_SkinObjRampRgb1              Input_SkinObjRampRgb1
+            #define IonArg_SkinObjRampThreshold0        Input_SkinObjRampThreshold0
+            #define IonArg_SkinObjRampThreshold1        Input_SkinObjRampThreshold1
+            #define IonArg_SkinObjRampSoftness          Input_SkinObjRampSoftness
+            #define IonArg_SkinViewRampThreshold0       Input_SkinViewRampThreshold0
+            #define IonArg_SkinViewRampThreshold1       Input_SkinViewRampThreshold1
+            #define IonArg_SkinViewRampSoftness         Input_SkinViewRampSoftness
 
-            #define IonArg_SkinObjRampRgb0     Input_SkinObjRampRgb0
-            #define IonArg_SkinObjRampRgb1     Input_SkinObjRampRgb1
-            #define IonArg_SkinObjRampThreshold0 Input_SkinObjRampThreshold0
-            #define IonArg_SkinObjRampThreshold1 Input_SkinObjRampThreshold1
-            #define IonArg_SkinObjRampSoftness  Input_SkinObjRampSoftness
-            #define IonArg_SkinViewRampThreshold0  Input_SkinViewRampThreshold0
-            #define IonArg_SkinViewRampThreshold1  Input_SkinViewRampThreshold1
-            #define IonArg_SkinViewRampSoftness      Input_SkinViewRampSoftness
+            #define IonArg_LightRampThreshold           Input_LightRampThreshold
+            #define IonArg_LightRampSoftness            Input_LightRampSoftness
 
-            #define IonArg_LightRampThreshold  Input_LightRampThreshold
-            #define IonArg_LightRampSoftness   Input_LightRampSoftness
+            #define IonArg_LightRimSoftness             Input_LightRimSoftness
+            #define IonArg_RimIntensity                 Input_RimIntensity
 
-            #define IonArg_LightRimSoftness           Input_LightRimSoftness
-            #define IonArg_RimIntensity       Input_RimIntensity
+            #define IonArg_BackLightRimSoftness         Input_BackLightRimSoftness
+            #define IonArg_BackRimIntensity             Input_BackRimIntensity
 
-            #define IonArg_BackLightRimSoftness        Input_BackLightRimSoftness
-            #define IonArg_BackRimIntensity    Input_BackRimIntensity
+            #define IonArg_ReflectSmoothness            Input_ReflectSmoothness
+            #define IonArg_ReflectIntensity             Input_ReflectIntensity
 
-            #define IonArg_MetalSmoothness    Input_MetalSmoothness
-            #define IonArg_MetalRimIntensity    Input_MetalRimIntensity
-
-            #define IonArg_MatCapTex            Input_MatCapTex
-            #define IonArg_MatCapInfluence      Input_MatCapInfluence
+            #define IonArg_MatCapTex                    Input_MatCapTex
+            #define IonArg_MatCapInfluence              Input_MatCapInfluence
             
-            #define IonArg_EnvMapTex           Input_EnvMapTex
-            #define IonArg_EnvMapInfluence   Input_EnvMapInfluence
+            #define IonArg_EnvMapTex                    Input_EnvMapTex
+            #define IonArg_EnvMapInfluence              Input_EnvMapInfluence
 
-            #define IonArg_EffectMap            Input_EffectMap
-            #define IonArg_EffectMap0           Input_EffectMap0
-            #define IonArg_EffectMap1           Input_EffectMap1
-            #define IonArg_EffectMap2           Input_EffectMap2
-            #define IonArg_EffectMap3           Input_EffectMap3
-            #define IonArg_EffectMapInside      Input_EffectMapInside
+            #define IonArg_EffectMap                    Input_EffectMap
+            #define IonArg_EffectMap0                   Input_EffectMap0
+            #define IonArg_EffectMap1                   Input_EffectMap1
+            #define IonArg_EffectMap2                   Input_EffectMap2
+            #define IonArg_EffectMap3                   Input_EffectMap3
+            #define IonArg_EffectMapInside              Input_EffectMapInside
 
             #define IonArg_VecMap0 Input_VecMap0
 
