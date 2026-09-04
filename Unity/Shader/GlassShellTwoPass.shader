@@ -1,4 +1,4 @@
-Shader "Ion/GlassShellTwoPass"
+Shader "Ivy/GlassShellTwoPass"
 {
     Properties
     {
@@ -34,7 +34,7 @@ Shader "Ion/GlassShellTwoPass"
 
         // 抓屏，给透镜折射用。带名字表示每帧只抓一次、多个玻璃共享。
         // 注意抓到的只有本物体之前绘制的内容，所以玻璃看不到自己的内壁和其他半透明物体。
-        GrabPass { "IonArg_GlassGrabTex" }
+        GrabPass { "IvyArg_GlassGrabTex" }
 
         // 内外壁共用这一份代码，靠片元的 SV_IsFrontFace 区分正背面，
         // 所以下面两个 Pass 只差 Cull 方向。
@@ -56,36 +56,36 @@ Shader "Ion/GlassShellTwoPass"
         float  Input_SpecIntensity;
         float  Input_ReflectIntensity;
 
-        sampler2D IonArg_GlassGrabTex;
+        sampler2D IvyArg_GlassGrabTex;
 
         // 玻璃折射率。物理常数，不作为参数暴露：1.0 等于关闭透镜，1.5 就是普通玻璃。
-        #define IonDef_GlassIor 1.5
+        #define IvyDef_GlassIor 1.5
 
         // 光谱采样次数。只拆 R/G/B 三份的话，通道之间会漏出品红和青色，
         // 看起来像 RGB 错位的故障效果；沿光谱多采几次再按波长权重累加，
         // 才会出现宝石那种连续的火彩。
-        #define IonDef_SpectrumSteps 6
+        #define IvyDef_SpectrumSteps 6
 
         // 色散强度为 1 时折射率上下各偏多少。真实宝石很小（钻石约 2%），
         // 这里放大到 15%，否则实时下几乎看不出火彩。
-        #define IonDef_DispersionSpread 0.3
+        #define IvyDef_DispersionSpread 0.3
 
         // 表面薄膜的折射率，取水膜的 1.33。
-        #define IonDef_FilmIor 1.33
+        #define IvyDef_FilmIor 1.33
         // 基准膜厚，单位纳米。420nm 差不多正好跨一个干涉级次，
         // 再厚色相震荡就会快过像素采样能力，出现摩尔纹和闪烁。
-        #define IonDef_FilmThicknessNm 420.0
+        #define IvyDef_FilmThicknessNm 420.0
         // 顶薄底厚的厚度起伏比例，模拟重力让膜液下沉。
-        #define IonDef_FilmVariation 0.55
+        #define IvyDef_FilmVariation 0.55
 
-        struct IonAttr_Glass
+        struct IvyAttr_Glass
         {
             float4 PosOs : POSITION;
             float3 NrmOs : NORMAL;
             UNITY_VERTEX_INPUT_INSTANCE_ID
         };
 
-        struct IonVary_Glass
+        struct IvyVary_Glass
         {
             float4 PosCs     : SV_POSITION;
             float3 NrmWs     : TEXCOORD0;
@@ -95,11 +95,11 @@ Shader "Ion/GlassShellTwoPass"
             UNITY_VERTEX_OUTPUT_STEREO
         };
 
-        IonVary_Glass IonVert_Glass(IonAttr_Glass attr)
+        IvyVary_Glass IvyVert_Glass(IvyAttr_Glass attr)
         {
-            IonVary_Glass vary;
+            IvyVary_Glass vary;
             UNITY_SETUP_INSTANCE_ID(attr);
-            UNITY_INITIALIZE_OUTPUT(IonVary_Glass, vary);
+            UNITY_INITIALIZE_OUTPUT(IvyVary_Glass, vary);
             UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(vary);
 
             vary.PosCs = UnityObjectToClipPos(attr.PosOs);
@@ -113,12 +113,12 @@ Shader "Ion/GlassShellTwoPass"
             // 薄膜厚度。真实泡泡受重力影响顶薄底厚，用物体空间的归一化高度做梯度：
             // 它跟着物体走，不会因为角色移动而游移，也与物体缩放无关。
             half heightFactor = attr.PosOs.y / max(length(attr.PosOs.xyz), 1e-4);
-            vary.FilmThick = IonDef_FilmThicknessNm * (1.0 + heightFactor * IonDef_FilmVariation);
+            vary.FilmThick = IvyDef_FilmThicknessNm * (1.0 + heightFactor * IvyDef_FilmVariation);
             return vary;
         }
 
         // 环境图采样。用显式 LOD，所以放在分支里也不会因为缺少屏幕导数出问题。
-        half3 IonEnvRgb_Glass(half3 dirWs, half lod)
+        half3 IvyEnvRgb_Glass(half3 dirWs, half lod)
         {
             half4 raw = UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, dirWs, lod);
             return DecodeHDR(raw, unity_SpecCube0_HDR);
@@ -127,19 +127,19 @@ Shader "Ion/GlassShellTwoPass"
         // 透镜折射后的背景。做法是沿折射方向往前走一段，再把落点投影回屏幕取抓屏，
         // 透视、FOV、单眼渲染全部由 VP 矩阵和 ComputeGrabScreenPos 自己处理，
         // 所以不需要任何经验系数；折射率等于 1 时落点就在原视线上，偏移自动为 0。
-        half3 IonLensBg_Glass(half3 posWs, half3 refrWs, half march)
+        half3 IvyLensBg_Glass(half3 posWs, half3 refrWs, half march)
         {
             float4 posCs   = mul(UNITY_MATRIX_VP, float4(posWs + refrWs * march, 1.0));
             float4 grabPos = ComputeGrabScreenPos(posCs);
             // 显式 LOD，这样放在分支里也不依赖屏幕导数（抓屏本来也没有 mip）
             float2 grabUv  = grabPos.xy / max(grabPos.w, 1e-5);
-            return tex2Dlod(IonArg_GlassGrabTex, float4(grabUv, 0, 0)).rgb;
+            return tex2Dlod(IvyArg_GlassGrabTex, float4(grabUv, 0, 0)).rgb;
         }
 
         // 波长到 RGB 的粗略响应。t = 0 是红端，t = 1 是紫端。
         // 三条钟形曲线故意留出重叠，中间才会过渡出黄和青；
         // 不重叠就退化成红绿蓝三条硬边，那就是廉价的 RGB 错位感。
-        half3 IonSpectrumWeight_Glass(half t)
+        half3 IvySpectrumWeight_Glass(half t)
         {
             return saturate(1.0 - abs(t - half3(0.0, 0.5, 1.0)) * 1.4);
         }
@@ -147,20 +147,20 @@ Shader "Ion/GlassShellTwoPass"
         // 宝石火彩。折射率随波长变化（长波折射率低、短波高），每个波长的折射方向
         // 就不一样，沿光谱逐个采样再按权重累加，出射时便分离成彩色。
         // 这是宝石色散和"轮廓彩边"的本质区别：它长在折射路径里，出现在石身内部。
-        half3 IonLensFire_Glass(half3 posWs, half3 viewWs, half3 nrmLens, half march, half dispersion)
+        half3 IvyLensFire_Glass(half3 posWs, half3 viewWs, half3 nrmLens, half march, half dispersion)
         {
             half3 sumRgb = 0.0;
             half3 sumW   = 0.0;
 
             [unroll]
-            for (int s = 0; s < IonDef_SpectrumSteps; s++)
+            for (int s = 0; s < IvyDef_SpectrumSteps; s++)
             {
-                half  t   = (s + 0.5) / IonDef_SpectrumSteps;
-                half  ior = IonDef_GlassIor * (1.0 + (t - 0.5) * dispersion * IonDef_DispersionSpread);
+                half  t   = (s + 0.5) / IvyDef_SpectrumSteps;
+                half  ior = IvyDef_GlassIor * (1.0 + (t - 0.5) * dispersion * IvyDef_DispersionSpread);
                 half3 dir = refract(-viewWs, nrmLens, 1.0 / ior);
 
-                half3 w = IonSpectrumWeight_Glass(t);
-                sumRgb += IonLensBg_Glass(posWs, dir, march) * w;
+                half3 w = IvySpectrumWeight_Glass(t);
+                sumRgb += IvyLensBg_Glass(posWs, dir, march) * w;
                 sumW   += w;
             }
             return sumRgb / max(sumW, 1e-4);
@@ -170,14 +170,14 @@ Shader "Ion/GlassShellTwoPass"
         // 与波长同量级时发生干涉，某些波长被增强、某些被抵消。
         // 这跟色散是两套物理：色散是折射角随波长变化，这里是反射光自己干涉，
         // 所以它作用在表面反射上，不需要知道物体背后有什么，也就不用采样抓屏。
-        half3 IonThinFilm_Glass(half ndotv, half thicknessNm)
+        half3 IvyThinFilm_Glass(half ndotv, half thicknessNm)
         {
             // 斯涅尔定律求膜内折射角。掠射时膜内路径变长，色相会随视角推移。
-            half sinT2 = (1.0 - ndotv * ndotv) / (IonDef_FilmIor * IonDef_FilmIor);
+            half sinT2 = (1.0 - ndotv * ndotv) / (IvyDef_FilmIor * IvyDef_FilmIor);
             half cosT  = sqrt(saturate(1.0 - sinT2));
 
             // 光程差：在膜内往返一次的几何路径乘膜的折射率
-            half opd = 2.0 * IonDef_FilmIor * thicknessNm * cosT;
+            half opd = 2.0 * IvyDef_FilmIor * thicknessNm * cosT;
 
             // RGB 各取一个代表波长（纳米）。干涉强度对每个波长是平滑的余弦，
             // 色相会自然循环，所以三点采样就够，不像色散必须沿光谱多采。
@@ -191,7 +191,7 @@ Shader "Ion/GlassShellTwoPass"
 
         // 输出预乘 Alpha（配合 Blend One OneMinusSrcAlpha），
         // 这样高光和环境反射是纯加光，不会被 Alpha 压暗。
-        half4 IonFrag_Glass(IonVary_Glass vary, bool isFront : SV_IsFrontFace) : SV_Target
+        half4 IvyFrag_Glass(IvyVary_Glass vary, bool isFront : SV_IsFrontFace) : SV_Target
         {
             UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(vary);
 
@@ -208,7 +208,7 @@ Shader "Ion/GlassShellTwoPass"
             // 色散全部集中在下面内壁 Pass 的折射路径上。
             half  envLod = (1.0 - Input_Smoothness) * 6.0;
             half3 reflWs = reflect(-viewWs, nrmWs);
-            half3 envRgb = IonEnvRgb_Glass(reflWs, envLod) * Input_ReflectIntensity * lerp(0.15, 1.0, fresnel);
+            half3 envRgb = IvyEnvRgb_Glass(reflWs, envLod) * Input_ReflectIntensity * lerp(0.15, 1.0, fresnel);
 
             half3 halfWs  = normalize(lightWs + viewWs);
             half  specPow = exp2(Input_Smoothness * 10.0) + 1.0;
@@ -216,7 +216,7 @@ Shader "Ion/GlassShellTwoPass"
 
             // 薄膜干涉染色。干涉只发生在表面反射上，所以只乘到反射类的项，
             // 强度为 0 时是全白，等于不参与。
-            half3 filmRgb = lerp(1.0, IonThinFilm_Glass(ndotv, vary.FilmThick), Input_ThinFilm);
+            half3 filmRgb = lerp(1.0, IvyThinFilm_Glass(ndotv, vary.FilmThick), Input_ThinFilm);
 
             half3 baseRgb = Input_Color.rgb;
             half3 rgb = baseRgb * Input_Alpha                             // 本体（已预乘）
@@ -247,12 +247,12 @@ Shader "Ion/GlassShellTwoPass"
                 half3 bgRgb;
                 if (Input_Dispersion > 0.0001)
                 {
-                    bgRgb = IonLensFire_Glass(vary.PosWs, viewWs, nrmLens, march, Input_Dispersion);
+                    bgRgb = IvyLensFire_Glass(vary.PosWs, viewWs, nrmLens, march, Input_Dispersion);
                 }
                 else
                 {
-                    half3 refrWs = refract(-viewWs, nrmLens, 1.0 / IonDef_GlassIor);
-                    bgRgb = IonLensBg_Glass(vary.PosWs, refrWs, march);
+                    half3 refrWs = refract(-viewWs, nrmLens, 1.0 / IvyDef_GlassIor);
+                    bgRgb = IvyLensBg_Glass(vary.PosWs, refrWs, march);
                 }
 
                 // 玻璃颜色同时也是透光的染色
@@ -276,8 +276,8 @@ Shader "Ion/GlassShellTwoPass"
             Blend One OneMinusSrcAlpha
 
             HLSLPROGRAM
-            #pragma vertex   IonVert_Glass
-            #pragma fragment IonFrag_Glass
+            #pragma vertex   IvyVert_Glass
+            #pragma fragment IvyFrag_Glass
             #pragma target 3.0
             #pragma multi_compile_instancing
             ENDHLSL
@@ -295,8 +295,8 @@ Shader "Ion/GlassShellTwoPass"
             Blend One OneMinusSrcAlpha
 
             HLSLPROGRAM
-            #pragma vertex   IonVert_Glass
-            #pragma fragment IonFrag_Glass
+            #pragma vertex   IvyVert_Glass
+            #pragma fragment IvyFrag_Glass
             #pragma target 3.0
             #pragma multi_compile_instancing
             ENDHLSL

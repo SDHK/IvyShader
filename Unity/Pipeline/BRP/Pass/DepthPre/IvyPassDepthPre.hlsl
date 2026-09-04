@@ -1,0 +1,67 @@
+/****************************************
+*
+* 作者： 闪电黑客
+* 日期： 2026/6/14
+*
+* 描述： IvyPassDepthPre - 深度预写 Pass
+*        在颜色渲染前将前面深度写入深度缓冲区。
+*        结合 Alpha Cutoff，实现：
+*          alpha >= Cutoff → 写深度（不透明区域阻挡内部面）
+*          alpha <  Cutoff → 不写深度（透明区域可看到内部）
+*
+* 使用说明：
+* - Pass 设置：ZWrite On, ColorMask 0, Cull Back
+* - LightMode = Always（每帧每摄像机都执行，在 ForwardBase 前运行）
+* - 必须放在 ForwardBase Pass 之前声明
+*
+****************************************/
+
+#if Def(IvyPassDepthPre)
+#define Def_IvyPassDepthPre
+
+//===[必要参数声明]====================================================
+sampler2D IvyArg_MainTex;
+float4    IvyArg_MainTex_ST;
+float     IvyArg_Cutoff;
+
+#pragma vertex vert
+#pragma fragment frag
+
+#define Link_IvyBase
+#define Link_IvyMatrix
+#define Link_IvyMath
+#define Link_IvyUv
+#include "../../Core/IvyCore.hlsl"
+
+struct VertData
+{
+    IvyVar_PosOs
+    IvyVar_T0(float2, UV)
+};
+
+struct FragData
+{
+    IvyVar_PosCs
+    IvyVar_T0(float2, UV)
+};
+
+FragData vert(VertData vertData)
+{
+    FragData fragData;
+    fragData.PosCs = IvyMatrix_PosOsToCs(vertData.PosOs);
+    fragData.UV     = IvyUv_Transform2D(vertData.UV, IvyArg_MainTex_ST.xy, IvyArg_MainTex_ST.zw);
+    return fragData;
+}
+
+half4 frag(FragData fragData) : SV_Target
+{
+    // alpha >= Cutoff → 正值 → 写深度（阻挡内部面）
+    // alpha <  Cutoff → 负值 → clip 丢弃，不写深度（透明穿透）
+    float alpha = tex2D(IvyArg_MainTex, fragData.UV).a;
+    //这是个例子，需要和主shaderpass相同的透明度计算方式。
+    //clip(alpha - IvyArg_Cutoff);
+     clip(1);
+    return 0;
+}
+
+#endif // Def(IvyPassDepthPre)

@@ -1,9 +1,9 @@
 
 HLSLINCLUDE
-#define IonShader
+#define IvyShader
 ENDHLSL
 
-Shader "Ion/DepthOnlyProxyBrp"
+Shader "Ivy/DepthOnlyProxyBrp"
 {
     Properties
     {
@@ -22,11 +22,11 @@ Shader "Ion/DepthOnlyProxyBrp"
         //     ZWrite On
         //     ColorMask 0
         //     HLSLPROGRAM
-        //     // #define IonArg_MainTex    Input_MainTex
-        //     #define IonArg_MainTex_ST Input_MainTex_ST
-        //     #define IonArg_Cutoff     Input_Cutoff
-        //     #define Link_IonPassDepthPre
-        //     #include "../IonCoreUnity.hlsl"
+        //     // #define IvyArg_MainTex    Input_MainTex
+        //     #define IvyArg_MainTex_ST Input_MainTex_ST
+        //     #define IvyArg_Cutoff     Input_Cutoff
+        //     #define Link_IvyPassDepthPre
+        //     #include "../IvyCoreUnity.hlsl"
         //     ENDHLSL
         // }
 
@@ -41,9 +41,9 @@ Shader "Ion/DepthOnlyProxyBrp"
            // ZTest LEqual
             ColorMask 0
             HLSLPROGRAM
-            #define IonArg_Scale Input_Scale 
-            #define Link_IonPassShadowCaster
-            #include "../IonCoreUnity.hlsl"
+            #define IvyArg_Scale Input_Scale 
+            #define Link_IvyPassShadowCaster
+            #include "../IvyCoreUnity.hlsl"
             ENDHLSL
         }
     }
