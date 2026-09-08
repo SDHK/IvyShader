@@ -29,3 +29,7 @@
 #if Link(IvyEffect3D)
 #include "IvyEffect3D.hlsl"
 #endif
+
+#if Link(IvyTransmit)
+#include "IvyTransmit.hlsl"
+#endif

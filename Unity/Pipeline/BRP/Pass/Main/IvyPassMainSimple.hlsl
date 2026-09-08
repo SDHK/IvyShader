@@ -69,8 +69,42 @@ float IvyArg_BackRimIntensity;// 背光强度（0=关闭）
 float IvyArg_BackLightRimSoftness;// 边缘集中度（建议 2~8）
 
 
-float IvyArg_ReflectSmoothness0;
-float IvyArg_ReflectIntensity0;
+float IvyArg_ReflectIntensity00;
+float IvyArg_ReflectIntensity01;
+float IvyArg_ReflectIntensity10;
+float IvyArg_ReflectIntensity11;
+float IvyArg_ReflectIntensity20;
+float IvyArg_ReflectIntensity21;
+float IvyArg_ReflectIntensity30;
+float IvyArg_ReflectIntensity31;
+float IvyArg_ReflectSmoothness00;
+float IvyArg_ReflectSmoothness01;
+float IvyArg_ReflectSmoothness10;
+float IvyArg_ReflectSmoothness11;
+float IvyArg_ReflectSmoothness20;
+float IvyArg_ReflectSmoothness21;
+float IvyArg_ReflectSmoothness30;
+float IvyArg_ReflectSmoothness31;
+
+float IvyArg_Transmit00;
+float IvyArg_Transmit01;
+float IvyArg_Transmit10;
+float IvyArg_Transmit11;
+float IvyArg_Transmit20;
+float IvyArg_Transmit21;
+float IvyArg_Transmit30;
+float IvyArg_Transmit31;
+
+float IvyArg_Film00;
+float IvyArg_Film01;
+float IvyArg_Film10;
+float IvyArg_Film11;
+float IvyArg_Film20;
+float IvyArg_Film21;
+float IvyArg_Film30;
+float IvyArg_Film31;
+float IvyArg_IridescenceHue;
+float IvyArg_IridescenceSpread;
 
 // 金属环境贴图（CubeMap 和 2D equirectangular）
 sampler2D IvyArg_EnvMapTex;
@@ -79,13 +113,17 @@ float IvyArg_EnvMapInfluence;
 sampler2D IvyArg_MatCapTex;
 float IvyArg_MatCapInfluence;
 
-// 特效图
-int IvyArg_EffectMode0;
-int IvyArg_EffectMode1;
-int IvyArg_EffectMode2;
-int IvyArg_EffectMode3;
+// 特效
 int IvyArg_EffectMap;
-int IvyArg_EffectModeInside;
+float IvyArg_EffectIntensity00;
+float IvyArg_EffectIntensity01;
+float IvyArg_EffectIntensity10;
+float IvyArg_EffectIntensity11;
+float IvyArg_EffectIntensity20;
+float IvyArg_EffectIntensity21;
+float IvyArg_EffectIntensity30;
+float IvyArg_EffectIntensity31;
+float IvyArg_EffectInside;
 // 映射图
 int IvyArg_VecMap0;
 
@@ -120,13 +158,14 @@ int IvyArg_VecMap0;
 #define Link_IvyField
 #define Link_IvyVecMap
 #define Link_IvyRamp
+#define Link_IvyIridescence
 #define Link_IvyEffect3D
 #define Link_IvyUv
 #define Link_IvyGeom
 #define Link_IvySkin
 #define Link_IvyReflect
+#define Link_IvyTransmit
 #include "../../Core/IvyCore.hlsl"
-
 
 struct VertIn
 {
@@ -290,24 +329,25 @@ FragOut Frag(FragIn fragIn)
         skinRgb = IvySkin_Ramp(skinRampIn).Rgb;
     }
 
-    half3 skinRgbPreEffect = skinRgb;
 
     //===[特效向量映射]=====================================================
     float3  vecMapSwitch;
-    float effectMask = 1;
     vecMapSwitch = IvySwitch_Float3(IvyArg_VecMap0, vecMaps.VecCamToPosOs, vecMaps.VecCamToPosWs, vecMaps.VecMapCamVs, vecMaps.VecMapReflect, vecMaps.VecMapNrmPosOs,  vecMaps.VecMapNrmPosWs, vecMaps.VecMapNrmPosVs);
-    //===[对特效图的映射]==
+    //===[对特效图的映射]=====================================================
+    half effectIntensity0 = IvySwitch_Float3(uvId, IvyArg_EffectIntensity00, IvyArg_EffectIntensity10, IvyArg_EffectIntensity20, IvyArg_EffectIntensity30).x;
+    half effectIntensity1 = IvySwitch_Float3(uvId, IvyArg_EffectIntensity01, IvyArg_EffectIntensity11, IvyArg_EffectIntensity21, IvyArg_EffectIntensity31).x;
+    half effectMask = geomOut.IsFront
+        ? lerp(effectIntensity0, effectIntensity1, skinMaskLuma)
+        : IvyArg_EffectInside;
     IvyEffect3D_VolumeIn effectIn;
-    effectIn.SkinRgb = skinRgbPreEffect;
+    effectIn.SkinRgb = skinRgb;
     effectIn.InsideRgb = IvyArg_SkinRgb31;
     effectIn.VecMap = vecMaps.VecCamToPosOs;
     effectIn.CamOs = geomOut.CamOs;
     effectIn.IsFront = geomOut.IsFront;
     effectIn.Depth = 1.0;
     effectIn.EffectId = IvyArg_EffectMap;
-    effectIn.RegionMode = IvySwitch_Float3(uvId, IvyArg_EffectMode0, IvyArg_EffectMode1, IvyArg_EffectMode2, IvyArg_EffectMode3);
-    effectIn.InsideEnable = IvyArg_EffectModeInside;
-    effectIn.SkinMaskLuma = skinMaskLuma;
+    effectIn.Mask = effectMask;
     effectIn.Time = IvyParam_Time.x;
     effectIn.PosOffset = float2(0, 0);
     IvyEffect3D_VolumeOut effectOut = IvyEffect3D_Volume(effectIn);
@@ -315,8 +355,14 @@ FragOut Frag(FragIn fragIn)
 
     //金属为粗糙时需要阴影，边缘反射为瓷器和塑料
     //===[金属反射]=====================================================
+    half reflectIntensity0 = IvySwitch_Float3(uvId, IvyArg_ReflectIntensity00, IvyArg_ReflectIntensity10, IvyArg_ReflectIntensity20, IvyArg_ReflectIntensity30).x;
+    half reflectSmoothness0 = IvySwitch_Float3(uvId, IvyArg_ReflectSmoothness00, IvyArg_ReflectSmoothness10, IvyArg_ReflectSmoothness20, IvyArg_ReflectSmoothness30).x;
+    half reflectIntensity1 = IvySwitch_Float3(uvId, IvyArg_ReflectIntensity01, IvyArg_ReflectIntensity11, IvyArg_ReflectIntensity21, IvyArg_ReflectIntensity31).x;
+    half reflectSmoothness1 = IvySwitch_Float3(uvId, IvyArg_ReflectSmoothness01, IvyArg_ReflectSmoothness11, IvyArg_ReflectSmoothness21, IvyArg_ReflectSmoothness31).x;
+    half reflectIntensity = lerp(reflectIntensity0, reflectIntensity1, skinMaskLuma);
+    half reflectSmoothness = lerp(reflectSmoothness0, reflectSmoothness1, skinMaskLuma);
     // 反射模糊度
-    half mipMap = (1.0 - IvyArg_ReflectSmoothness0) * 8.0; 
+    half mipMap = (1.0 - reflectSmoothness) * 8.0; 
     // BRP 环境反射探针
     float4 envRaw = UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, vecMaps.VecMapReflect, mipMap);
     float3 probeReflect = DecodeHDR(envRaw, unity_SpecCube0_HDR);
@@ -339,8 +385,8 @@ FragOut Frag(FragIn fragIn)
     reflectIn.MatCapRgb = matCapReflect;
     reflectIn.EnvMapInfluence = IvyArg_EnvMapInfluence;
     reflectIn.MatCapInfluence = IvyArg_MatCapInfluence;
-    reflectIn.ReflectSmoothness = IvyArg_ReflectSmoothness0;
-    reflectIn.ReflectIntensity = IvyArg_ReflectIntensity0;
+    reflectIn.ReflectSmoothness = reflectSmoothness;
+    reflectIn.ReflectIntensity = reflectIntensity;
     IvyReflect_SpecularOut reflectOut = IvyReflect_Specular(reflectIn);
     //===[附加光照]====================================
     //边缘光
@@ -351,11 +397,50 @@ FragOut Frag(FragIn fragIn)
     half3 backRimLight = backRimRamp * (lightOut.Rgb + envLight) ;
 
     half3 addLight = rimLight + backRimLight;
+    //===[透射折射]====================================
 
-    float3 finalColor = reflectOut.Rgb + addLight;
+    half transmit0 = IvySwitch_Float3(uvId, IvyArg_Transmit00, IvyArg_Transmit10, IvyArg_Transmit20, IvyArg_Transmit30).x;
+    half transmit1 = IvySwitch_Float3(uvId, IvyArg_Transmit01, IvyArg_Transmit11, IvyArg_Transmit21, IvyArg_Transmit31).x;
+    half transmit = lerp(transmit0, transmit1, skinMaskLuma);
+
+    half film0 = IvySwitch_Float3(uvId, IvyArg_Film00, IvyArg_Film10, IvyArg_Film20, IvyArg_Film30).x;
+    half film1 = IvySwitch_Float3(uvId, IvyArg_Film01, IvyArg_Film11, IvyArg_Film21, IvyArg_Film31).x;
+    half filmAmt = lerp(film0, film1, skinMaskLuma);
+    half ndotv = saturate(dot(geomOut.NrmWsFront, dirPosToCamWs));
+
+    half heightFactor = geomOut.PosOs.y / max(length(geomOut.PosOs.xyz), 1e-4);
+    half iridescenceHue = IvyArg_IridescenceHue - heightFactor*0.5;
+    half3 filmRgb = lerp(1.0, IvyIridescence(ndotv, iridescenceHue, IvyArg_IridescenceSpread), filmAmt);
+
+    half3 specRgb = (reflectOut.HighLightPart + reflectOut.ReflectSpecular + reflectOut.ReflectRimLight) * filmRgb;
+    half3 opaqueRgb = reflectOut.DiffusePart + specRgb + addLight;
+    half3 reflectRgb = lerp(opaqueRgb, specRgb + addLight, transmit);
+
+    half3 refractRgb = 0;
+    if (geomOut.IsFront && transmit > 1e-4)
+    {
+        half ior = lerp(1.0, 2.42, transmit);
+        float3 refrWs = refract(-dirPosToCamWs, geomOut.NrmWsFront, 1.0 / ior);
+        float4 refrRaw = UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, refrWs, mipMap);
+        half3 refrProbe = DecodeHDR(refrRaw, unity_SpecCube0_HDR);
+        float2 refrUv = IvyUv_DirToSphere(refrWs);
+        half3 refrEnv = tex2Dlod(IvyArg_EnvMapTex, float4(refrUv, 0, mipMap)).rgb;
+        refractRgb = lerp(refrProbe, refrEnv, IvyArg_EnvMapInfluence) * filmRgb;
+    }
+
+    half fresnel = IvyRamp_Fresnel(geomOut.NrmWsFront, dirPosToCamWs, 0.5);
+    IvyTransmit_BlendIn transmitIn;
+    transmitIn.Rgb = skinRgb;
+    transmitIn.Alpha = lerp(0.0, 0.15, transmit);
+    transmitIn.Refract = transmit;
+    transmitIn.IsFront = geomOut.IsFront;
+    transmitIn.ReflectRgb = reflectRgb;
+    transmitIn.RefractRgb = refractRgb;
+    transmitIn.Fresnel = lerp(1.0, fresnel * 0.9, transmit);
+    IvyTransmit_BlendOut transmitOut = IvyTransmit_Blend(transmitIn);
 
     FragOut fragOut;
-    fragOut.TargetRgba = half4(finalColor, 1);
+    fragOut.TargetRgba = transmitOut.Rgba;
     return fragOut;
 }
 

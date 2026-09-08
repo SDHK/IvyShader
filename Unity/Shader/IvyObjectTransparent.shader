@@ -77,35 +77,68 @@ Shader "Ivy/IvyObjectTransparent"
         [Space(10)]
         Input_MatCapInfluence               ("MatCap混合",            Range(0,1)) = 0.5    
         Input_MatCapTex                     ("MatCap贴图",            2D) = "gray" {}
+        [Space(10)]
+        Input_IridescenceHue                ("虹彩色相",              Range(0,1)) = 0.55
+        Input_IridescenceSpread             ("虹彩展开",              Range(0,2)) = 0.25
 
         [Space(20)]
-        [Header(Null white black all)]
-        [IntRange]Input_SurfaceMode0        ("面料模式0",            Range(0,3)) = 0
-        Input_ReflectIntensity0             ("反射强度0",            Range(0,1)) = 0
-        Input_ReflectSmoothness0            ("反射光滑0",            Range(0,1)) = 0
+        Input_ReflectIntensity01            ("反射强度0亮",          Range(0,1)) = 0
+        Input_ReflectSmoothness01           ("反射光滑0亮",          Range(0,1)) = 0
+        Input_Transmit01                    ("透明折射0亮",          Range(0,1)) = 0
+        Input_Film01                        ("虹彩0亮",              Range(0,1)) = 0
+        [Space(5)]
+        Input_ReflectIntensity00            ("反射强度0暗",          Range(0,1)) = 0
+        Input_ReflectSmoothness00           ("反射光滑0暗",          Range(0,1)) = 0
+        Input_Transmit00                    ("透明折射0暗",          Range(0,1)) = 0
+        Input_Film00                        ("虹彩0暗",              Range(0,1)) = 0
         [Space(10)]
-        [IntRange]Input_SurfaceMode1        ("面料模式1",            Range(0,3)) = 0
-        Input_ReflectIntensity1             ("反射强度1",            Range(0,1)) = 0
-        Input_ReflectSmoothness1            ("反射光滑1",            Range(0,1)) = 0
+        Input_ReflectIntensity11            ("反射强度1亮",          Range(0,1)) = 0
+        Input_ReflectSmoothness11           ("反射光滑1亮",          Range(0,1)) = 0
+        Input_Transmit11                    ("透明折射1亮",          Range(0,1)) = 0
+        Input_Film11                        ("虹彩1亮",              Range(0,1)) = 0
+        [Space(5)]
+        Input_ReflectIntensity10            ("反射强度1暗",          Range(0,1)) = 0
+        Input_ReflectSmoothness10           ("反射光滑1暗",          Range(0,1)) = 0
+        Input_Transmit10                    ("透明折射1暗",          Range(0,1)) = 0
+        Input_Film10                        ("虹彩1暗",              Range(0,1)) = 0
         [Space(10)]
-        [IntRange]Input_SurfaceMode2        ("面料模式2",            Range(0,3)) = 0
-        Input_ReflectIntensity2             ("反射强度2",            Range(0,1)) = 0
-        Input_ReflectSmoothness2            ("反射光滑2",            Range(0,1)) = 0
+        Input_ReflectIntensity21            ("反射强度2亮",          Range(0,1)) = 0
+        Input_ReflectSmoothness21           ("反射光滑2亮",          Range(0,1)) = 0
+        Input_Transmit21                    ("透明折射2亮",          Range(0,1)) = 0
+        Input_Film21                        ("虹彩2亮",              Range(0,1)) = 0
+        [Space(5)]
+        Input_ReflectIntensity20            ("反射强度2暗",          Range(0,1)) = 0
+        Input_ReflectSmoothness20           ("反射光滑2暗",          Range(0,1)) = 0
+        Input_Transmit20                    ("透明折射2暗",          Range(0,1)) = 0
+        Input_Film20                        ("虹彩2暗",              Range(0,1)) = 0
         [Space(10)]
-        [IntRange]Input_SurfaceMode3        ("面料模式3",            Range(0,3)) = 0
-        Input_ReflectIntensity3             ("反射强度3",            Range(0,1)) = 0
-        Input_ReflectSmoothness3            ("反射光滑3",            Range(0,1)) = 0
+        Input_ReflectIntensity31            ("反射强度3亮",          Range(0,1)) = 0
+        Input_ReflectSmoothness31           ("反射光滑3亮",          Range(0,1)) = 0
+        Input_Transmit31                    ("透明折射3亮",          Range(0,1)) = 0
+        Input_Film31                        ("虹彩3亮",              Range(0,1)) = 0
+        [Space(5)]
+        Input_ReflectIntensity30            ("反射强度3暗",          Range(0,1)) = 0
+        Input_ReflectSmoothness30           ("反射光滑3暗",          Range(0,1)) = 0
+        Input_Transmit30                    ("透明折射3暗",          Range(0,1)) = 0
+        Input_Film30                        ("虹彩3暗",              Range(0,1)) = 0
 
         [Space(20)]
         [Header(Null Star3d Crystal3d Star2d)]
         [IntRange] Input_EffectMap          ("特效类型",            Range(0,3))     = 0
-        //扰动，移动
-        [Header(Null white black all)]
-        [IntRange] Input_EffectMode0        ("特效模式0",           Range(0,3))     = 0
-        [IntRange] Input_EffectMode1        ("特效模式1",           Range(0,3))     = 0
-        [IntRange] Input_EffectMode2        ("特效模式2",           Range(0,3))     = 0
-        [IntRange] Input_EffectMode3        ("特效模式3",           Range(0,3))     = 0
-        [Toggle]   Input_EffectModeInside   ("内部特效",       Int)            = 0
+        [Space(10)]
+        Input_EffectIntensity01             ("特效强度0亮",          Range(0,1)) = 0
+        Input_EffectIntensity00             ("特效强度0暗",          Range(0,1)) = 0
+        [Space(5)]
+        Input_EffectIntensity11             ("特效强度1亮",          Range(0,1)) = 0
+        Input_EffectIntensity10             ("特效强度1暗",          Range(0,1)) = 0
+        [Space(5)]
+        Input_EffectIntensity21             ("特效强度2亮",          Range(0,1)) = 0
+        Input_EffectIntensity20             ("特效强度2暗",          Range(0,1)) = 0
+        [Space(5)]
+        Input_EffectIntensity31             ("特效强度3亮",          Range(0,1)) = 0
+        Input_EffectIntensity30             ("特效强度3暗",          Range(0,1)) = 0
+        [Space(10)]
+        Input_EffectInside                  ("内部特效",            Range(0,1)) = 0
 
         [Space(40)]
         [Header(SkyOs0 SkyWs1 CamVs2 Reflect3 NrmOs4 NrmWs5 NrmVs6)]
@@ -230,7 +263,7 @@ Shader "Ivy/IvyObjectTransparent"
             // Cull Front
             // ZWrite Off
             ZTest LEqual
-            Blend SrcAlpha OneMinusSrcAlpha
+            Blend One OneMinusSrcAlpha
 
             HLSLPROGRAM
 
@@ -285,8 +318,43 @@ Shader "Ivy/IvyObjectTransparent"
             #define IvyArg_BackLightRimSoftness         Input_BackLightRimSoftness
             #define IvyArg_BackRimIntensity             Input_BackRimIntensity
 
-            #define IvyArg_ReflectSmoothness0            Input_ReflectSmoothness0
-            #define IvyArg_ReflectIntensity0             Input_ReflectIntensity0
+            #define IvyArg_ReflectIntensity00           Input_ReflectIntensity00
+            #define IvyArg_ReflectIntensity01           Input_ReflectIntensity01
+            #define IvyArg_ReflectIntensity10           Input_ReflectIntensity10
+            #define IvyArg_ReflectIntensity11           Input_ReflectIntensity11
+            #define IvyArg_ReflectIntensity20           Input_ReflectIntensity20
+            #define IvyArg_ReflectIntensity21           Input_ReflectIntensity21
+            #define IvyArg_ReflectIntensity30           Input_ReflectIntensity30
+            #define IvyArg_ReflectIntensity31           Input_ReflectIntensity31
+            #define IvyArg_ReflectSmoothness00          Input_ReflectSmoothness00
+            #define IvyArg_ReflectSmoothness01          Input_ReflectSmoothness01
+            #define IvyArg_ReflectSmoothness10          Input_ReflectSmoothness10
+            #define IvyArg_ReflectSmoothness11          Input_ReflectSmoothness11
+            #define IvyArg_ReflectSmoothness20          Input_ReflectSmoothness20
+            #define IvyArg_ReflectSmoothness21          Input_ReflectSmoothness21
+            #define IvyArg_ReflectSmoothness30          Input_ReflectSmoothness30
+            #define IvyArg_ReflectSmoothness31          Input_ReflectSmoothness31
+
+            #define IvyArg_Transmit00                   Input_Transmit00
+            #define IvyArg_Transmit01                   Input_Transmit01
+            #define IvyArg_Transmit10                   Input_Transmit10
+            #define IvyArg_Transmit11                   Input_Transmit11
+            #define IvyArg_Transmit20                   Input_Transmit20
+            #define IvyArg_Transmit21                   Input_Transmit21
+            #define IvyArg_Transmit30                   Input_Transmit30
+            #define IvyArg_Transmit31                   Input_Transmit31
+
+            #define IvyArg_Film00                       Input_Film00
+            #define IvyArg_Film01                       Input_Film01
+            #define IvyArg_Film10                       Input_Film10
+            #define IvyArg_Film11                       Input_Film11
+            #define IvyArg_Film20                       Input_Film20
+            #define IvyArg_Film21                       Input_Film21
+            #define IvyArg_Film30                       Input_Film30
+            #define IvyArg_Film31                       Input_Film31
+
+            #define IvyArg_IridescenceHue               Input_IridescenceHue
+            #define IvyArg_IridescenceSpread            Input_IridescenceSpread
 
             #define IvyArg_MatCapTex                    Input_MatCapTex
             #define IvyArg_MatCapInfluence              Input_MatCapInfluence
@@ -295,11 +363,15 @@ Shader "Ivy/IvyObjectTransparent"
             #define IvyArg_EnvMapInfluence              Input_EnvMapInfluence
 
             #define IvyArg_EffectMap                    Input_EffectMap
-            #define IvyArg_EffectMode0                  Input_EffectMode0
-            #define IvyArg_EffectMode1                  Input_EffectMode1
-            #define IvyArg_EffectMode2                  Input_EffectMode2
-            #define IvyArg_EffectMode3                  Input_EffectMode3
-            #define IvyArg_EffectModeInside             Input_EffectModeInside
+            #define IvyArg_EffectIntensity00            Input_EffectIntensity00
+            #define IvyArg_EffectIntensity01            Input_EffectIntensity01
+            #define IvyArg_EffectIntensity10            Input_EffectIntensity10
+            #define IvyArg_EffectIntensity11            Input_EffectIntensity11
+            #define IvyArg_EffectIntensity20            Input_EffectIntensity20
+            #define IvyArg_EffectIntensity21            Input_EffectIntensity21
+            #define IvyArg_EffectIntensity30            Input_EffectIntensity30
+            #define IvyArg_EffectIntensity31            Input_EffectIntensity31
+            #define IvyArg_EffectInside                 Input_EffectInside
 
             #define IvyArg_VecMap0 Input_VecMap0
 

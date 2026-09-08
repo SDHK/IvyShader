@@ -5,7 +5,7 @@
 *
 * 描述： 3D 体积特效阶段
 *        沿视线积体积场，再按遮罩叠回皮肤底色
-*        不采样：向量、时间、区域模式由 Pass 填入
+*        不采样：向量、时间、遮罩由 Pass 填入
 */
 
 #if DefPart(IvyEffect3D, Stage)
@@ -44,17 +44,9 @@ struct IvyEffect3D_VolumeIn
     /// </summary>
     int EffectId;
     /// <summary>
-    /// 正面注入方式：0 关，1 灰度，2 反灰度，3 整面
+    /// 叠回皮肤的权重（0~1，由 Pass 按花纹暗/亮强度填入）
     /// </summary>
-    int RegionMode;
-    /// <summary>
-    /// 体内是否启用（非 0 启用）
-    /// </summary>
-    int InsideEnable;
-    /// <summary>
-    /// 皮肤遮罩灰度
-    /// </summary>
-    half SkinMaskLuma;
+    half Mask;
     /// <summary>
     /// 时间（用于场扰动）
     /// </summary>
@@ -80,27 +72,10 @@ IvyEffect3D_VolumeOut IvyEffect3D_Volume(IvyEffect3D_VolumeIn dataIn)
     IvyEffect3D_VolumeOut dataOut;
     dataOut.Rgb = dataIn.SkinRgb;
     dataOut.EffectRgb = 0;
-    dataOut.Mask = 0;
+    dataOut.Mask = dataIn.Mask;
 
-    if (dataIn.EffectId == 0) return dataOut;
-
-    if (dataIn.IsFront)
-    {
-        if (dataIn.RegionMode == 1) dataOut.Mask = dataIn.SkinMaskLuma;
-        else if (dataIn.RegionMode == 2) dataOut.Mask = 1.0 - dataIn.SkinMaskLuma;
-        else if (dataIn.RegionMode == 3) dataOut.Mask = 1.0;
-    }
-    else
-    {
-        dataOut.Mask = 1.0;
-    }
-
-    bool runVolume = dataIn.IsFront ? (dataOut.Mask != 0) : (dataIn.InsideEnable != 0);
-    if (!runVolume)
-    {
-        dataOut.Rgb = lerp(dataIn.SkinRgb, dataOut.EffectRgb, dataOut.Mask);
-        return dataOut;
-    }
+    // 关闭特效或遮罩为 0 时直接返回
+    if (dataIn.EffectId == 0 || dataIn.Mask == 0) return dataOut;
 
     float tHit = length(dataIn.VecMap);
     float tNear;

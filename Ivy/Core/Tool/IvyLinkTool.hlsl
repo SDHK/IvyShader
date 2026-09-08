@@ -49,6 +49,10 @@
 #include "IvyRamp.hlsl"     // 渐变计算工具（Lambert 等）
 #endif
 
+#if Link(IvyIridescence)
+#include "IvyIridescence.hlsl" // 虹彩 / 珠光 / 薄膜
+#endif
+
 #if Link(IvyEffect3D)
 #include "IvyEffect3D.hlsl"     // 特效工具
 #endif
