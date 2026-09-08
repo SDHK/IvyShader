@@ -9,8 +9,6 @@
 #if DefPart(IvyVertex, Tool) 
 #define Def_IvyVertex_Tool
 
-#define Link_IvyMatrix
-#include "../IvyEdit.hlsl"
 
 
 // 顶点沿法线方向缩放

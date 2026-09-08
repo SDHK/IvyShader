@@ -3,23 +3,65 @@
 * 作者： 闪电黑客
 * 日期： 2024/12/13 19:01
 
-* 描述： 各种扭曲函数合集 
+* 描述： UV 工具：变换、投影、分区、扭曲
 
 */
 
 #if DefPart(IvyUv, Tool) 
 #define Def_IvyUv_Tool
 
-
-
-// 2D坐标缩放偏移
-// float2 uv : 输入的二维坐标
-// float2 scale : 缩放值
-// float2 offset : 偏移值
-// float2 return : 变换后的二维坐标
+/// <summary>
+/// 2D坐标缩放偏移
+/// </summary>
+/// <param name="uv">输入的二维坐标</param>
+/// <param name="scale">缩放值</param>
+/// <param name="offset">偏移值</param>
+/// <returns>变换后的二维坐标</returns>
 float2 IvyUv_Transform2D(float2 uv, float2 scale, float2 offset)
 {
     return uv * scale + offset;
+}
+
+/// <summary>
+/// 把 [0,1] UV 映射到格子坐标（压在最后一格内，避免 uv==1 越界）
+/// </summary>
+/// <param name="uv">输入的二维坐标</param>
+/// <param name="cols">格子列数</param>
+/// <param name="rows">格子行数</param>
+/// <returns>格子坐标</returns>    
+float2 IvyUv_GridCell(float2 uv, int cols, int rows)
+{
+    float2 grid = float2((float)cols, (float)rows);
+    return min(uv * grid, grid - 1e-5);
+}
+
+/// <summary>
+/// 格子 Id（左上为 0，行优先）
+/// </summary>
+/// <param name="uv">输入的二维坐标</param>
+/// <param name="cols">格子列数</param>
+/// <param name="rows">格子行数</param>   
+/// <param name="flipY">1=数学 row0(下) 翻成上=0（贴图/九宫格习惯）</param>
+/// <returns>格子 Id</returns> 
+int IvyUv_GridId(float2 uv, int cols, int rows, int flipY = 1)
+{
+    float2 cell = IvyUv_GridCell(uv, cols, rows);
+    int col = (int)floor(cell.x);
+    int mathRow = (int)floor(cell.y);
+    int row = flipY != 0 ? (rows - 1 - mathRow) : mathRow;
+    return row * cols + col;
+}
+
+/// <summary>
+/// 格内局部 UV [0,1)
+/// </summary>
+/// <param name="uv">输入的二维坐标</param>
+/// <param name="cols">格子列数</param>
+/// <param name="rows">格子行数</param>
+/// <returns>格内局部 UV</returns>    
+float2 IvyUv_GridLocal(float2 uv, int cols, int rows)
+{
+    return frac(IvyUv_GridCell(uv, cols, rows));
 }
 
 /// <summary>

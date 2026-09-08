@@ -26,7 +26,6 @@
 #if Link(IvyMatrix)
 #include "IvyMatrix.hlsl"   // 矩阵计算
 #endif
-
 //===[高级工具]===
 
 #if Link(IvyNoise)
@@ -50,8 +49,8 @@
 #include "IvyRamp.hlsl"     // 渐变计算工具（Lambert 等）
 #endif
 
-#if Link(IvyEffect)
-#include "IvyEffect.hlsl"     // 特效工具
+#if Link(IvyEffect3D)
+#include "IvyEffect3D.hlsl"     // 特效工具
 #endif
 
 

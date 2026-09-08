@@ -9,18 +9,13 @@
 
 
 
-#if DefPart(IvyEffect, Tool)
-#define Def_IvyEffect_Tool
-
-#define Link_IvyHash
-#define Link_IvyMath
-#define Link_IvyField
-#include "../IvyEdit.hlsl"
+#if DefPart(IvyEffect3D, Tool)
+#define Def_IvyEffect3D_Tool
 
 //===[宝石云]===
 
 //===[水面]===
-float3 IvyEffect_Water(float2 map, float time)
+float3 IvyEffect3D_Water(float2 map, float time)
 {
     float ga = IvyHash_11(time);
     //四角Hash向量
@@ -35,7 +30,7 @@ float3 IvyEffect_Water(float2 map, float time)
 /// <param name="map">映射</param>
 /// <param name="time">时间</param>
 /// <returns>返回计算后的颜色值</returns>
-float3 IvyEffect_Line(float2 map, float time)
+float3 IvyEffect3D_Line(float2 map, float time)
 {
     float3 col1 = float3(0.0, 0.21, 0.35);
     float3 col2 = float3(1, 1, 1);
@@ -64,7 +59,7 @@ u = float2( u.x, -u.y ) / dot(u,u) + p,
 /// <param name="map">映射</param>
 /// <param name="time">时间</param>
 /// <returns>返回计算后的颜色值</returns>
-float3 IvyEffect_Cloud(float2 map, float time)
+float3 IvyEffect3D_Cloud(float2 map, float time)
 {
     float3 col1 = float3(0.0, 0.21, 0.35);
     float3 col2 = float3(1, 1, 1);
@@ -94,7 +89,7 @@ p =mul ((k*p - .2*time - j) , m),
 /// <param name="time">时间</param>
 /// <param name="dir">方向</param>
 /// <returns>返回计算后的颜色值</returns>
-float3 IvyEffect_StarNest1(float3 map, float3 camOs,float time, float2 dir)
+float3 IvyEffect3D_StarNest1(float3 map, float3 camOs,float time, float2 dir)
 {
     float formuparam = 0.53;
     float stepsize = 0.1;
@@ -153,7 +148,7 @@ float3 IvyEffect_StarNest1(float3 map, float3 camOs,float time, float2 dir)
 /// <param name="time">时间</param>
 /// <param name="dir">方向</param>
 /// <returns>返回计算后的颜色值</returns>
-float3 IvyEffect_StarNest(float3 map, float3 camOs, float near, float far,float2 dir,float2 time2)
+float3 IvyEffect3D_StarNest(float3 map, float3 camOs, float near, float far,float2 dir,float2 time2)
 {
     float3 skyOsDirMap = normalize(map);
     float3 tile = float3(1, 1, 1);
@@ -189,7 +184,7 @@ float3 IvyEffect_StarNest(float3 map, float3 camOs, float near, float far,float2
 /// <param name="camOs">物体相机</param>
 /// <param name="depth">深度</param>
 /// <returns>返回计算后的颜色值</returns>
-float3 IvyEffect_VolumeStar( float3 skyOsDirMap, float3 camOs, float near, float far,float2 dir,float2 time = 0)
+float3 IvyEffect3D_VolumeStar( float3 skyOsDirMap, float3 camOs, float near, float far,float2 dir,float2 time = 0)
 {
     // 归一化方向向量
     skyOsDirMap = normalize(skyOsDirMap);
@@ -223,7 +218,7 @@ float3 IvyEffect_VolumeStar( float3 skyOsDirMap, float3 camOs, float near, float
 /// <param name="camOs">物体相机</param>
 /// <param name="depth">深度</param>
 /// <returns>返回计算后的颜色值</returns>
-float3 IvyEffect_VolumeCrystal(float3 skyOsDirMap, float3 camOs, float near, float far,float2 dir,float2 time = 0)
+float3 IvyEffect3D_VolumeCrystal(float3 skyOsDirMap, float3 camOs, float near, float far,float2 dir,float2 time = 0)
 {
     float3 pos;
     // 归一化方向向量
@@ -252,4 +247,4 @@ float3 IvyEffect_VolumeCrystal(float3 skyOsDirMap, float3 camOs, float near, flo
 
 // 云，液体，酒杯，汽水糖浆
 
-#endif// DefPart(IvyEffect, Tool)
+#endif// DefPart(IvyEffect3D, Tool)

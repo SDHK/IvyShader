@@ -25,13 +25,13 @@
 // 模块包装宏（单参数版本 - 完整模块）
 // 用于判断是否应该定义某个完整模块，防止重复定义
 // 使用场景：Pass 文件、Tool 文件等完整模块
-#define Def(name) (defined(Link_##name) && !defined(Def_##name) || !defined(IvyShader))
+#define Def(name) (!defined(Def_##name) || !defined(IvyShader))
 
 // 模块包装宏（双参数版本 - 部分模块）
 // 用于判断是否应该定义某个模块的特定部分，防止重复定义
 // 使用场景：统一链接文件中控制不同部分的加载
 // part 可以是：Library, Bind, Tool 等
-#define DefPart(name, part) (defined(Link_##name) && !defined(Def_##name##_##part) || !defined(IvyShader))
+#define DefPart(name, part) (!defined(Def_##name##_##part) || !defined(IvyShader))
 
 // 模块链接宏（单行版本）
 // 用于判断是否应该链接某个模块，控制按需加载

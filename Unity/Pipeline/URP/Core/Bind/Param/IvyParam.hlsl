@@ -28,39 +28,34 @@
 #define IvyParam_CameraProjectionParams unity_CameraProjectionParams
 
 //===[矩阵]===
+
 //float4x4 模型矩阵
 #define IvyParam_Matrix_M UNITY_MATRIX_M
-//float4x4 模型矩阵的逆矩阵
-#define IvyParam_Matrix_I_M UNITY_MATRIX_I_M
-//float4x4 模型矩阵的逆转置（用于法线转换）
-// 注意：URP 中没有 UNITY_MATRIX_IT_M，手动计算：逆转置 = 转置(逆矩阵)
-#define IvyParam_Matrix_IT_M transpose((float3x3)IvyParam_Matrix_I_M)
 //float4x4 视图矩阵
 #define IvyParam_Matrix_V UNITY_MATRIX_V
-//float4x4 视图矩阵的逆矩阵
-#define IvyParam_Matrix_I_V UNITY_MATRIX_I_V
 //float4x4 投影矩阵
 #define IvyParam_Matrix_P UNITY_MATRIX_P
+
+//float4x4 模型矩阵的逆矩阵
+#define IvyParam_Matrix_I_M UNITY_MATRIX_I_M
+//float4x4 视图矩阵的逆矩阵
+#define IvyParam_Matrix_I_V UNITY_MATRIX_I_V
 //float4x4 投影矩阵的逆矩阵
 #define IvyParam_Matrix_I_P UNITY_MATRIX_I_P
-//float4x4 视图投影矩阵
-#define IvyParam_Matrix_VP UNITY_MATRIX_VP
-//float4x4 视图投影矩阵的逆矩阵
-#define IvyParam_Matrix_I_VP UNITY_MATRIX_I_VP
+
 //float4x4 模型视图矩阵
 #define IvyParam_Matrix_MV UNITY_MATRIX_MV
-//float4x4 模型视图矩阵的逆矩阵
-#define IvyParam_Matrix_I_MV mul(IvyParam_Matrix_I_V, IvyParam_Matrix_I_M)
+//float4x4 视图投影矩阵
+#define IvyParam_Matrix_VP UNITY_MATRIX_VP
 //float4x4 模型视图投影矩阵
 #define IvyParam_Matrix_MVP UNITY_MATRIX_MVP
-//float4x4 模型视图投影矩阵的逆矩阵
+
+//float4x4 模型视图矩阵的逆矩阵 ：需要测试I_MV
+#define IvyParam_Matrix_I_MV mul(IvyParam_Matrix_I_V, IvyParam_Matrix_I_M)
+//float4x4 视图投影矩阵的逆矩阵
+#define IvyParam_Matrix_I_VP UNITY_MATRIX_I_VP
+//float4x4 模型视图投影矩阵的逆矩阵 ：需要测试I_MVP
 #define IvyParam_Matrix_I_MVP mul(IvyParam_Matrix_I_VP, IvyParam_Matrix_I_M)
-
-
-//float4x4 模型视图矩阵的转置
-#define IvyParam_Matrix_T_MV UNITY_MATRIX_T_MV
-//float4x4 模型视图矩阵的逆转置
-#define IvyParam_Matrix_IT_MV UNITY_MATRIX_IT_MV
 
 
 //===[时间]===
@@ -74,6 +69,9 @@
 //float4 上一帧的时间间隔。x:帧间隔时间，y:帧间隔时间/20，z:帧间隔时间/200，w:帧间隔时间x2
 #define IvyParam_DeltaTime _DeltaTime
 
+
+
+//以下不可通用，删除
 //===[光照]===
 
 //float4 天空环境光颜色（RGB）和强度（A）
@@ -116,7 +114,6 @@
 //float4 雾的颜色（RGB）和强度（A）
 #define IvyParam_FogColor unity_FogColor
 //float4 雾的参数。x:密度，y:起始距离，z:结束距离，w:其他参数
-#define IvyParam_FogParams unity_FogParams
 #define IvyParam_FogParams unity_FogParams
 
 #endif // DefPart(IvyBase, Param)

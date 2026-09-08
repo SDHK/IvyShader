@@ -13,9 +13,6 @@
 #if DefPart(IvyField, Tool)
 #define Def_IvyField_Tool
 
-#define Link_IvyHash
-#define Link_IvyMath
-#include "../IvyEdit.hlsl"
 
 float IvySDField_Sphere( float3 p, float r = 0.5 )
 {

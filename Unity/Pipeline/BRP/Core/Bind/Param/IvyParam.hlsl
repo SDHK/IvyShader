@@ -31,38 +31,31 @@
 
 //float4x4 模型矩阵
 #define IvyParam_Matrix_M unity_ObjectToWorld
-//float4x4 模型矩阵的逆矩阵
-#define IvyParam_Matrix_I_M unity_WorldToObject
-//float4x4 模型矩阵的逆转置（用于法线转换）
-// BRP 中有 UNITY_MATRIX_IT_M
-//#define IvyParam_Matrix_IT_M UNITY_MATRIX_IT_M
-#define IvyParam_Matrix_IT_M transpose((float3x3)IvyParam_Matrix_I_M)
 //float4x4 视图矩阵
 #define IvyParam_Matrix_V UNITY_MATRIX_V
+//float4x4 投影矩阵
+#define IvyParam_Matrix_P  UNITY_MATRIX_P
+
+//float4x4 模型矩阵的逆矩阵
+#define IvyParam_Matrix_I_M unity_WorldToObject
 //float4x4 视图矩阵的逆矩阵
 #define IvyParam_Matrix_I_V UNITY_MATRIX_I_V
-//float4x4 投影矩阵
-#define IvyParam_Matrix_P unity_CameraProjection
-//float4x4 投影矩阵的逆矩阵
+//float4x4 投影矩阵的逆矩阵, Unity没提供，所以可能是错的。
 #define IvyParam_Matrix_I_P unity_CameraInvProjection
 
-//float4x4 视图投影矩阵
-#define IvyParam_Matrix_VP UNITY_MATRIX_VP
-//float4x4 视图投影矩阵的逆矩阵
-#define IvyParam_Matrix_I_VP mul(IvyParam_Matrix_I_V, IvyParam_Matrix_I_P)
 //float4x4 模型视图矩阵
 #define IvyParam_Matrix_MV UNITY_MATRIX_MV
-//float4x4 模型视图矩阵的逆矩阵
-#define IvyParam_Matrix_I_MV mul(IvyParam_Matrix_I_V, IvyParam_Matrix_I_M)
+//float4x4 视图投影矩阵
+#define IvyParam_Matrix_VP UNITY_MATRIX_VP
 //float4x4 模型视图投影矩阵
 #define IvyParam_Matrix_MVP UNITY_MATRIX_MVP
-//float4x4 模型视图投影矩阵的逆矩阵
-#define IvyParam_Matrix_I_MVP mul(IvyParam_Matrix_I_VP, IvyParam_Matrix_I_M)
 
-//float4x4 模型视图矩阵的转置
-#define IvyParam_Matrix_T_MV UNITY_MATRIX_T_MV
-//float4x4 模型视图矩阵的逆转置
-#define IvyParam_Matrix_IT_MV UNITY_MATRIX_IT_MV
+//float4x4 模型视图矩阵的逆矩阵
+#define IvyParam_Matrix_I_MV  mul(IvyParam_Matrix_I_M, IvyParam_Matrix_I_V)
+//float4x4 视图投影矩阵的逆矩阵
+#define IvyParam_Matrix_I_VP  mul(IvyParam_Matrix_I_V, IvyParam_Matrix_I_P)
+//float4x4 模型视图投影矩阵的逆矩阵
+#define IvyParam_Matrix_I_MVP mul(IvyParam_Matrix_I_M, IvyParam_Matrix_I_VP)
 
 //===[时间]===
 
@@ -75,6 +68,9 @@
 //float4 上一帧的时间间隔。x:帧间隔时间，y:帧间隔时间/20，z:帧间隔时间/200，w:帧间隔时间x2
 #define IvyParam_DeltaTime _DeltaTime
 
+
+
+//以下不可通用，删除
 //===[光照]===
 
 //float4 天空环境光颜色（RGB）和强度（A）

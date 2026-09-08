@@ -14,20 +14,6 @@
 //=== [光照阴影数据结构] ===
 
 
-//光照阴影数据
-struct IvyStruct_Light
-{
-    // 光源方向
-    half3   Direction;
-    // 光源颜色
-    half3   Rgb;
-    // 光源衰减
-    float   DistAtten; 
-    // 阴影衰减
-    half    ShadowAtten;
-    // 阴影层级
-    uint    LayerMask;
-};
 
 //===[数据结构字段映射]===
 // 顶点位置

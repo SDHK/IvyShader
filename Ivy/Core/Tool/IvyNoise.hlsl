@@ -10,8 +10,7 @@
 #if DefPart(IvyNoise, Tool) 
 #define Def_IvyNoise_Tool
 
-#define Link_IvyHash
-#include "../IvyEdit.hlsl"
+#include "IvyHash.hlsl"
 
 // 随机数函数
 // float3 c: 输入的三维坐标

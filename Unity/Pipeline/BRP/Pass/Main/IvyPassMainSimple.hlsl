@@ -69,8 +69,8 @@ float IvyArg_BackRimIntensity;// 背光强度（0=关闭）
 float IvyArg_BackLightRimSoftness;// 边缘集中度（建议 2~8）
 
 
-float IvyArg_ReflectSmoothness;
-float IvyArg_ReflectIntensity;
+float IvyArg_ReflectSmoothness0;
+float IvyArg_ReflectIntensity0;
 
 // 金属环境贴图（CubeMap 和 2D equirectangular）
 sampler2D IvyArg_EnvMapTex;
@@ -80,12 +80,12 @@ sampler2D IvyArg_MatCapTex;
 float IvyArg_MatCapInfluence;
 
 // 特效图
-int IvyArg_EffectMap0;
-int IvyArg_EffectMap1;
-int IvyArg_EffectMap2;
-int IvyArg_EffectMap3;
+int IvyArg_EffectMode0;
+int IvyArg_EffectMode1;
+int IvyArg_EffectMode2;
+int IvyArg_EffectMode3;
 int IvyArg_EffectMap;
-int IvyArg_EffectMapInside;
+int IvyArg_EffectModeInside;
 // 映射图
 int IvyArg_VecMap0;
 
@@ -110,17 +110,21 @@ int IvyArg_VecMap0;
 
 //===[引入核心库]====================================================
 #define Link_IvyBase
-#define Link_IvyHash
+//#define Link_IvyHash
 #define Link_IvyNoise
 #define Link_IvyLight
+
 #define Link_IvyMatrix
 #define Link_IvyMath
 #define Link_IvyVertex
 #define Link_IvyField
 #define Link_IvyVecMap
 #define Link_IvyRamp
-#define Link_IvyEffect
+#define Link_IvyEffect3D
 #define Link_IvyUv
+#define Link_IvyGeom
+#define Link_IvySkin
+#define Link_IvyReflect
 #include "../../Core/IvyCore.hlsl"
 
 
@@ -128,13 +132,13 @@ struct VertIn
 {
     IvyVar_PosOs
     IvyVar_NrmOs
-    IvyVar_T0(float2, UV)
+    IvyVar_T0(float2, Uv)
 };
 
 struct VertOut
 {
     IvyVar_PosCs
-    IvyVar_T0(float2, UV)
+    IvyVar_T0(float2, Uv)
     IvyVar_T1(float3, NrmOs)
     IvyVar_T2(float3, PosOs)
     IvyVar_T3(float3, NrmWs)
@@ -158,9 +162,9 @@ struct FragOut{ IvyVar_TargetRgba };
 VertOut Vert(VertIn vertIn)
 {
     VertOut vertOut;
-    //vertOut.UV = IvyUv_Transform2D(vertIn.UV.xy, IvyArg_MainTex_ST.xy, IvyArg_MainTex_ST.zw);
+    //vertOut.Uv = IvyUv_Transform2D(vertIn.Uv.xy, IvyArg_MainTex_ST.xy, IvyArg_MainTex_ST.zw);
 
-    vertOut.UV = vertIn.UV;
+    vertOut.Uv = vertIn.Uv;
     vertOut.PosCs = IvyMatrix_PosOsToCs(vertIn.PosOs);
     vertOut.NrmOs = vertIn.NrmOs;
     vertOut.PosOs = vertIn.PosOs;
@@ -168,131 +172,66 @@ VertOut Vert(VertIn vertIn)
     vertOut.PosWs = IvyMatrix_PosOsToWs(vertIn.PosOs);
     // light-space shadow coord：基于顶点世界坐标变换，不依赖屏幕深度缓冲
     vertOut.ShadowCoord = IvyLight_ShadowCoord(vertIn.PosOs, vertOut.PosCs, vertOut.PosWs);
-    vertOut.GrabPos = IvyBase_GrabScreenPos(vertOut.PosCs);
+    vertOut.GrabPos = ComputeGrabScreenPos(vertOut.PosCs);
     return vertOut;
 }
 
 FragOut Frag(FragIn fragIn)
 {
-    //===[片元输入]===================================================
-    float4 posCs = fragIn.VertOut.PosCs;
-    float2 uv = fragIn.VertOut.UV;
-    float3 nrmOs = fragIn.VertOut.NrmOs;
-    float3 posOs = fragIn.VertOut.PosOs;
-    float3 nrmWs = fragIn.VertOut.NrmWs;
-    float3 posWs = fragIn.VertOut.PosWs;
-    float4 shadowCoord = fragIn.VertOut.ShadowCoord;
-    float4 grabPos = fragIn.VertOut.GrabPos;
-    float viewFace = fragIn.ViewFace;
-    bool isFront = viewFace > 0.0;
-
-    if(!isFront)
-    {
-        nrmOs = -nrmOs;
-        nrmWs = -nrmWs;
-    }
-
     //===[透镜折射效果]===================================================
-    float2 grabUV = grabPos.xy / grabPos.w;
-    // 简单整屏相对中心放大（先用片元 UV 中心试；更好是物体中心投到屏幕）
+    float4 grabPos = fragIn.VertOut.GrabPos;
+    float2 grabUv = grabPos.xy / grabPos.w;
+    // 简单整屏相对中心放大（先用片元 Uv 中心试；更好是物体中心投到屏幕）
     float2 center = float2(0.5, 0.5);
     float zoom = 1;
     // >1 放大
-    float2 zoomedUV = center + (grabUV - center) / zoom;
-    float3 bg = tex2D(IvyArg_GrabTexture, zoomedUV).rgb;
-    //======
-
+    float2 zoomedUv = center + (grabUv - center) / zoom;
+    float3 bg = tex2D(IvyArg_GrabTexture, zoomedUv).rgb;
 
     //===[自发光]===================================================
-    float emissiveMask = tex2D(IvyArg_EmissiveTex, uv).r;
-    float emissiveWeight = saturate(emissiveMask * IvyArg_EmissiveIntensity);
-    //===[场景光照]================================================
+    //float emissiveMask = tex2D(IvyArg_EmissiveTex, geomOut.Uv).r;
+    //float emissiveWeight = saturate(emissiveMask * IvyArg_EmissiveIntensity);
+    //===[几何基础阶段]===================================================
+    IvyGeom_BuildIn geomIn;
+    geomIn.Uv = fragIn.VertOut.Uv;
+    geomIn.PosOs = fragIn.VertOut.PosOs;
+    geomIn.NrmOs = fragIn.VertOut.NrmOs;
+    geomIn.IsFront = fragIn.ViewFace > 0.0;
+    geomIn.CamWs = _WorldSpaceCameraPos;
+    geomIn.OrthoParams = unity_OrthoParams;
+    IvyGeom_BuildOut geomOut = IvyGeom_Build(geomIn);
+    IvyGeom_VecMapOut vecMaps = IvyGeom_VecMap(geomOut);
+    // 方向世界坐标到世界相机
+    float3 dirPosToCamWs = normalize(vecMaps.VecPosToCamWs);
+    //===[Uv分区]===================================================
+    // 格子数改这里即可（2×2 / 2×3 / 3×3…）；tex2D switch 与颜色槽仍按实际贴图数手写
+    int uvId = IvyUv_GridId(geomOut.Uv, 2, 2);
+    float2 localUv = IvyUv_GridLocal(geomOut.Uv, 2, 2);
+    //===[光照漫反射阶段]===================================================
+    IvyStruct_Light light = IvyLight_MainLight(fragIn.VertOut.ShadowCoord);
+    IvyLight_DiffuseIn lightIn;
+    lightIn.NrmWs = geomOut.NrmWsFront;
+    lightIn.Rgb =light.Rgb;
+    lightIn.Dir = light.Direction;
+    lightIn.DistAtten = light.DistAtten;
+    lightIn.ShadowAtten = light.ShadowAtten;
+
+    lightIn.Influence = IvyArg_LightInfluence;
+    lightIn.LightMin = IvyArg_LightMin;
+    lightIn.LightMax = IvyArg_LightMax;
+    lightIn.ShadowMin = IvyArg_LightShadowMin;
+    lightIn.ShadowThreshold = IvyArg_LightRampThreshold;
+    lightIn.ShadowSoftness = IvyArg_LightRampSoftness;
+    IvyLight_DiffuseOut lightOut = IvyLight_Diffuse(lightIn);
+    //===[环境光照]================================================
     // 环境光球谐光照，晚上没有球谐光照。
-    half3 envLight = ShadeSH9(float4(nrmWs, 1));
+    half3 envLight = ShadeSH9(float4(geomOut.NrmWsFront, 1));
     // 环境光影响度
     envLight = lerp(IvyMath_Luma(envLight), envLight, IvyArg_EnvLightInfluence);
     // 环境光钳制，避免发光过亮导致溢出
-    envLight = clamp(envLight , IvyArg_LightMin, IvyArg_LightMax);
+    //envLight = clamp(envLight , IvyArg_LightMin, IvyArg_LightMax);
 
-    // 主光源信息
-    IvyStruct_Light light = IvyLight_MainLight(shadowCoord);
-    half3 lightRgb = light.Rgb;
-    half3 lightDir = light.Direction;
-    float lightDistAtten = light.DistAtten;
-    half lightShadowAtten = light.ShadowAtten;
-    // 光照钳制，避免发光过亮导致溢出,但y可能达不到1
-    float sunUp = clamp(lightDir.y, 0 , 1)*2;
-    half3 lightBaseRgb = clamp(lightRgb * sunUp,IvyArg_LightMin, IvyArg_LightMax);
-
-
-    // 综合距离衰减和阴影衰减，得到最终光照颜色
-    lightRgb = lightBaseRgb * lightDistAtten * lightShadowAtten;
-    // 主体光照色影响度，防止过度受光源颜色调制
-    half3 mainLightRgb = lerp(IvyMath_Luma(lightRgb), lightRgb, IvyArg_LightInfluence);
-
-
-    // 如果光线向下，则反转光线方向，让光线始终在上方，保证阴影效果
-    if(lightDir.y <= 0 )lightDir.y = -lightDir.y;
-    // 当光线消失时，保持固定头顶方向以维持阴影效果
-    if(length(lightDir) == 0)lightDir = float3(0,1,0);
-
-    // 计算光照亮度（灰度）
-    half lightLuma = IvyMath_Luma(lightRgb);
-    //===[变量]===================================================
-    float3 camWs = IvyParam_CameraPosWs;
-    float3 camOs = IvyMatrix_PosWsToOs(camWs);
-    float3 objWs = IvyMatrix_PosOsToWs(float3(0, 0, 0));
-    float3 nrmVs = (normalize(camOs-nrmOs));
-
-
-  //float3   nrmVs = IvyVecMap_LookTo()
-
-    // 向量世界相机到世界坐标
-    // 正交投影时，视线方向为相机前方
-     float3 vecCamToPosWs;
-    if (IvyParam_OrthoParams.w > 0.5)
-    {
-        vecCamToPosWs = -IvyParam_Matrix_V[2].xyz;
-    }
-    else
-    {
-        vecCamToPosWs = IvyVecMap_LookTo(camWs, posWs);
-    }
-
-    float3 vecCamToPosOs = IvyVecMap_LookTo(camOs, posOs);
-    // 向量世界坐标到世界相机
-    float3 vecPosToCamWs = -vecCamToPosWs;
-    // 向量世界物体到世界相机
-    float3 vecObjToCamWs = IvyVecMap_LookTo(objWs, camWs);
-    // 向量世界相机到世界物体
-    float3 vecCamToObjWs = -vecObjToCamWs;
-    // 方向世界坐标到世界相机
-    float3 dirPosToCamWs = normalize(vecPosToCamWs);
-    // 方向高光
-    float3 dirHighLight = normalize(lightDir + dirPosToCamWs);
- 
-    //===[UV分区]===================================================
-    // uv: 模型 UV0，假设在 [0,1)
-    // 防止 uv==1 时落到第 3 格
-    uv = min(uv, 0.999999);// 防止 uv==1 时落到第 3 格
-    int col = (int)floor(uv.x * 2.0); // 0,1 → u0,u1
-    int row = (int)floor(uv.y * 2.0); // 0,1 → v0,v1（左下为 0）
-    int visualRow = 1 - row; // 把数学 row0(下) 翻成「上=0」
-    // 格子内局部 UV（采细节用）
-    float2 localUV = frac(uv * 2.0);
-    // uv的九宫格分区索引，0~3
-    int uvId = visualRow * 2 + col; // 0..3
-
-    
     //===[皮肤着色]=================================================
-    //皮肤细节遮罩
-    half4 skinMask = 0;
-    //皮肤灰度
-    half skinMaskLuma = 0;
-    //皮肤颜色
-    half3 skinRgb = 0;
-    //最终透明度
-    half finalAlpha = 1;
     // 根据 uvId 选择对应的纹理和颜色
 
     //临时颜色！！！！
@@ -302,235 +241,122 @@ FragOut Frag(FragIn fragIn)
     //IvyArg_SkinRgb11 = IvyArg_SkinRgb01;
     //IvyArg_SkinRgb21 = IvyArg_SkinRgb01;
     //IvyArg_SkinRgb31 = IvyArg_SkinRgb01;
-
-    half4 skinRgb0 = IvySwitch_Float4(uvId,IvyArg_SkinRgb00,IvyArg_SkinRgb10,IvyArg_SkinRgb20,IvyArg_SkinRgb30);
-    half4 skinRgb1 = IvySwitch_Float4(uvId,IvyArg_SkinRgb01,IvyArg_SkinRgb11,IvyArg_SkinRgb21,IvyArg_SkinRgb31);
-    //原图
+    //皮肤细节遮罩
+    half4 skinMask = 0;
     switch (uvId)
     {
-        case 0:skinMask = tex2D(IvyArg_SkinMask0, localUV); break;
-        case 1:skinMask = tex2D(IvyArg_SkinMask1, localUV); break;
-        case 2:skinMask = tex2D(IvyArg_SkinMask2, localUV); break;
-        case 3:skinMask = tex2D(IvyArg_SkinMask3, localUV); break;
+        case 0:skinMask = tex2D(IvyArg_SkinMask0, localUv); break;
+        case 1:skinMask = tex2D(IvyArg_SkinMask1, localUv); break;
+        case 2:skinMask = tex2D(IvyArg_SkinMask2, localUv); break;
+        case 3:skinMask = tex2D(IvyArg_SkinMask3, localUv); break;
         default:skinMask = 1; break;
     }
-    //灰度
-    skinMaskLuma = IvyMath_Luma(skinMask.rgb);// * skinMask.a
+    //皮肤灰度
+    half skinMaskLuma = IvyMath_Luma(skinMask.rgb);// * skinMask.a
     //渐变着色
-    skinRgb = lerp(skinRgb0.rgb, skinRgb1.rgb,  skinMaskLuma);
-
+    half4 skinRgb0 = IvySwitch_Float4(uvId,IvyArg_SkinRgb00,IvyArg_SkinRgb10,IvyArg_SkinRgb20,IvyArg_SkinRgb30);
+    half4 skinRgb1 = IvySwitch_Float4(uvId,IvyArg_SkinRgb01,IvyArg_SkinRgb11,IvyArg_SkinRgb21,IvyArg_SkinRgb31);
+    half3 skinRgb = lerp(skinRgb0.rgb, skinRgb1.rgb,  skinMaskLuma);
     //最终透明度
-    finalAlpha = skinMask.a;
+    half  finalAlpha = skinMask.a;
 
     //===[皮肤渐变喷涂]========================
-    //当前皮肤色
-    half3 skinHsv = IvyMath_RgbToHsv(skinRgb);
-    //渐变基准色
-    half3 skinRampHsv = IvyMath_RgbToHsv(IvyArg_RampRgbBase.rgb);
-    float3 skinRgbTest = 0;
-    //===[边缘光颜色]====================================
+    //假sss次表面散射思路，如果摄像逐渐看向主光照，则增加边缘光强度，取暗色为次表面边光颜色。
+
     if(IvyArg_SkinRampToggle != 0)
     {
-        //半Lambert喷涂
-        half skinObjRampLambert = IvyRamp_Lambert(nrmOs, IvyArg_SkinObjRampPos, 0.5);
-        //计算当前皮肤色与渐变基准色的 HSV 差值
-        half3 skinObjDeltaHsv0 = IvyMath_HsvDelta(IvyMath_RgbToHsv(IvyArg_SkinObjRampRgb0.rgb), skinRampHsv);
-        half3 skinObjDeltaHsv1 = IvyMath_HsvDelta(IvyMath_RgbToHsv(IvyArg_SkinObjRampRgb1.rgb), skinRampHsv);
-        //根据当前皮肤色与渐变基准色的 HSV 差值，计算出当前皮肤色在各个渐变域的颜色
-        half3 skinObjRampRgb0 = IvyMath_HsvToRgb(IvyMath_ApplyHsvDelta(skinHsv , skinObjDeltaHsv0));
-        half3 skinObjRampRgb1 = IvyMath_HsvToRgb(IvyMath_ApplyHsvDelta(skinHsv , skinObjDeltaHsv1));
-        //根据 Lambert 灰度权重，计算出当前片元在各个渐变域的颜色
-        skinRgb = IvyRamp_Rgb3(
-        skinObjRampLambert,
-        skinObjRampRgb0, IvyArg_SkinObjRampThreshold0, IvyArg_SkinObjRampSoftness,
-        skinRgb, 1 - IvyArg_SkinObjRampThreshold1, IvyArg_SkinObjRampSoftness,
-        skinObjRampRgb1);
+        IvySkin_RampIn skinRampIn;
+        skinRampIn.SkinRgb = skinRgb;
+        skinRampIn.RampBaseRgb = IvyArg_RampRgbBase.rgb;
+        skinRampIn.Nrm = geomOut.NrmOsFront;
+        skinRampIn.RampDir = IvyArg_SkinObjRampPos;
+        skinRampIn.LambertScale = 0.5;
+        skinRampIn.Rgb0 = IvyArg_SkinObjRampRgb0.rgb;
+        skinRampIn.Rgb1 = IvyArg_SkinObjRampRgb1.rgb;
+        skinRampIn.Threshold0 = IvyArg_SkinObjRampThreshold0;
+        skinRampIn.Threshold1 = IvyArg_SkinObjRampThreshold1;
+        skinRampIn.Softness = IvyArg_SkinObjRampSoftness;
+        skinRgb = IvySkin_Ramp(skinRampIn).Rgb;
 
-        //skinRgbTest = skinObjRampLambert;
+        skinRampIn.SkinRgb = skinRgb;
+        skinRampIn.Nrm = geomOut.NrmWsFront;
+        skinRampIn.RampDir = dirPosToCamWs;
+        skinRampIn.LambertScale = 1.0;
+        skinRampIn.Rgb0 = IvyArg_SkinViewRampRgb0.rgb;
+        skinRampIn.Rgb1 = IvyArg_SkinViewRampRgb1.rgb;
+        skinRampIn.Threshold0 = IvyArg_SkinViewRampThreshold0;
+        skinRampIn.Threshold1 = IvyArg_SkinViewRampThreshold1;
+        skinRampIn.Softness = IvyArg_SkinViewRampSoftness;
+        skinRgb = IvySkin_Ramp(skinRampIn).Rgb;
+    }
 
+    half3 skinRgbPreEffect = skinRgb;
 
-        //重新计算当前皮肤色
-        skinHsv = IvyMath_RgbToHsv(skinRgb);
-        half skinViewRampLambert = IvyRamp_Lambert(nrmWs,dirPosToCamWs);
-        half3 skinViewDeltaHsv0 = IvyMath_HsvDelta(IvyMath_RgbToHsv(IvyArg_SkinViewRampRgb0.rgb), skinRampHsv);
-        half3 skinViewDeltaHsv1 = IvyMath_HsvDelta(IvyMath_RgbToHsv(IvyArg_SkinViewRampRgb1.rgb), skinRampHsv);
-        half3 skinViewRampRgb0 = IvyMath_HsvToRgb(IvyMath_ApplyHsvDelta(skinHsv , skinViewDeltaHsv0));
-        half3 skinViewRampRgb1 = IvyMath_HsvToRgb(IvyMath_ApplyHsvDelta(skinHsv , skinViewDeltaHsv1));
-        skinRgb = IvyRamp_Rgb3(
-        skinViewRampLambert, 
-        skinViewRampRgb0, IvyArg_SkinViewRampThreshold0,IvyArg_SkinViewRampSoftness,
-        skinRgb,1 - IvyArg_SkinViewRampThreshold1, IvyArg_SkinViewRampSoftness,
-        skinViewRampRgb1);
-   }
-    //假sss次表面散射思路，如果摄像逐渐看向主光照，则增加边缘光强度，取暗色为次表面边光颜色。
-    //===[光照阴影]====================================
-    // 光照阴影（灰度，跟随光源方向）
-    half lightLambert = IvyRamp_Lambert(nrmWs, lightDir, 0.5);
-    half lightLambrtGray  = IvyRamp_Gray(lightLambert, IvyArg_LightRampThreshold, IvyArg_LightRampSoftness);
-    // 光照强度映射到指定范围，避免过暗或过亮
-    lightLambrtGray  = lightLambrtGray  * (IvyArg_LightMax - IvyArg_LightShadowMin) + IvyArg_LightShadowMin;
-    //漫反射光照颜色（随光源方向变化）
-    half3 diffuseLight = envLight + mainLightRgb * lightLambrtGray;
+    //===[特效向量映射]=====================================================
+    float3  vecMapSwitch;
+    float effectMask = 1;
+    vecMapSwitch = IvySwitch_Float3(IvyArg_VecMap0, vecMaps.VecCamToPosOs, vecMaps.VecCamToPosWs, vecMaps.VecMapCamVs, vecMaps.VecMapReflect, vecMaps.VecMapNrmPosOs,  vecMaps.VecMapNrmPosWs, vecMaps.VecMapNrmPosVs);
+    //===[对特效图的映射]==
+    IvyEffect3D_VolumeIn effectIn;
+    effectIn.SkinRgb = skinRgbPreEffect;
+    effectIn.InsideRgb = IvyArg_SkinRgb31;
+    effectIn.VecMap = vecMaps.VecCamToPosOs;
+    effectIn.CamOs = geomOut.CamOs;
+    effectIn.IsFront = geomOut.IsFront;
+    effectIn.Depth = 1.0;
+    effectIn.EffectId = IvyArg_EffectMap;
+    effectIn.RegionMode = IvySwitch_Float3(uvId, IvyArg_EffectMode0, IvyArg_EffectMode1, IvyArg_EffectMode2, IvyArg_EffectMode3);
+    effectIn.InsideEnable = IvyArg_EffectModeInside;
+    effectIn.SkinMaskLuma = skinMaskLuma;
+    effectIn.Time = IvyParam_Time.x;
+    effectIn.PosOffset = float2(0, 0);
+    IvyEffect3D_VolumeOut effectOut = IvyEffect3D_Volume(effectIn);
+    skinRgb = effectOut.Rgb;
+
+    //金属为粗糙时需要阴影，边缘反射为瓷器和塑料
+    //===[金属反射]=====================================================
+    // 反射模糊度
+    half mipMap = (1.0 - IvyArg_ReflectSmoothness0) * 8.0; 
+    // BRP 环境反射探针
+    float4 envRaw = UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, vecMaps.VecMapReflect, mipMap);
+    float3 probeReflect = DecodeHDR(envRaw, unity_SpecCube0_HDR);
+    // 环境贴图反射
+    float2 envUv = IvyUv_DirToSphere(vecMaps.VecMapReflect);
+    float3 metalEnvReflect = tex2Dlod(IvyArg_EnvMapTex, float4(envUv, 0, mipMap)).rgb;
+    // MatCap贴图反射
+    float2 matCupUv = IvyUv_DirToMatCap(vecMaps.VecMapRotateFrame);
+    float3 matCapReflect = tex2Dlod(IvyArg_MatCapTex, float4(matCupUv, 0, mipMap)).rgb;
+    IvyReflect_SpecularIn reflectIn;
+    reflectIn.SkinRgb = skinRgb;
+    reflectIn.NrmWs = geomOut.NrmWsFront;
+    reflectIn.ViewDir = dirPosToCamWs;
+    reflectIn.LightDir = lightOut.Dir;
+    reflectIn.Lambert = lightOut.Lambert;
+    reflectIn.EnvLight = envLight;
+    reflectIn.LightRgb = lightOut.Rgb;
+    reflectIn.ProbeRgb = probeReflect;
+    reflectIn.EnvMapRgb = metalEnvReflect;
+    reflectIn.MatCapRgb = matCapReflect;
+    reflectIn.EnvMapInfluence = IvyArg_EnvMapInfluence;
+    reflectIn.MatCapInfluence = IvyArg_MatCapInfluence;
+    reflectIn.ReflectSmoothness = IvyArg_ReflectSmoothness0;
+    reflectIn.ReflectIntensity = IvyArg_ReflectIntensity0;
+    IvyReflect_SpecularOut reflectOut = IvyReflect_Specular(reflectIn);
     //===[附加光照]====================================
     //边缘光
-    half rimRamp = IvyRamp_Fresnel(nrmWs,dirPosToCamWs, IvyArg_LightRimSoftness) * IvyArg_RimIntensity;
-    half3 rimLight = rimRamp * mainLightRgb ;
+    half rimRamp = IvyRamp_Fresnel(geomOut.NrmWsFront,dirPosToCamWs, IvyArg_LightRimSoftness) * IvyArg_RimIntensity;
+    half3 rimLight = rimRamp * (lightOut.Rgb + envLight) ;
     //背光
-    half backRimRamp = IvyRamp_BackRim(nrmWs, dirPosToCamWs, lightDir, IvyArg_BackLightRimSoftness) * IvyArg_BackRimIntensity ;
-    half3 backRimLight = backRimRamp * mainLightRgb ;
+    half backRimRamp = IvyRamp_BackRim(geomOut.NrmWsFront, dirPosToCamWs, lightOut.Dir, IvyArg_BackLightRimSoftness) * IvyArg_BackRimIntensity ;
+    half3 backRimLight = backRimRamp * (lightOut.Rgb + envLight) ;
 
     half3 addLight = rimLight + backRimLight;
 
-
-    //===[特效向量映射]=====================================================
-    // 0.物体空间视线方向（无限远天空盒，角度跟随物体旋转）
-    float3 skyOsVecMap = vecCamToPosOs;
-    // 1.世界空间视线方向（无限远天空盒，角度跟世界）
-    float3 skyWsVecMap = vecCamToPosWs;
-    // 2.摄像机视线
-    float3 camVsVecMap = IvyVecMap_CamVs(vecCamToPosWs);
-    // 3.镜面反射效果
-    float3 reflectVecMap = IvyVecMap_Reflect(vecCamToPosWs, nrmWs);
-    // 4.法线映射到物体表面，跟随物体移动和旋转
-    float3 nrmPosOsVecMap = IvyVecMap_NrmPosOs(nrmOs, posOs);
-    // 5.法线映射到物体表面，跟随物体移动但不旋转
-    float3 nrmPosWsVecMap = IvyVecMap_NrmPosWs(nrmOs, posOs);
-    // 6.法线映射到物体表面，跟随视角同步旋转
-    float3 nrmPosVsVecMap = IvyVecMap_NrmPosVs(nrmWs, posOs);
-
-    float3 nrmLookVecMap = IvyVecMap_VecLookAt(nrmWs, vecPosToCamWs);
-    //float3 nrmLookVecMap = IvyVecMap_VecRotateEuler(nrmOs, float3(0,0,0));
-
-    float3 vecMap, vecMap0, vecMap1, vecMap2, vecMap3, vecMap4;
-    float effectMask = 1;
-
-    //int vecMapSwitch = IvySwitch_Float3(uvId,IvyArg_VecMap0,IvyArg_VecMap1,IvyArg_VecMap2,IvyArg_VecMap3);
-    //vecMap = IvySwitch_Float3(IvyArg_VecMap0, skyOsVecMap, skyWsVecMap, camVsVecMap, reflectVecMap, nrmPosOsVecMap, nrmPosWsVecMap, nrmPosVsVecMap);
-
-    vecMap = skyOsVecMap; // 3D特效渲染为体积云
-    //===[对特效图的映射]==
-    float tNear, tFar;
-    float depth = 1;//假设厚度为1
-    float tHit = length(vecCamToPosOs);
-    if (isFront)
-    {
-        // 体外看：从表面往里积一段（假厚度，或以后换成背面深度）
-        tNear = tHit;
-        tFar = tHit + depth;
-    }
-    else 
-    {
-        // 体内看背面：从相机积到出口（背面片元）
-        tNear = 0.0;
-        tFar = tHit + 0.1;
-    }
-
-    //特效图强遮罩位图,0和1为不启用特效图，2~31为启用特效图,最多支持30种
-    int effectMapBitMask = 0;
-    //特效图遮罩权重
-    float effectMapMask = 0;
-
-    if(IvyArg_EffectMap != 0)
-    {
-        if(isFront)
-        {
-            float skinMaskLumaReverse = 1 - skinMaskLuma;
-            //根据uvId选择特效图注入方式
-            int effectMap = IvySwitch_Float3(uvId,IvyArg_EffectMap0,IvyArg_EffectMap1,IvyArg_EffectMap2,IvyArg_EffectMap3);
-            //根据皮肤遮罩的灰度值，计算特效图的遮罩权重
-            effectMapMask = IvySwitch_Float3(effectMap, 0, skinMaskLuma, skinMaskLumaReverse,  1);
-            //区域特效遮罩。
-            if(IvyArg_EffectMap !=0 && effectMapMask != 0) effectMapBitMask |= 1 << IvyArg_EffectMap;
-        }
-        else
-        {
-            effectMapMask = 1;
-            //区域特效遮罩。
-            if(IvyArg_EffectMapInside !=0 )  effectMapBitMask |= 1 << IvyArg_EffectMap;
-        }
-    }
-
-
-    // 位运算判断筛选特效
-    float3 vol1 = 0, vol2 = 0, vol3 = 0;
-    // 特效场扰动
-    float2 timecs = float2(cos(IvyParam_Time.x),sin(IvyParam_Time.x));
-    //timecs =float2(1,1);
-    // 特效平移
-    float2 dir = IvyParam_Time.x * 0.1* float2(1, 1);
-    dir = float2(0,0);
-    if(effectMapBitMask&(1<<1)) vol1 += IvyEffect_VolumeStar(vecMap,  camOs, tNear, tFar,dir,timecs);
-    if(effectMapBitMask&(1<<2)) vol2 += IvyEffect_VolumeCrystal(vecMap, camOs, tNear, tFar,dir,timecs);
-    if(effectMapBitMask&(1<<3)) vol3 += IvyEffect_StarNest(vecMap,camOs, tNear, tFar, dir,timecs);
-
-    // 通道特效混合
-    float3 effectMapRgb = IvySwitch_Float3(IvyArg_EffectMap, 0, vol1, vol2, vol3);
-    if(isFront)
-    {
-        effectMapRgb *= skinRgb;
-    }
-    else
-    {
-        //内部用通道3亮色
-        effectMapRgb *= IvyArg_SkinRgb31;
-    }
-    skinRgb = lerp(skinRgb, effectMapRgb, effectMapMask) ;
-
-
-    //金属为粗糙时需要阴影，边缘反射为瓷器和塑料
-    //===[金属]=====================================================
-    //粗糙度
-    half rough  = 1.0 - IvyArg_ReflectSmoothness;
-
-    //  方向高光（Blinn-Phong）
-    //高光遮罩
-    half highLightFacingMask = IvyRamp_Lambert(nrmWs, lightDir);
-    half highLightRamp = IvyRamp_HighLight(nrmWs, dirHighLight, rough) * highLightFacingMask;
-
-    // 反射模糊度
-    half mip = rough * 8.0; 
-    // BRP 环境反射探针
-    float4 envRaw = UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, reflectVecMap, mip);
-    float3 probeReflect = DecodeHDR(envRaw, unity_SpecCube0_HDR);
-    // 环境贴图反射
-    float2 envUV = IvyUv_DirToSphere(reflectVecMap);
-    float3 metalEnvReflect = tex2Dlod(IvyArg_EnvMapTex, float4(envUV, 0, mip)).rgb;
-    float3 metalReflect = lerp(probeReflect ,metalEnvReflect , IvyArg_EnvMapInfluence);
-    // MatCap贴图反射
-    float2 matCupUV = IvyUv_DirToMatCap(nrmLookVecMap);
-    float3 matCapReflect = tex2Dlod(IvyArg_MatCapTex, float4(matCupUV, 0, mip)).rgb;
-    metalReflect = lerp(metalReflect ,matCapReflect , IvyArg_MatCapInfluence);
-
-    // 菲涅耳边缘反射
-    half fresnelMetal = IvyRamp_Fresnel(nrmWs, dirPosToCamWs, 0.5) ;
-
-    float phaseUniform = saturate(IvyArg_ReflectIntensity * 2.0 - 1.0); // 0.5~1 → 0~1：均匀化
-    half reflectRim = IvyRamp_Lambert(nrmWs,dirPosToCamWs,0.5);
-    reflectRim = 1-IvyRamp_Gray(reflectRim,  IvyArg_ReflectIntensity,0.5);
-    reflectRim = lerp( reflectRim , 1.0, phaseUniform);
-
-    // 金属高光可用 max(skinRgb,0.2) 防止暗色 albedo 高光过黑（保留原逻辑）
-    half3 specColor =  max(skinRgb,0.1);
-    // NPR 附加：rim / 背光（不含 highLight，避免和主光高光重复）
-    half3 addPart = specColor * addLight;//*notMetal 光滑度代替。
-    // 金属共用的漫射光照（已含 Metal）
-    half3 metalLight = skinRgb * diffuseLight;
-    //粗糙：整面漫射底
-    half roughDiffuseWeight = rough * rough;
-    //光滑：菲涅尔弱的地方补漫射（填中心变黑），边缘留给 reflectSpec
-    half smoothCenterFillWeight = (1.0 - reflectRim) * IvyArg_ReflectSmoothness;
-    half3 metalDiffusePart = metalLight * (roughDiffuseWeight + smoothCenterFillWeight);
-    // 4 直射 spec：金属/非金属共用，不再 specAlbedo * metalHighLight
-    half3 highLightPart = specColor * highLightRamp * mainLightRgb;
-    // 5 环境反射
-    float3 reflectSpec = metalReflect * lerp(skinRgb, 1, fresnelMetal) * reflectRim;
-    float3 finalColor =  metalDiffusePart + reflectSpec + addPart + highLightPart;
+    float3 finalColor = reflectOut.Rgb + addLight;
 
     FragOut fragOut;
     fragOut.TargetRgba = half4(finalColor, 1);
-    //fragOut.TargetRgba = half4(skinRgbTest.rgb, 0.5);
     return fragOut;
-
 }
 
 #endif// Def(IvyPassMainSimple)
@@ -542,8 +368,8 @@ FragOut Frag(FragIn fragIn)
 // ===星旋效果
 
 //       float iTime = IvyParam_Time.y;
-//   //float2 uv = (fragData.UV / iResolution.xy) - .5;
-//   float2 uv = fragData.UV*0.5;
+//   //float2 uv = (fragData.Uv / iResolution.xy) - .5;
+//   float2 uv = fragData.Uv*0.5;
 //float t = iTime * .1 + ((.25 + .05 * sin(iTime * .1))/(length(uv.xy) + .07)) * 2.2;
 //float si = sin(t);
 //float co = cos(t);

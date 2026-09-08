@@ -10,98 +10,112 @@ Shader "Ivy/IvyObjectTransparent"
         
         // Input_MainTex            ("无用主材质",                        2D)     = "white" {}
         [Space(20)]
-        Input_SkinMask0          ("花纹0",   2D)     = "white" {}
-        Input_SkinMask1          ("花纹1",   2D)     = "white" {}
-        Input_SkinMask2          ("花纹2",   2D)     = "white" {}
-        Input_SkinMask3          ("花纹3",   2D)     = "white" {}
+        Input_SkinMask0                     ("花纹0",   2D)     = "white" {}
+        Input_SkinMask1                     ("花纹1",   2D)     = "white" {}
+        Input_SkinMask2                     ("花纹2",   2D)     = "white" {}
+        Input_SkinMask3                     ("花纹3",   2D)     = "white" {}
         
         [Space(20)]
-        Input_EmissiveIntensity  ("自发光强度",                       Range(0,1))  = 0.1
-        Input_EmissiveTex        ("自发光遮罩",       2D)     = "white" {}
+        Input_EmissiveIntensity             ("自发光强度",           Range(0,1))  = 0.1
+        Input_EmissiveTex                   ("自发光遮罩",           2D)     = "white" {}
         
         //皮肤颜色
         [Space(20)]
-        Input_SkinRgb01             ("主要亮",              Color)  = (1.00, 1.00, 1.00, 1)
-        Input_SkinRgb00             ("主要暗",              Color)  = (1.00, 1.00, 1.00, 1)
+        Input_SkinRgb01                     ("主要亮",              Color)  = (1.00, 1.00, 1.00, 1)
+        Input_SkinRgb00                     ("主要暗",              Color)  = (1.00, 1.00, 1.00, 1)
         [Space(10)]
-        Input_SkinRgb11             ("次要亮",              Color)  = (1.00, 1.00, 1.00, 1)
-        Input_SkinRgb10             ("次要暗",              Color)  = (1.00, 1.00, 1.00, 1)
+        Input_SkinRgb11                     ("次要亮",              Color)  = (1.00, 1.00, 1.00, 1)
+        Input_SkinRgb10                     ("次要暗",              Color)  = (1.00, 1.00, 1.00, 1)
         [Space(10)]
-        Input_SkinRgb21             ("金属亮",              Color)  = (0.80, 0.80, 0.80, 1)
-        Input_SkinRgb20             ("金属暗",              Color)  = (0.80, 0.80, 0.80, 1)
+        Input_SkinRgb21                     ("金属亮",              Color)  = (0.80, 0.80, 0.80, 1)
+        Input_SkinRgb20                     ("金属暗",              Color)  = (0.80, 0.80, 0.80, 1)
         [Space(10)]
-        Input_SkinRgb31             ("高亮亮",              Color)  = (0.60, 0.60, 0.60, 1)
-        Input_SkinRgb30             ("高亮暗",              Color)  = (0.60, 0.60, 0.60, 1)
+        Input_SkinRgb31                     ("高亮亮",              Color)  = (0.60, 0.60, 0.60, 1)
+        Input_SkinRgb30                     ("高亮暗",              Color)  = (0.60, 0.60, 0.60, 1)
         //皮肤渐变颜色
 
         [Space(20)]
-        Input_RampRgbBase           ("渐变基准色",                   Color)      = (0.20, 0.20, 0.25, 1)
+        Input_RampRgbBase                   ("渐变基准颜色",               Color)      = (0.20, 0.20, 0.25, 1)
         
         [Space(20)]
-        [Toggle] Input_SkinRampToggle  ("皮肤渐变色启用",            Int) = 0
-        Input_SkinObjRampPos      ("方向渐变照射位置",                 Vector)     = (0, 1, 0, 0)
-        Input_SkinObjRampRgb1     ("方向渐变亮色",                     Color)      = (0.60, 0.60, 0.60, 1)
-        Input_SkinObjRampRgb0     ("方向渐变暗色",                     Color)      = (0.60, 0.60, 0.60, 1)
-        Input_SkinObjRampThreshold1 ("方向渐变亮色阈值",                  Range(0,1)) = 0.1
-        Input_SkinObjRampThreshold0 ("方向渐变暗色阈值",                  Range(0,1)) = 0.3
-        Input_SkinObjRampSoftness   ("方向渐变柔和度",                   Range(0,1)) = 0.5
+        [Toggle] Input_SkinRampToggle       ("渐变启用",                  Int) = 0
+        Input_SkinObjRampPos                ("方向渐变位置",              Vector)     = (0, 1, 0, 0)
+        Input_SkinObjRampRgb1               ("方向渐变亮色",              Color)      = (0.60, 0.60, 0.60, 1)
+        Input_SkinObjRampRgb0               ("方向渐变暗色",              Color)      = (0.60, 0.60, 0.60, 1)
+        Input_SkinObjRampThreshold1         ("方向渐变亮色阈值",          Range(0,1)) = 0.1
+        Input_SkinObjRampThreshold0         ("方向渐变暗色阈值",          Range(0,1)) = 0.3
+        Input_SkinObjRampSoftness           ("方向渐变柔和度",            Range(0,1)) = 0.5
         
         [Space(10)]
-        Input_SkinViewRampRgb1 		    ("视线渐变亮色",                        Color)  = (1, 1, 1, 1)
-        Input_SkinViewRampRgb0 		    ("视线渐变暗色",                        Color)  = (1, 1, 1, 1)
-        Input_SkinViewRampThreshold1    ("视线渐变亮色阈值",                       Range(0,1)) = 0.1
-        Input_SkinViewRampThreshold0    ("视线渐变暗色阈值",                       Range(0,1)) = 0.5
-        Input_SkinViewRampSoftness      ("视线渐变柔和度",                       Range(0,1)) = 0.5
+        Input_SkinViewRampRgb1 		        ("视线渐变亮色",               Color)  = (1, 1, 1, 1)
+        Input_SkinViewRampRgb0 		        ("视线渐变暗色",               Color)  = (1, 1, 1, 1)
+        Input_SkinViewRampThreshold1        ("视线渐变亮色阈值",           Range(0,1)) = 0.1
+        Input_SkinViewRampThreshold0        ("视线渐变暗色阈值",           Range(0,1)) = 0.5
+        Input_SkinViewRampSoftness          ("视线渐变柔和度",             Range(0,1)) = 0.5
 
         [Space(20)]
-        Input_LightMin                  ("光照下限",                       Range(0,1))  = 0.1
-        Input_LightMax 	                ("光照上限",                       Range(0,1))  = 0.9
-        Input_LightInfluence            ("光照色影响",                       Range(0,1))  = 0.2
-        Input_EnvLightInfluence 	    ("环境光影响",                       Range(0,1))  = 1
-
-        Input_LightShadowMin 	        ("光照阴影值",                       Range(0,1))  = 0.3
-        Input_LightRampThreshold        ("光影阈值",                         Range(0,1)) = 0.5
-        Input_LightRampSoftness         ("光影柔和度",                       Range(0,1)) = 0.25
-
-        [Space(20)]
-        Input_RimIntensity          ("边光强度（伪次表面散射）",                        Range(0,1))  = 0.25
-        Input_LightRimSoftness      ("边光柔和度（伪次表面散射）",                            Range(0,1)) = 0.5
+        Input_LightMin                      ("光照度下限",               Range(0,1))  = 0.1
+        Input_LightMax 	                    ("光照度上限",               Range(0,1))  = 0.9
         [Space(10)]
-        Input_BackRimIntensity      ("背光强度",                        Range(0,1))  = 0.25
-        Input_BackLightRimSoftness  ("背光柔和度",                            Range(0,1)) = 0.5
+        Input_LightInfluence                ("光照色影响",               Range(0,1))  = 0.2
+        Input_EnvLightInfluence 	        ("环境色影响",               Range(0,1))  = 1
+        [Space(10)]
+        Input_LightShadowMin 	            ("光照阴影",                Range(0,1))  = 0.3
+        Input_LightRampThreshold            ("光影阈值",                Range(0,1)) = 0.5
+        Input_LightRampSoftness             ("光影柔和",                Range(0,1)) = 0.25
+
+        [Space(20)]
+        Input_RimIntensity                  ("边光强度（伪次表面散射）",        Range(0,1))  = 0.25
+        Input_LightRimSoftness              ("边光柔和（伪次表面散射）",       Range(0,1)) = 0.5
+        [Space(10)]
+        Input_BackRimIntensity              ("背光强度",                        Range(0,1))  = 0.25
+        Input_BackLightRimSoftness          ("背光柔和",                       Range(0,1)) = 0.5
     
+        [Space(40)]
+        Input_EnvMapInfluence               ("环境图混合",           Range(0,1)) = 0.5
+        Input_EnvMapTex                     ("环境反射图",           2D) = "gray" {}
         [Space(10)]
-        Input_ReflectIntensity       ("反射强度",            Range(0,1)) = 0
-        Input_ReflectSmoothness      ("反射光滑度",          Range(0,1)) = 0
-
+        Input_MatCapInfluence               ("MatCap混合",            Range(0,1)) = 0.5    
+        Input_MatCapTex                     ("MatCap贴图",            2D) = "gray" {}
 
         [Space(20)]
-        Input_EnvMapTex           ("环境反射图",         2D) = "gray" {}
-        Input_EnvMapInfluence     ("环境图混合",            Range(0,1)) = 0.5
-        [Space(20)]
-        Input_MatCapTex             ("MatCap",               2D) = "gray" {}
-        Input_MatCapInfluence       ("MatCap混合",            Range(0,1)) = 0.5       
+        [Header(Null white black all)]
+        [IntRange]Input_SurfaceMode0        ("面料模式0",            Range(0,3)) = 0
+        Input_ReflectIntensity0             ("反射强度0",            Range(0,1)) = 0
+        Input_ReflectSmoothness0            ("反射光滑0",            Range(0,1)) = 0
+        [Space(10)]
+        [IntRange]Input_SurfaceMode1        ("面料模式1",            Range(0,3)) = 0
+        Input_ReflectIntensity1             ("反射强度1",            Range(0,1)) = 0
+        Input_ReflectSmoothness1            ("反射光滑1",            Range(0,1)) = 0
+        [Space(10)]
+        [IntRange]Input_SurfaceMode2        ("面料模式2",            Range(0,3)) = 0
+        Input_ReflectIntensity2             ("反射强度2",            Range(0,1)) = 0
+        Input_ReflectSmoothness2            ("反射光滑2",            Range(0,1)) = 0
+        [Space(10)]
+        [IntRange]Input_SurfaceMode3        ("面料模式3",            Range(0,3)) = 0
+        Input_ReflectIntensity3             ("反射强度3",            Range(0,1)) = 0
+        Input_ReflectSmoothness3            ("反射光滑3",            Range(0,1)) = 0
 
         [Space(20)]
         [Header(Null Star3d Crystal3d Star2d)]
-        [IntRange] Input_EffectMap  ("特效",                Range(0,3))     = 0
+        [IntRange] Input_EffectMap          ("特效类型",            Range(0,3))     = 0
         //扰动，移动
         [Header(Null white black all)]
-        [IntRange] Input_EffectMap0 ("特效注入0",           Range(0,3))     = 0
-        [IntRange] Input_EffectMap1 ("特效注入1",           Range(0,3))     = 0
-        [IntRange] Input_EffectMap2 ("特效注入2",           Range(0,3))     = 0
-        [IntRange] Input_EffectMap3 ("特效注入3",           Range(0,3))     = 0
-        [Toggle]   Input_EffectMapInside ("内部特效",       Int)            = 0
+        [IntRange] Input_EffectMode0        ("特效模式0",           Range(0,3))     = 0
+        [IntRange] Input_EffectMode1        ("特效模式1",           Range(0,3))     = 0
+        [IntRange] Input_EffectMode2        ("特效模式2",           Range(0,3))     = 0
+        [IntRange] Input_EffectMode3        ("特效模式3",           Range(0,3))     = 0
+        [Toggle]   Input_EffectModeInside   ("内部特效",       Int)            = 0
 
-        [Space(20)]
+        [Space(40)]
         [Header(SkyOs0 SkyWs1 CamVs2 Reflect3 NrmOs4 NrmWs5 NrmVs6)]
-        [IntRange] Input_VecMap0			 ("向量映射0",       Range(0,6))     = 0
+        [IntRange] Input_VecMap0			("2d特效向量映射0",       Range(0,6))     = 0
         [Space(20)]
-        Input_Cutoff             ("透明度裁剪",                    Range(0,5)) = 0.5
+        Input_Cutoff                        ("透明度裁剪",           Range(0,5)) = 0.5
     
         [Space(20)]
-        Input_OutlineColor              ("描边颜色",                           Color)  = (0, 0, 0, 1)
-        Input_OutlineScale              ("描边大小",                           Float)  = 0
+        Input_OutlineColor                  ("描边颜色",            Color)  = (0, 0, 0, 1)
+        Input_OutlineScale                  ("描边大小",            Float)  = 0
 
     }
 
@@ -271,8 +285,8 @@ Shader "Ivy/IvyObjectTransparent"
             #define IvyArg_BackLightRimSoftness         Input_BackLightRimSoftness
             #define IvyArg_BackRimIntensity             Input_BackRimIntensity
 
-            #define IvyArg_ReflectSmoothness            Input_ReflectSmoothness
-            #define IvyArg_ReflectIntensity             Input_ReflectIntensity
+            #define IvyArg_ReflectSmoothness0            Input_ReflectSmoothness0
+            #define IvyArg_ReflectIntensity0             Input_ReflectIntensity0
 
             #define IvyArg_MatCapTex                    Input_MatCapTex
             #define IvyArg_MatCapInfluence              Input_MatCapInfluence
@@ -281,11 +295,11 @@ Shader "Ivy/IvyObjectTransparent"
             #define IvyArg_EnvMapInfluence              Input_EnvMapInfluence
 
             #define IvyArg_EffectMap                    Input_EffectMap
-            #define IvyArg_EffectMap0                   Input_EffectMap0
-            #define IvyArg_EffectMap1                   Input_EffectMap1
-            #define IvyArg_EffectMap2                   Input_EffectMap2
-            #define IvyArg_EffectMap3                   Input_EffectMap3
-            #define IvyArg_EffectMapInside              Input_EffectMapInside
+            #define IvyArg_EffectMode0                  Input_EffectMode0
+            #define IvyArg_EffectMode1                  Input_EffectMode1
+            #define IvyArg_EffectMode2                  Input_EffectMode2
+            #define IvyArg_EffectMode3                  Input_EffectMode3
+            #define IvyArg_EffectModeInside             Input_EffectModeInside
 
             #define IvyArg_VecMap0 Input_VecMap0
 

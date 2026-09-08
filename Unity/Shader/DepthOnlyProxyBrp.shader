@@ -42,8 +42,8 @@ Shader "Ivy/DepthOnlyProxyBrp"
             ColorMask 0
             HLSLPROGRAM
             #define IvyArg_Scale Input_Scale 
-            #define Link_IvyPassShadowCaster
-            #include "../IvyCoreUnity.hlsl"
+            // #define Link_IvyPassShadowCaster
+            // #include "../IvyCoreUnity.hlsl"
             ENDHLSL
         }
     }

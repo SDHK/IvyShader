@@ -44,8 +44,8 @@
 #if DefPart(IvyMatrix, Tool) 
 #define Def_IvyMatrix_Tool
 
-#define Link_IvyBase
 #include "../IvyEdit.hlsl"
+
 
 
 // 归一化一个三维向量，避免除以零
@@ -60,28 +60,77 @@ float3 IvyMatrix_SafeNormalize(float3 inVec)
 
 //===[Normal (Nrm) 转换]===
 
+// 法线专用：p_B = T p_A 时 n_B = (T⁻¹)ᵀ n_A = transpose(I_T) n_A
+// 反向：n_A = Tᵀ n_B = transpose(T) n_B
+// 非均匀缩放必须走逆转置，不能当普通向量直接乘 T
+
+//===[法线 Object Space (Os)]===
+
 /// <summary>
-/// 转换为法线：从物体空间转到世界空间（法线专用，使用逆转置矩阵，应对转世界阶段的模型非均匀缩放法线矫正）
+/// 转换为法线：从物体空间转到世界空间 (Object Space -> World Space)
 /// </summary>
 /// <param name="nrmOs">物体法线</param>
 /// <returns>世界法线</returns>
 float3 IvyMatrix_NrmOsToWs(float3 nrmOs)
 {
-    // 使用物体矩阵的逆转置来转换法线到世界空间
-    // 注意：IvyParam_Matrix_IT_MV 会将法线转换到观察空间，而不是世界空间
-    return normalize(mul((float3x3)IvyParam_Matrix_IT_M, nrmOs)); // (M⁻¹)ᵀ × nrmOs
+    return normalize(mul(transpose((float3x3)IvyParam_Matrix_I_M), nrmOs)); // (M⁻¹)ᵀ × nrmOs
 }
 
+/// <summary>
+/// 转换为法线：从物体空间转到观察空间 (Object Space -> View Space)
+/// </summary>
+/// <param name="nrmOs">物体法线</param>
+/// <returns>观察法线</returns>
+float3 IvyMatrix_NrmOsToVs(float3 nrmOs)
+{
+    return normalize(mul(transpose((float3x3)IvyParam_Matrix_I_MV), nrmOs)); // (MV⁻¹)ᵀ × nrmOs
+}
+
+//===[法线 World Space (Ws)]===
 
 /// <summary>
-/// 转换为法线：从世界空间转到物体空间（法线专用，使用逆转置矩阵，应对转世界阶段的模型非均匀缩放法线矫正）
+/// 转换为法线：从世界空间转到物体空间 (World Space -> Object Space)
 /// </summary>
 /// <param name="nrmWs">世界法线</param>
 /// <returns>物体法线</returns>
 float3 IvyMatrix_NrmWsToOs(float3 nrmWs)
 {
-    return normalize(mul(transpose((float3x3)IvyParam_Matrix_M), nrmWs)).xyz;// Mᵀ × nrmWs
+    return normalize(mul(transpose((float3x3)IvyParam_Matrix_M), nrmWs)); // Mᵀ × nrmWs
 }
+
+/// <summary>
+/// 转换为法线：从世界空间转到观察空间 (World Space -> View Space)
+/// </summary>
+/// <param name="nrmWs">世界法线</param>
+/// <returns>观察法线</returns>
+float3 IvyMatrix_NrmWsToVs(float3 nrmWs)
+{
+    return normalize(mul(transpose((float3x3)IvyParam_Matrix_I_V), nrmWs)); // (V⁻¹)ᵀ × nrmWs
+}
+
+//===[法线 View Space (Vs)]===
+
+/// <summary>
+/// 转换为法线：从观察空间转到物体空间 (View Space -> Object Space)
+/// </summary>
+/// <param name="nrmVs">观察法线</param>
+/// <returns>物体法线</returns>
+float3 IvyMatrix_NrmVsToOs(float3 nrmVs)
+{
+    return normalize(mul(transpose((float3x3)IvyParam_Matrix_MV), nrmVs)); // MVᵀ × nrmVs
+}
+
+/// <summary>
+/// 转换为法线：从观察空间转到世界空间 (View Space -> World Space)
+/// </summary>
+/// <param name="nrmVs">观察法线</param>
+/// <returns>世界法线</returns>
+float3 IvyMatrix_NrmVsToWs(float3 nrmVs)
+{
+    return normalize(mul(transpose((float3x3)IvyParam_Matrix_V), nrmVs)); // Vᵀ × nrmVs
+}
+
+//===[Position (pos) 转换]===
 
 //===[Object Space (Os) 转换]===
 
@@ -133,7 +182,7 @@ float3 IvyMatrix_VecOsToVs(float3 posOs)
 /// <returns>裁剪坐标</returns>
 float4 IvyMatrix_PosOsToCs(float3 posOs)
 {
-    return mul(IvyParam_Matrix_MVP, float4(posOs, 1.0));
+    return mul(IvyParam_Matrix_MVP, float4(posOs, 1));
 }
 
 
@@ -242,6 +291,7 @@ float4 IvyMatrix_PosVsToCs(float3 posVs)
 
 /// <summary>
 /// 转换为坐标：从裁剪空间转到物体空间（Clip Space -> Object Space）
+/// 危险：UnityBRP没提供UNITY_MATRIX_I_P，可能是错的。
 /// </summary>
 /// <param name="posCs">裁剪坐标</param>
 /// <returns>物体坐标</returns>
@@ -253,6 +303,7 @@ float3 IvyMatrix_PosCsToOs(float4 posCs)
 
 /// <summary>
 /// 转换为坐标：从裁剪空间转到世界空间（Clip Space -> World Space）
+/// 危险：UnityBRP没提供UNITY_MATRIX_I_P，可能是错的。
 /// </summary>
 /// <param name="posCs">裁剪坐标</param>
 /// <returns>世界坐标</returns>
@@ -264,6 +315,7 @@ float3 IvyMatrix_PosCsToWs(float4 posCs)
 
 /// <summary>
 /// 转换为坐标：从裁剪空间转到观察空间（Clip Space -> View Space）
+/// 危险：UnityBRP没提供UNITY_MATRIX_I_P，可能是错的。
 /// </summary>
 /// <param name="posCs">裁剪坐标</param>
 /// <returns>观察坐标</returns>

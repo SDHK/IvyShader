@@ -10,7 +10,6 @@
 #if DefPart(IvyRamp, Tool)
 #define Def_IvyRamp_Tool
 
-
 /// <summary>
 /// 计算 Lambert 光照权重
 /// </summary>

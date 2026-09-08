@@ -62,4 +62,8 @@
 // 工具函数统一入口（根据 Link_IvyXXX 宏控制是否链接）
 #include "Tool/IvyLinkTool.hlsl"
 
+
+// 阶段函数统一入口（根据 Link_IvyXXX 宏控制是否链接）
+#include "Stage/IvyLinkStage.hlsl"
+
 #endif // Def_IvyCore
