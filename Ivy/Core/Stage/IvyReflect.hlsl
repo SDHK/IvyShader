@@ -10,7 +10,9 @@
 #if DefPart(IvyReflect, Stage)
 #define Def_IvyReflect_Stage
 
+#include "../Tool/IvyColor.hlsl"
 #include "../Tool/IvyRamp.hlsl"
+#include "../Tool/IvyEffect2D.hlsl"
 
 struct IvyReflect_SpecularIn
 {
@@ -63,6 +65,18 @@ struct IvyReflect_SpecularIn
     /// 反射强度（兼作 Gray 阈值，大于 0.5 时均匀化）
     /// </summary>
     half ReflectIntensity;
+    /// <summary>
+    /// 物体空间位置（闪粉采样）
+    /// </summary>
+    float3 PosOs;
+    /// <summary>
+    /// 物体空间位置的像素足迹（Pass 在分支外求导）
+    /// </summary>
+    float3 PosOsPixel;
+    /// <summary>
+    /// 闪粉强度（面料 8 条已 lerp）
+    /// </summary>
+    half GlitterAmount;
 };
 
 struct IvyReflect_SpecularOut
@@ -88,7 +102,7 @@ IvyReflect_SpecularOut IvyReflect_Specular(IvyReflect_SpecularIn dataIn)
     half3 specColor = max(dataIn.SkinRgb, 0.1);
 
     float3 dirHighLight = normalize(dataIn.LightDir + dataIn.ViewDir);
-    half highLightRamp = IvyRamp_HighLight(dataIn.NrmWs, dirHighLight, dataOut.Rough);
+    half highLightRamp =IvyRamp_HighLight(dataIn.NrmWs, dirHighLight, dataOut.Rough);
 
     dataOut.EnvRgb = lerp(dataIn.ProbeRgb, dataIn.EnvMapRgb, dataIn.EnvMapInfluence);
     dataOut.EnvRgb = lerp(dataOut.EnvRgb, dataIn.MatCapRgb, dataIn.MatCapInfluence);
@@ -104,7 +118,16 @@ IvyReflect_SpecularOut IvyReflect_Specular(IvyReflect_SpecularIn dataIn)
     half smoothCenterFillWeight = (1.0 - reflectRim) * dataIn.ReflectSmoothness;
     dataOut.DiffusePart = metalLight * (roughDiffuseWeight + smoothCenterFillWeight);
     dataOut.HighLightPart = specColor * highLightRamp * dataIn.Lambert;
+    //dataOut.HighLightPart *=0.1;
+
     dataOut.ReflectSpecular = dataOut.EnvRgb * lerp(dataIn.SkinRgb, 1.0, fresnel) * reflectRim;
+    // 覆盖只取环境图亮斑；中间灰到处都有，不切的话整通道都会闪
+    half glitterCover = smoothstep(0.05, 1, IvyColor_Luma(dataOut.EnvRgb+highLightRamp));
+    if (dataIn.GlitterAmount > 0 && glitterCover > 0)
+    {
+        half glitterField = IvyEffect2D_Glitter(dataIn.PosOs, dataIn.PosOsPixel, dataIn.NrmWs, dataIn.ViewDir, dataIn.LightDir, glitterCover);
+        dataOut.HighLightPart += (dataOut.DiffusePart+dataOut.ReflectSpecular) * glitterField * dataIn.GlitterAmount;
+    }
     dataOut.ReflectRimLight = specColor * (fresnel * dataIn.ReflectSmoothness);
     dataOut.Rgb = dataOut.DiffusePart + dataOut.ReflectSpecular + dataOut.HighLightPart + dataOut.ReflectRimLight;
     return dataOut;

@@ -62,8 +62,8 @@ float IvyRamp_HighLight(float3 nrmWs, float3 lightDir, float softness)
     // GGXTerm：D(N·H) = a^2 / (π * ((N·H)^2*(a^2-1)+1)^2)
     float denominator = (normalDotHalf * roughnessAlphaSquared - normalDotHalf) * normalDotHalf + 1.0;
     float ggxDistribution = roughnessAlphaSquared / (UNITY_PI * denominator * denominator + 1e-7);
-
-    return ggxDistribution;
+    // 仍用 GGX 曲线，峰值进 1
+    return 1.5*ggxDistribution / (1 + ggxDistribution);
 }
 
 //===[背光边缘光]===

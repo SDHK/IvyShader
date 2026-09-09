@@ -3,7 +3,7 @@
 * 作者： 闪电黑客
 * 日期： 2026/09/09
 *
-* 描述： 2D 特效：轴、覆盖、网点、线条、云雾、星巢
+* 描述： 2D 特效：轴、覆盖、网点、线条、云雾、星巢、闪粉
 *        只出灰度，不采样
 *
 */
@@ -13,6 +13,7 @@
 
 #include "IvyMath.hlsl"
 #include "IvyField.hlsl"
+#include "IvyNoise.hlsl"
 
 /// <summary>
 /// 二维映射收成 0~1 轴（方向角）
@@ -71,9 +72,19 @@ half IvyEffect2D_Mask(half region, half cover, half screen)
 }
 
 /// <summary>
-/// 分形线条。map 为二维映射。
+/// 三平面混合。坐标用位置，权重用 abs(法线)，平坦处不会被球面投影拉开。
 /// </summary>
-half IvyEffect2D_Line(float2 map, float time)
+half IvyEffect2D_TriplanarBlend(float3 nrm, half fieldX, half fieldY, half fieldZ)
+{
+    float3 w = abs(nrm);
+    w /= max(w.x + w.y + w.z, 1e-5);
+    return fieldX * w.x + fieldY * w.y + fieldZ * w.z;
+}
+
+/// <summary>
+/// 分形线条（单平面）。
+/// </summary>
+half IvyEffect2D_LinePlane(float2 map, float time)
 {
     float f = 3.0;
     float g = f;
@@ -87,7 +98,7 @@ half IvyEffect2D_Line(float2 map, float time)
     float2 u = map;
     for (int i = 0; i < 20; i++)
     {
-        u = float2(u.x, -u.y) / dot(u, u) + p;
+        u = float2(u.x, -u.y) / max(dot(u, u), 1e-5) + p;
         u.x = abs(u.x);
         f = max(f, dot(u - p, u - p));
         g = min(g, sin(dot(u + p, u + p)) + 1.0);
@@ -97,24 +108,107 @@ half IvyEffect2D_Line(float2 map, float time)
 }
 
 /// <summary>
-/// 云雾。map 为二维映射。
+/// 分形线条。PosOs 采样，NrmOs 混合。
 /// </summary>
-half IvyEffect2D_Cloud(float2 map, float time)
+half IvyEffect2D_Line(float3 pos, float3 nrm, float time)
 {
-    float3 o = 0.0;
-    float j = 0.8;
-    float k = 1.5;
-    float2 n = float2(1.0, 1.0);
-    float2 p = map;
-    float2x2 rot = float2x2(j, -1.0, 1.0, j);
-    for (o.z = k + p.y / 4.0; j < 1e2; j *= k)
-    {
-        p = mul((k * p - 0.2 * time - j), rot);
-        n = mul(n, rot);
-        n += sin(p + n);
-        o += dot(cos(p + n), p / p) / 9.0 / j;
-    }
-    return length(1.0 - exp(-4.0 * o * o)) * 0.5;
+    return IvyEffect2D_TriplanarBlend(
+        nrm,
+        IvyEffect2D_LinePlane(pos.yz, time),
+        IvyEffect2D_LinePlane(pos.zx, time),
+        IvyEffect2D_LinePlane(pos.xy, time)
+    );
+}
+
+/// <summary>
+/// 云雾。PosOs 采样，NrmOs 混合。
+/// </summary>
+half IvyEffect2D_Cloud(float3 pos, float3 nrm, float time)
+{
+    return IvyEffect2D_TriplanarBlend(
+        nrm,
+        IvyNoise_Smoke(pos.yz, time),
+        IvyNoise_Smoke(pos.zx, time),
+        IvyNoise_Smoke(pos.xy, time)
+    );
+}
+
+/// <summary>
+/// 各向异性闪光（单层、双半程）。同一根切向扫主光半程和视线，哈希只采一次。
+/// x 主光，y 视线（给环境贴图亮部用）。
+/// </summary>
+half2 IvyEffect2D_GlintLayer(float3 coord, float3 nrm, float3 dirHalfLit, float3 dirHalfView, float scale, half anisotropy, half concentration, half streak)
+{
+    float3 aniso = IvyNoise_White3(coord * scale) * 2.0 - 1.0;
+    aniso -= nrm * dot(aniso, nrm); //投到切平面，只留表面内的朝向
+    aniso = normalize(aniso + 1e-5);
+
+    half sharpness = exp2((1.1 - anisotropy) * 3.5);
+    half nhLit = pow(abs(dot(nrm, dirHalfLit)), sharpness * concentration);
+    half nhView = pow(abs(dot(nrm, dirHalfView)), sharpness * concentration);
+    half gLit = nhLit * pow(1.0 - abs(dot(dirHalfLit, aniso)) * anisotropy, streak);
+    half gView = nhView * pow(1.0 - abs(dot(dirHalfView, aniso)) * anisotropy, streak);
+    return half2(gLit, gView);
+}
+
+/// <summary>
+/// 随机闪粉：两层各向异性闪光。x 跟主光，y 跟视线。
+/// coord 用 PosOs，向量用世界空间；pixel 为 fwidth(PosOs)，由 Pass 填。
+/// </summary>
+half2 IvyEffect2D_Glitter(float3 pos, float3 pixel, float3 nrm, float3 viewDir, float3 lightDir)
+{
+    float3 dirHalfLit = normalize(lightDir + viewDir);
+    float3 dirHalfView = viewDir;
+
+    // 转 45°，否则颗粒会顺着物体 XYZ 排成行
+    float3 coord = pos * 0.5;
+    coord.xy = (coord.xy + coord.yx * float2(1.0, -1.0)) * 0.7071;
+    coord.xz = (coord.xz + coord.zx * float2(1.0, -1.0)) * 0.7071;
+    float3 coord2 = coord;
+
+    // 采样点按像素足迹被半程向量推开，视角或光一动颗粒才闪灭；两层灵敏度不同
+    coord.xy -= dirHalfLit.xz * 20.0 * pixel.xy;
+    coord.xz -= dirHalfLit.xy * 20.0 * pixel.xz;
+    coord2.xy -= dirHalfLit.xy * 5.0 * pixel.xy;
+    coord2.xz -= dirHalfLit.xz * 5.0 * pixel.xz;
+
+    half2 g0 = IvyEffect2D_GlintLayer(coord, nrm, dirHalfLit, dirHalfView, 6000.0, 0.55, 12.0, 10.0) * 1.8;
+    half2 g1 = IvyEffect2D_GlintLayer(coord2, nrm, dirHalfLit, dirHalfView, 14000.0, 0.60, 6.0, 150.0) * 2.0;
+    return g0 + g1;
+}
+
+/// <summary>
+/// 各向异性闪光（单层）。覆盖由传入灰度决定，半程向量只负责闪灭。
+/// </summary>
+half IvyEffect2D_GlintLayer(float3 coord, float3 nrm, float3 dirHalf, half cover, float scale, half anisotropy, half streak)
+{
+    float3 aniso = IvyNoise_White3(coord * scale) * 2.0 - 1.0;
+    aniso -= nrm * dot(aniso, nrm);
+    aniso = normalize(aniso + 1e-5);
+    half spark = pow(1.0 - abs(dot(dirHalf, aniso)) * anisotropy, streak);
+    return saturate(cover) * spark;
+}
+
+/// <summary>
+/// 随机闪粉：覆盖用灰度，闪灭仍走主光半程。
+/// </summary>
+half IvyEffect2D_Glitter(float3 pos, float3 pixel, float3 nrm, float3 viewDir, float3 lightDir, half cover)
+{
+    float3 dirHalf = normalize(lightDir + viewDir);
+
+    float3 coord = pos * 0.5;
+    coord.xy = (coord.xy + coord.yx * float2(1.0, -1.0)) * 0.7071;
+    coord.xz = (coord.xz + coord.zx * float2(1.0, -1.0)) * 0.7071;
+    float3 coord2 = coord;
+
+    coord.xy -= dirHalf.xz * 20.0 * pixel.xy;
+    coord.xz -= dirHalf.xy * 20.0 * pixel.xz;
+    coord2.xy -= dirHalf.xy * 5.0 * pixel.xy;
+    coord2.xz -= dirHalf.xz * 5.0 * pixel.xz;
+
+    half g0 = IvyEffect2D_GlintLayer(coord, nrm, dirHalf, cover, 4000.0, 0.55, 10.0) * 1.8;
+    half g1 = IvyEffect2D_GlintLayer(coord2, nrm, dirHalf, cover, 8000.0, 0.60, 150.0) * 2.0;
+    return g0 + g1;
 }
 
 /// <summary>

@@ -79,6 +79,15 @@
 #define IvyArg_Transmit30                   Input_Transmit30
 #define IvyArg_Transmit31                   Input_Transmit31
 
+#define IvyArg_Glitter00                    Input_Glitter00
+#define IvyArg_Glitter01                    Input_Glitter01
+#define IvyArg_Glitter10                    Input_Glitter10
+#define IvyArg_Glitter11                    Input_Glitter11
+#define IvyArg_Glitter20                    Input_Glitter20
+#define IvyArg_Glitter21                    Input_Glitter21
+#define IvyArg_Glitter30                    Input_Glitter30
+#define IvyArg_Glitter31                    Input_Glitter31
+
 #define IvyArg_Film00                       Input_Film00
 #define IvyArg_Film01                       Input_Film01
 #define IvyArg_Film10                       Input_Film10
@@ -99,6 +108,7 @@
 #define IvyArg_EnvMapInfluence              Input_EnvMapInfluence
 
 #define IvyArg_EffectMap                    Input_EffectMap
+#define IvyArg_Effect2DMap                  Input_Effect2DMap
 #define IvyArg_EffectIntensity00            Input_EffectIntensity00
 #define IvyArg_EffectIntensity01            Input_EffectIntensity01
 #define IvyArg_EffectIntensity10            Input_EffectIntensity10

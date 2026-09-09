@@ -95,6 +95,15 @@ float IvyArg_Transmit21;
 float IvyArg_Transmit30;
 float IvyArg_Transmit31;
 
+float IvyArg_Glitter00;
+float IvyArg_Glitter01;
+float IvyArg_Glitter10;
+float IvyArg_Glitter11;
+float IvyArg_Glitter20;
+float IvyArg_Glitter21;
+float IvyArg_Glitter30;
+float IvyArg_Glitter31;
+
 float IvyArg_Film00;
 float IvyArg_Film01;
 float IvyArg_Film10;
@@ -116,6 +125,7 @@ float IvyArg_MatCapInfluence;
 
 // 特效
 int IvyArg_EffectMap;
+int IvyArg_Effect2DMap;
 float IvyArg_EffectIntensity00;
 float IvyArg_EffectIntensity01;
 float IvyArg_EffectIntensity10;
@@ -332,10 +342,7 @@ FragOut Frag(FragIn fragIn)
     }
 
 
-    //===[特效向量映射]=====================================================
-    float3  vecMapSwitch;
-    vecMapSwitch = IvySwitch_Float3(IvyArg_VecMap0, vecMaps.VecCamToPosOs, vecMaps.VecCamToPosWs, vecMaps.VecMapCamVs, vecMaps.VecMapReflect, vecMaps.VecMapNrmPosOs,  vecMaps.VecMapNrmPosWs, vecMaps.VecMapNrmPosVs);
-    //===[对特效图的映射]=====================================================
+    //===[特效]=====================================================
     half effectIntensity0 = IvySwitch_Float3(uvId, IvyArg_EffectIntensity00, IvyArg_EffectIntensity10, IvyArg_EffectIntensity20, IvyArg_EffectIntensity30).x;
     half effectIntensity1 = IvySwitch_Float3(uvId, IvyArg_EffectIntensity01, IvyArg_EffectIntensity11, IvyArg_EffectIntensity21, IvyArg_EffectIntensity31).x;
     half effectMask = geomOut.IsFront
@@ -355,6 +362,19 @@ FragOut Frag(FragIn fragIn)
     IvyEffect3D_VolumeOut effectOut = IvyEffect3D_Volume(effectIn);
     skinRgb = effectOut.Rgb;
 
+    IvyEffect2D_MapIn effect2dIn;
+    effect2dIn.SkinRgb = skinRgb;
+    effect2dIn.InsideRgb = IvyArg_SkinRgb31;
+    effect2dIn.PosOs = geomOut.PosOs;
+    effect2dIn.NrmOs = geomOut.NrmOsFront;
+    effect2dIn.IsFront = geomOut.IsFront;
+    effect2dIn.EffectId = IvyArg_Effect2DMap;
+    effect2dIn.Mask = effectMask;
+    effect2dIn.Time = IvyParam_Time.x;
+    effect2dIn.PosOffset = float2(1, 1);
+    IvyEffect2D_MapOut effect2dOut = IvyEffect2D_Map(effect2dIn);
+    skinRgb = effect2dOut.Rgb;
+
     //金属为粗糙时需要阴影，边缘反射为瓷器和塑料
     //===[金属反射]=====================================================
     half reflectIntensity0 = IvySwitch_Float3(uvId, IvyArg_ReflectIntensity00, IvyArg_ReflectIntensity10, IvyArg_ReflectIntensity20, IvyArg_ReflectIntensity30).x;
@@ -363,6 +383,9 @@ FragOut Frag(FragIn fragIn)
     half reflectSmoothness1 = IvySwitch_Float3(uvId, IvyArg_ReflectSmoothness01, IvyArg_ReflectSmoothness11, IvyArg_ReflectSmoothness21, IvyArg_ReflectSmoothness31).x;
     half reflectIntensity = lerp(reflectIntensity0, reflectIntensity1, skinMaskLuma);
     half reflectSmoothness = lerp(reflectSmoothness0, reflectSmoothness1, skinMaskLuma);
+    half glitter0 = IvySwitch_Float3(uvId, IvyArg_Glitter00, IvyArg_Glitter10, IvyArg_Glitter20, IvyArg_Glitter30).x;
+    half glitter1 = IvySwitch_Float3(uvId, IvyArg_Glitter01, IvyArg_Glitter11, IvyArg_Glitter21, IvyArg_Glitter31).x;
+    half glitterAmount = lerp(glitter0, glitter1, skinMaskLuma);
     // 反射模糊度
     half mipMap = (1.0 - reflectSmoothness) * 8.0; 
     // BRP 环境反射探针
@@ -387,6 +410,9 @@ FragOut Frag(FragIn fragIn)
     reflectIn.MatCapInfluence = IvyArg_MatCapInfluence;
     reflectIn.ReflectSmoothness = reflectSmoothness;
     reflectIn.ReflectIntensity = reflectIntensity;
+    reflectIn.PosOs = geomOut.PosOs;
+    reflectIn.PosOsPixel = fwidth(geomOut.PosOs);
+    reflectIn.GlitterAmount = glitterAmount;
     IvyReflect_SpecularOut reflectOut = IvyReflect_Specular(reflectIn);
     //===[附加光照]====================================
     //边缘光
@@ -401,7 +427,9 @@ FragOut Frag(FragIn fragIn)
 
     half transmit0 = IvySwitch_Float3(uvId, IvyArg_Transmit00, IvyArg_Transmit10, IvyArg_Transmit20, IvyArg_Transmit30).x;
     half transmit1 = IvySwitch_Float3(uvId, IvyArg_Transmit01, IvyArg_Transmit11, IvyArg_Transmit21, IvyArg_Transmit31).x;
-    half transmit = lerp(transmit0, transmit1, skinMaskLuma);
+    half transmit = lerp(transmit0, transmit1, skinMaskLuma) ;
+
+
 
     half film0 = IvySwitch_Float3(uvId, IvyArg_Film00, IvyArg_Film10, IvyArg_Film20, IvyArg_Film30).x;
     half film1 = IvySwitch_Float3(uvId, IvyArg_Film01, IvyArg_Film11, IvyArg_Film21, IvyArg_Film31).x;
@@ -445,7 +473,9 @@ FragOut Frag(FragIn fragIn)
     IvyTransmit_BlendOut transmitOut = IvyTransmit_Blend(transmitIn);
 
     FragOut fragOut;
-    fragOut.TargetRgba = transmitOut.Rgba;
+
+    //fragOut.TargetRgba = transmitOut.Rgba;
+    fragOut.TargetRgba = float4(reflectOut.Rgb, 1.0);
     fragOut.TargetRgba.rgb *= (lightOut.Rgb + envLight);
     return fragOut;
 }

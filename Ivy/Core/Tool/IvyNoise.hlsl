@@ -118,6 +118,41 @@ float IvyNoise_Value(float2 uv)
 }
 
 
+// 三维白噪声，等价于噪声图用点采样，格内不插值，硬边如电视雪花
+// float3 pos: 输入的三维坐标
+// float3 return: 每格一份三维随机值，范围 (0,1)
+float3 IvyNoise_White3(float3 pos)
+{
+    return IvyHash_33(floor(pos));
+}
+
+
+// 三维值噪声，等价于对一张随机颜色噪声图做三线性采样,有水面感
+// float3 pos: 输入的三维坐标
+// float3 return: 八角 Hash 插值后的三维随机值，范围 (0,1)
+float3 IvyNoise_Value3(float3 pos)
+{
+    float3 intPos = floor(pos);
+    float3 fracPos = frac(pos);
+    float3 u = fracPos * fracPos * (3.0 - 2.0 * fracPos); //Hermite 插值权重，同二维值噪声
+
+    float3 c000 = IvyHash_33(intPos); //八角取点
+    float3 c100 = IvyHash_33(intPos + float3(1, 0, 0));
+    float3 c010 = IvyHash_33(intPos + float3(0, 1, 0));
+    float3 c110 = IvyHash_33(intPos + float3(1, 1, 0));
+    float3 c001 = IvyHash_33(intPos + float3(0, 0, 1));
+    float3 c101 = IvyHash_33(intPos + float3(1, 0, 1));
+    float3 c011 = IvyHash_33(intPos + float3(0, 1, 1));
+    float3 c111 = IvyHash_33(intPos + float3(1, 1, 1));
+
+    float3 x00 = lerp(c000, c100, u.x);
+    float3 x10 = lerp(c010, c110, u.x);
+    float3 x01 = lerp(c001, c101, u.x);
+    float3 x11 = lerp(c011, c111, u.x);
+    return lerp(lerp(x00, x10, u.y), lerp(x01, x11, u.y), u.z);
+}
+
+
 // 柏林噪声
 // float2 uv: 输入的二维坐标
 // float return: 生成的柏林噪声值
