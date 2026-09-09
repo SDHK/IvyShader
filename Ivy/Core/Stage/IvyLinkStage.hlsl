@@ -18,6 +18,10 @@
 #include "IvyLight.hlsl"      
 #endif
 
+#if Link(IvyColor)
+#include "IvyColor.hlsl"
+#endif
+
 #if Link(IvySkin)
 #include "IvySkin.hlsl"
 #endif
@@ -30,10 +34,10 @@
 #include "IvyEffect3D.hlsl"
 #endif
 
-#if Link(IvyTransmit)
-#include "IvyTransmit.hlsl"
+#if Link(IvyEffect2D)
+#include "IvyEffect2D.hlsl"
 #endif
 
-#if Link(IvyIridescence)
-#include "IvyIridescence.hlsl"
+#if Link(IvyTransmit)
+#include "IvyTransmit.hlsl"
 #endif

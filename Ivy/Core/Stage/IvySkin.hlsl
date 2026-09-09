@@ -11,7 +11,7 @@
 #if DefPart(IvySkin, Stage)
 #define Def_IvySkin_Stage
 
-#include "../Tool/IvyMath.hlsl"
+#include "../Tool/IvyColor.hlsl"
 #include "../Tool/IvyRamp.hlsl"
 
 struct IvySkin_RampIn
@@ -72,13 +72,13 @@ IvySkin_RampOut IvySkin_Ramp(IvySkin_RampIn dataIn)
     IvySkin_RampOut dataOut;
 
     half lambert = IvyRamp_Lambert(dataIn.Nrm, dataIn.RampDir, dataIn.LambertScale);
-    half3 skinHsv = IvyMath_RgbToHsv(dataIn.SkinRgb);
-    half3 rampBaseHsv = IvyMath_RgbToHsv(dataIn.RampBaseRgb);
+    half3 skinHsv = IvyColor_RgbToHsv(dataIn.SkinRgb);
+    half3 rampBaseHsv = IvyColor_RgbToHsv(dataIn.RampBaseRgb);
 
-    half3 deltaHsv0 = IvyMath_HsvDelta(IvyMath_RgbToHsv(dataIn.Rgb0), rampBaseHsv);
-    half3 deltaHsv1 = IvyMath_HsvDelta(IvyMath_RgbToHsv(dataIn.Rgb1), rampBaseHsv);
-    half3 rampRgb0 = IvyMath_HsvToRgb(IvyMath_ApplyHsvDelta(skinHsv, deltaHsv0));
-    half3 rampRgb1 = IvyMath_HsvToRgb(IvyMath_ApplyHsvDelta(skinHsv, deltaHsv1));
+    half3 deltaHsv0 = IvyColor_HsvDelta(IvyColor_RgbToHsv(dataIn.Rgb0), rampBaseHsv);
+    half3 deltaHsv1 = IvyColor_HsvDelta(IvyColor_RgbToHsv(dataIn.Rgb1), rampBaseHsv);
+    half3 rampRgb0 = IvyColor_HsvToRgb(IvyColor_ApplyHsvDelta(skinHsv, deltaHsv0));
+    half3 rampRgb1 = IvyColor_HsvToRgb(IvyColor_ApplyHsvDelta(skinHsv, deltaHsv1));
 
     dataOut.Rgb = IvyRamp_Rgb3(
         lambert,

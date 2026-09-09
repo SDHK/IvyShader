@@ -105,6 +105,7 @@ float IvyArg_Film30;
 float IvyArg_Film31;
 float IvyArg_IridescenceHue;
 float IvyArg_IridescenceSpread;
+float IvyArg_IridescenceBands;
 
 // 金属环境贴图（CubeMap 和 2D equirectangular）
 sampler2D IvyArg_EnvMapTex;
@@ -154,11 +155,12 @@ int IvyArg_VecMap0;
 
 #define Link_IvyMatrix
 #define Link_IvyMath
+#define Link_IvyColor
 #define Link_IvyVertex
 #define Link_IvyField
 #define Link_IvyVecMap
 #define Link_IvyRamp
-#define Link_IvyIridescence
+#define Link_IvyEffect2D
 #define Link_IvyEffect3D
 #define Link_IvyUv
 #define Link_IvyGeom
@@ -266,7 +268,7 @@ FragOut Frag(FragIn fragIn)
     // 环境光球谐光照，晚上没有球谐光照。
     half3 envLight = ShadeSH9(float4(geomOut.NrmWsFront, 1));
     // 环境光影响度
-    envLight = lerp(IvyMath_Luma(envLight), envLight, IvyArg_EnvLightInfluence);
+    envLight = lerp(IvyColor_Luma(envLight), envLight, IvyArg_EnvLightInfluence);
     // 环境光钳制，避免发光过亮导致溢出
     //envLight = clamp(envLight , IvyArg_LightMin, IvyArg_LightMax);
 
@@ -274,12 +276,12 @@ FragOut Frag(FragIn fragIn)
     // 根据 uvId 选择对应的纹理和颜色
 
     //临时颜色！！！！
-    IvyArg_SkinRgb10 =IvyArg_SkinRgb00;
-    IvyArg_SkinRgb20 =IvyArg_SkinRgb00;
-    IvyArg_SkinRgb30 =IvyArg_SkinRgb00;
-    IvyArg_SkinRgb11 = IvyArg_SkinRgb01;
-    IvyArg_SkinRgb21 = IvyArg_SkinRgb01;
-    IvyArg_SkinRgb31 = IvyArg_SkinRgb01;
+    //IvyArg_SkinRgb10 =IvyArg_SkinRgb00;
+    //IvyArg_SkinRgb20 =IvyArg_SkinRgb00;
+    //IvyArg_SkinRgb30 =IvyArg_SkinRgb00;
+    //IvyArg_SkinRgb11 = IvyArg_SkinRgb01;
+    //IvyArg_SkinRgb21 = IvyArg_SkinRgb01;
+    //IvyArg_SkinRgb31 = IvyArg_SkinRgb01;
     //皮肤细节遮罩
     half4 skinMask = 0;
     switch (uvId)
@@ -291,7 +293,7 @@ FragOut Frag(FragIn fragIn)
         default:skinMask = 1; break;
     }
     //皮肤灰度
-    half skinMaskLuma = IvyMath_Luma(skinMask.rgb);// * skinMask.a
+    half skinMaskLuma = IvyColor_Luma(skinMask.rgb);// * skinMask.a
     //渐变着色
     half4 skinRgb0 = IvySwitch_Float4(uvId,IvyArg_SkinRgb00,IvyArg_SkinRgb10,IvyArg_SkinRgb20,IvyArg_SkinRgb30);
     half4 skinRgb1 = IvySwitch_Float4(uvId,IvyArg_SkinRgb01,IvyArg_SkinRgb11,IvyArg_SkinRgb21,IvyArg_SkinRgb31);
@@ -423,14 +425,13 @@ FragOut Frag(FragIn fragIn)
         refractRgb = lerp(refrProbe, refrEnv, IvyArg_EnvMapInfluence);
     }
 
-    IvyIridescence_LitIn iridescenceIn;
-    iridescenceIn.NdotV = ndotv;
-    iridescenceIn.Hue0 = IvyArg_IridescenceHue - heightFactor * 0.5;
-    iridescenceIn.Spread = IvyArg_IridescenceSpread;
-    iridescenceIn.Amount = filmAmt;
-    iridescenceIn.ReflectRgb = reflectRgb;
-    iridescenceIn.RefractRgb = refractRgb;
-    IvyIridescence_LitOut iridescenceOut = IvyIridescence_Lit(iridescenceIn);
+    IvyColor_StainIn colorIn;
+    colorIn.T = IvyEffect2D_Axis(ndotv, IvyArg_IridescenceHue - heightFactor * 0.5, IvyArg_IridescenceSpread);
+    colorIn.Bands = IvyArg_IridescenceBands;
+    colorIn.Amount = filmAmt;
+    colorIn.ReflectRgb = reflectRgb;
+    colorIn.RefractRgb = refractRgb;
+    IvyColor_StainOut colorOut = IvyColor_Stain(colorIn);
 
     half fresnel = IvyRamp_Fresnel(geomOut.NrmWsFront, dirPosToCamWs, 0.5);
     IvyTransmit_BlendIn transmitIn;
@@ -438,8 +439,8 @@ FragOut Frag(FragIn fragIn)
     transmitIn.Alpha = lerp(0.0, 0.15, transmit);
     transmitIn.Refract = transmit;
     transmitIn.IsFront = geomOut.IsFront;
-    transmitIn.ReflectRgb = iridescenceOut.ReflectRgb;
-    transmitIn.RefractRgb = iridescenceOut.RefractRgb;
+    transmitIn.ReflectRgb = colorOut.ReflectRgb;
+    transmitIn.RefractRgb = colorOut.RefractRgb;
     transmitIn.Fresnel = lerp(1.0, fresnel * 0.9, transmit);
     IvyTransmit_BlendOut transmitOut = IvyTransmit_Blend(transmitIn);
 

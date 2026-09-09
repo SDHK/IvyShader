@@ -23,6 +23,9 @@
 #if Link(IvyMath)
 #include "IvyMath.hlsl"      // 数学函数
 #endif
+#if Link(IvyColor)
+#include "IvyColor.hlsl"     // 颜色
+#endif
 #if Link(IvyMatrix)
 #include "IvyMatrix.hlsl"   // 矩阵计算
 #endif
@@ -49,12 +52,12 @@
 #include "IvyRamp.hlsl"     // 渐变计算工具（Lambert 等）
 #endif
 
-#if Link(IvyIridescence)
-#include "IvyIridescence.hlsl" // 虹彩 / 珠光 / 薄膜
+#if Link(IvyEffect2D)
+#include "IvyEffect2D.hlsl"     // 2D 特效
 #endif
 
 #if Link(IvyEffect3D)
-#include "IvyEffect3D.hlsl"     // 特效工具
+#include "IvyEffect3D.hlsl"     // 3D 体积特效
 #endif
 
 

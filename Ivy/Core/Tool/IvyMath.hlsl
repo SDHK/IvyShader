@@ -86,81 +86,12 @@ float IvyMath_ClampMap(float value, float min, float max, float targetMin = 0, f
 }
 
 /// <summary>
-/// 计算颜色的亮度
+/// 把 0~1 轴切成 bands 档
 /// </summary>
-half IvyMath_Luma(half3 color)
+half IvyMath_Quantize(half t, half bands)
 {
-    return dot(color, half3(0.299, 0.587, 0.114));
-}
-
-/// <summary>
-/// 基于余弦的调色板，4个vec3参数
-/// </summary>
-/// <param name="time">时间</param>
-/// <param name="dcOffset">直流偏移量</param>
-/// <param name="amp">振幅</param>
-/// <param name="freq">频率</param>
-/// <param name="phase">相位</param>
-/// <returns>返回计算后的颜色值</returns>
-half3 IvyMath_Palette( in half time, in half3 dcOffset, in half3 amp, in half3 freq, in half3 phase)
-{
-    return dcOffset + amp*cos( 6.283185*(freq*time+phase) );
-}
-
-/// <summary>
-/// 将 RGB 颜色转换为 HSV 颜色空间
-/// </summary>
-half3 IvyMath_RgbToHsv(half3 c)
-{
-    half4 K = half4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
-    half4 p = lerp(half4(c.bg, K.wz), half4(c.gb, K.xy), step(c.b, c.g));
-    half4 q = lerp(half4(p.xyw, c.r), half4(c.r, p.yzx), step(p.x, c.r));
-    half d = q.x - min(q.w, q.y);
-    half e = 1e-10;
-    return half3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);
-}
-
-/// <summary>
-/// 将 HSV 颜色转换为 RGB 颜色空间
-/// </summary>
-half3 IvyMath_HsvToRgb(half3 c)
-{
-    half4 K = half4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
-    half3 p = abs(frac(c.xxx + K.xyz) * 6.0 - K.www);
-    return c.z * lerp(K.xxx, saturate(p - K.xxx), c.y);
-}
-
-/// <summary>
-/// 计算 HSV 颜色的差值
-/// </summary>
-/// <param name="stopHsv">目标 HSV 颜色</param>
-/// <param name="refMidHsv">参考中间 HSV 颜色</param>
-/// <returns> 返回 (dH色相差, sMul饱和度倍率, vMul明度倍率)</returns>
-half3 IvyMath_HsvDelta(half3 stopHsv, half3 refMidHsv)
-{
-    half dH = stopHsv.x - refMidHsv.x;
-    if (dH > 0.5) dH -= 1.0;
-    if (dH < -0.5) dH += 1.0;
-    half sMul = stopHsv.y / max(refMidHsv.y, 1e-5);
-    half vMul = stopHsv.z / max(refMidHsv.z, 1e-5);
-    return half3(dH, sMul, vMul);
-}
-
-/// <summary>
-/// 根据 HSV 差值应用到当前 HSV 颜色上
-/// </summary>
-/// <param name="curMidHsv">当前中间 HSV 颜色</param>
-/// <param name="delta">HSV 差值</param>
-/// <returns>返回应用差值后的 HSV 颜色</returns>
-half3 IvyMath_ApplyHsvDelta(half3 curMidHsv, half3 delta)
-{
-    half3 o;
-    o.x = frac(curMidHsv.x + delta.x);
-    half s = curMidHsv.y;
-    if (s < 0.01) s = 0.01;   // 或改用 sAdd 分支
-    o.y = saturate(s * delta.y);
-    o.z = saturate(curMidHsv.z * delta.z);
-    return o; // 仍是 HSV，外面再 HsvToRgb
+    bands = max(floor(bands + 0.5), 1.0);
+    return floor(t * bands) / bands;
 }
 
 #endif

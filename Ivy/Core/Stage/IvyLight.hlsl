@@ -10,7 +10,7 @@
 #if DefPart(IvyLight, Stage)
 #define Def_IvyLight_Stage
 
-#include "../Tool/IvyMath.hlsl"
+#include "../Tool/IvyColor.hlsl"
 #include "../Tool/IvyRamp.hlsl"
 
 struct IvyLight_DiffuseIn
@@ -80,13 +80,13 @@ IvyLight_DiffuseOut IvyLight_Diffuse(IvyLight_DiffuseIn dataIn)
     // 综合距离衰减和阴影衰减，得到最终光照颜色
     dataOut.Rgb = dataOut.Rgb * dataIn.DistAtten * dataIn.ShadowAtten;
     //光照色彩的影响力
-    dataOut.Rgb = lerp(IvyMath_Luma(dataOut.Rgb) , dataOut.Rgb, dataIn.Influence);
+    dataOut.Rgb = lerp(IvyColor_Luma(dataOut.Rgb) , dataOut.Rgb, dataIn.Influence);
     //如果光线向下，则反转光线方向，让光线始终在上方，保证阴影效果
     if(dataOut.Dir.y<=0) dataOut.Dir.y= -dataOut.Dir.y;
     //当光线消失时，保持固定头顶方向以维持阴影效果
     if(length(dataOut.Dir)==0) dataOut.Dir = float3(0,1,0);
     //计算光照的亮度
-    dataOut.Luma = IvyMath_Luma(dataOut.Rgb);
+    dataOut.Luma = IvyColor_Luma(dataOut.Rgb);
 
     //计算光照的Lambert值
     half lightLambert = IvyRamp_Lambert(dataIn.NrmWs, dataOut.Dir, 0.5);

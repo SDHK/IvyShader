@@ -3,33 +3,29 @@
 * 作者： 闪电黑客
 * 日期： 2026/09/09
 *
-* 描述： 虹彩阶段
-*        色相由 Tool 算出，按反射/折射明暗染色
+* 描述： 颜色阶段
+*        珠光/镭射乘到反射、折射上
 *        不采样、不打光
 *
 */
 
-#if DefPart(IvyIridescence, Stage)
-#define Def_IvyIridescence_Stage
+#if DefPart(IvyColor, Stage)
+#define Def_IvyColor_Stage
 
-#include "../Tool/IvyIridescence.hlsl"
+#include "../Tool/IvyColor.hlsl"
 
-struct IvyIridescence_LitIn
+struct IvyColor_StainIn
 {
     /// <summary>
-    /// 法线点视线 0~1
+    /// 色轴 0~1（由 Pass 用 Effect2D_Axis 填入）
     /// </summary>
-    half NdotV;
+    half T;
     /// <summary>
-    /// 色相起点
+    /// 量化档数。0~1 连续珠光，2 以上硬边镭射
     /// </summary>
-    half Hue0;
+    half Bands;
     /// <summary>
-    /// 色相展开
-    /// </summary>
-    half Spread;
-    /// <summary>
-    /// 虹彩强度
+    /// 染色强度
     /// </summary>
     half Amount;
     /// <summary>
@@ -42,10 +38,10 @@ struct IvyIridescence_LitIn
     half3 RefractRgb;
 };
 
-struct IvyIridescence_LitOut
+struct IvyColor_StainOut
 {
     /// <summary>
-    /// 色相乘数（均值约 1）
+    /// 色相乘数
     /// </summary>
     half3 HueRgb;
     half3 ReflectRgb;
@@ -53,12 +49,12 @@ struct IvyIridescence_LitOut
 };
 
 /// <summary>
-/// 虹彩：按反射/折射明暗染色。灯在 IvyTransmit_Blend。
+/// 按珠光/镭射给反射、折射染色。
 /// </summary>
-IvyIridescence_LitOut IvyIridescence_Lit(IvyIridescence_LitIn dataIn)
+IvyColor_StainOut IvyColor_Stain(IvyColor_StainIn dataIn)
 {
-    IvyIridescence_LitOut dataOut;
-    half3 hueRgb = IvyIridescence(dataIn.NdotV, dataIn.Hue0, dataIn.Spread);
+    IvyColor_StainOut dataOut;
+    half3 hueRgb = IvyColor_Holo(dataIn.T, dataIn.Bands);
     dataOut.HueRgb = lerp(1.0, hueRgb, saturate(dataIn.Amount));
     dataOut.ReflectRgb = dataIn.ReflectRgb * dataOut.HueRgb;
     dataOut.RefractRgb = dataIn.RefractRgb * dataOut.HueRgb;

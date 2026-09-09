@@ -254,34 +254,4 @@ float IvyNoise_Smoke(float2 uv, float time = 0, float uvSpeed=10, float scale =1
     return (f * f * f + 0.6 * f * f + 0.5 * f);
 }
 
-// 高斯模糊
-// sampler2D _MainTex: 输入的纹理采样器
-// float2 uv: 输入的二维坐标
-// float blur: 模糊强度
-float4 IvyNoise_BlurGaussian(sampler2D _MainTex, float2 uv, float blur)
-{
-    // 1 / 16
-    float offset = blur * 0.0625f;
-    // 左上
-    float4 color = tex2D(_MainTex, float2(uv.x - offset, uv.y - offset)) * 0.0947416f;
-    // 上
-    color += tex2D(_MainTex, float2(uv.x, uv.y - offset)) * 0.118318f;
-    // 右上
-    color += tex2D(_MainTex, float2(uv.x + offset, uv.y + offset)) * 0.0947416f;
-    // 左
-    color += tex2D(_MainTex, float2(uv.x - offset, uv.y)) * 0.118318f;
-    // 中
-    color += tex2D(_MainTex, float2(uv.x, uv.y)) * 0.147761f;
-    // 右
-    color += tex2D(_MainTex, float2(uv.x + offset, uv.y)) * 0.118318f;
-    // 左下
-    color += tex2D(_MainTex, float2(uv.x - offset, uv.y + offset)) * 0.0947416f;
-    // 下
-    color += tex2D(_MainTex, float2(uv.x, uv.y + offset)) * 0.118318f;
-    // 右下
-    color += tex2D(_MainTex, float2(uv.x + offset, uv.y - offset)) * 0.0947416f;
-    color.rgb *= color.a;
-    return color;
-}
-
 #endif
