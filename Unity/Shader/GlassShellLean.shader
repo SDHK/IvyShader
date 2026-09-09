@@ -116,7 +116,7 @@ Shader "Ivy/GlassShellLean"
 
             half3 halfWs  = normalize(lightWs + viewWs);
             half  specPow = exp2(Input_Smoothness * 10.0) + 1.0;
-            half3 specRgb = pow(saturate(dot(nrmWs, halfWs)), specPow) * Input_SpecIntensity * _LightColor0.rgb;
+            half3 specRgb = pow(saturate(dot(nrmWs, halfWs)), specPow) * Input_SpecIntensity;
 
             half3 baseRgb = Input_Color.rgb;
             half fresnelLit = fresnel * Input_FresnelIntensity;
@@ -141,7 +141,9 @@ Shader "Ivy/GlassShellLean"
             transmitIn.ReflectRgb = reflectRgb;
             transmitIn.RefractRgb = refractRgb;
             transmitIn.Fresnel = fresnelLit;
-            return IvyTransmit_Blend(transmitIn).Rgba;
+            half4 rgba = IvyTransmit_Blend(transmitIn).Rgba;
+            rgba.rgb *= _LightColor0.rgb + ShadeSH9(float4(nrmWs, 1));
+            return rgba;
         }
         ENDHLSL
 

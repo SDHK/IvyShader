@@ -33,3 +33,7 @@
 #if Link(IvyTransmit)
 #include "IvyTransmit.hlsl"
 #endif
+
+#if Link(IvyIridescence)
+#include "IvyIridescence.hlsl"
+#endif

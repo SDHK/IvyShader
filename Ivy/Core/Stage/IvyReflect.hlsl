@@ -35,14 +35,6 @@ struct IvyReflect_SpecularIn
     /// </summary>
     half Lambert;
     /// <summary>
-    /// 环境漫射（球谐光）
-    /// </summary>
-    half3 EnvLight;
-    /// <summary>
-    /// 主光颜色 
-    /// </summary>
-    half3 LightRgb;
-    /// <summary>
     /// 环境反射探针色
     /// </summary>
     half3 ProbeRgb;
@@ -86,14 +78,14 @@ struct IvyReflect_SpecularOut
 
 /// <summary>
 /// NPR 镜面反射：三路环境混合 + 漫射/高光/反射拆分。
-/// 与 IvyLight_Diffuse 成对；金属与非金属共用。探针与贴图须由 Pass 采好再传入。
+/// 只出形（Lambert / ramp），主光颜色在 Pass 出口乘。
+/// 探针与贴图须由 Pass 采好再传入。
 /// </summary>
 IvyReflect_SpecularOut IvyReflect_Specular(IvyReflect_SpecularIn dataIn)
 {
     IvyReflect_SpecularOut dataOut;
     dataOut.Rough = 1.0 - dataIn.ReflectSmoothness;
     half3 specColor = max(dataIn.SkinRgb, 0.1);
-    half3 lightEnvRgb = dataIn.LightRgb + dataIn.EnvLight;
 
     float3 dirHighLight = normalize(dataIn.LightDir + dataIn.ViewDir);
     half highLightRamp = IvyRamp_HighLight(dataIn.NrmWs, dirHighLight, dataOut.Rough);
@@ -107,14 +99,13 @@ IvyReflect_SpecularOut IvyReflect_Specular(IvyReflect_SpecularIn dataIn)
     reflectRim = 1.0 - IvyRamp_Gray(reflectRim, dataIn.ReflectIntensity, 0.5);
     reflectRim = lerp(reflectRim, 1.0, phaseUniform);
 
-    half3 metalLight = dataIn.SkinRgb * dataIn.Lambert * lightEnvRgb;
+    half3 metalLight = dataIn.SkinRgb * dataIn.Lambert;
     half roughDiffuseWeight = dataOut.Rough * dataOut.Rough;
     half smoothCenterFillWeight = (1.0 - reflectRim) * dataIn.ReflectSmoothness;
     dataOut.DiffusePart = metalLight * (roughDiffuseWeight + smoothCenterFillWeight);
-    dataOut.HighLightPart = specColor * highLightRamp * dataIn.Lambert* lightEnvRgb;
+    dataOut.HighLightPart = specColor * highLightRamp * dataIn.Lambert;
     dataOut.ReflectSpecular = dataOut.EnvRgb * lerp(dataIn.SkinRgb, 1.0, fresnel) * reflectRim;
-    //光滑度当强度，在 Fresnel 处做边缘补亮。
-    dataOut.ReflectRimLight = specColor * (fresnel * dataIn.ReflectSmoothness * lightEnvRgb);
+    dataOut.ReflectRimLight = specColor * (fresnel * dataIn.ReflectSmoothness);
     dataOut.Rgb = dataOut.DiffusePart + dataOut.ReflectSpecular + dataOut.HighLightPart + dataOut.ReflectRimLight;
     return dataOut;
 }

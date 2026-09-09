@@ -85,42 +85,42 @@ Shader "Ivy/IvyObjectTransparent"
         Input_ReflectIntensity01            ("反射强度0亮",          Range(0,1)) = 0
         Input_ReflectSmoothness01           ("反射光滑0亮",          Range(0,1)) = 0
         Input_Transmit01                    ("透明折射0亮",          Range(0,1)) = 0
-        Input_Film01                        ("虹彩0亮",              Range(0,1)) = 0
+        Input_Film01                        ("虹彩变色0亮",              Range(0,1)) = 0
         [Space(5)]
         Input_ReflectIntensity00            ("反射强度0暗",          Range(0,1)) = 0
         Input_ReflectSmoothness00           ("反射光滑0暗",          Range(0,1)) = 0
         Input_Transmit00                    ("透明折射0暗",          Range(0,1)) = 0
-        Input_Film00                        ("虹彩0暗",              Range(0,1)) = 0
+        Input_Film00                        ("虹彩变色0暗",              Range(0,1)) = 0
         [Space(10)]
         Input_ReflectIntensity11            ("反射强度1亮",          Range(0,1)) = 0
         Input_ReflectSmoothness11           ("反射光滑1亮",          Range(0,1)) = 0
         Input_Transmit11                    ("透明折射1亮",          Range(0,1)) = 0
-        Input_Film11                        ("虹彩1亮",              Range(0,1)) = 0
+        Input_Film11                        ("虹彩变色1亮",              Range(0,1)) = 0
         [Space(5)]
         Input_ReflectIntensity10            ("反射强度1暗",          Range(0,1)) = 0
         Input_ReflectSmoothness10           ("反射光滑1暗",          Range(0,1)) = 0
         Input_Transmit10                    ("透明折射1暗",          Range(0,1)) = 0
-        Input_Film10                        ("虹彩1暗",              Range(0,1)) = 0
+        Input_Film10                        ("虹彩变色1暗",              Range(0,1)) = 0
         [Space(10)]
         Input_ReflectIntensity21            ("反射强度2亮",          Range(0,1)) = 0
         Input_ReflectSmoothness21           ("反射光滑2亮",          Range(0,1)) = 0
         Input_Transmit21                    ("透明折射2亮",          Range(0,1)) = 0
-        Input_Film21                        ("虹彩2亮",              Range(0,1)) = 0
+        Input_Film21                        ("虹彩变色2亮",              Range(0,1)) = 0
         [Space(5)]
         Input_ReflectIntensity20            ("反射强度2暗",          Range(0,1)) = 0
         Input_ReflectSmoothness20           ("反射光滑2暗",          Range(0,1)) = 0
         Input_Transmit20                    ("透明折射2暗",          Range(0,1)) = 0
-        Input_Film20                        ("虹彩2暗",              Range(0,1)) = 0
+        Input_Film20                        ("虹彩变色2暗",              Range(0,1)) = 0
         [Space(10)]
         Input_ReflectIntensity31            ("反射强度3亮",          Range(0,1)) = 0
         Input_ReflectSmoothness31           ("反射光滑3亮",          Range(0,1)) = 0
         Input_Transmit31                    ("透明折射3亮",          Range(0,1)) = 0
-        Input_Film31                        ("虹彩3亮",              Range(0,1)) = 0
+        Input_Film31                        ("虹彩变色3亮",              Range(0,1)) = 0
         [Space(5)]
         Input_ReflectIntensity30            ("反射强度3暗",          Range(0,1)) = 0
         Input_ReflectSmoothness30           ("反射光滑3暗",          Range(0,1)) = 0
         Input_Transmit30                    ("透明折射3暗",          Range(0,1)) = 0
-        Input_Film30                        ("虹彩3暗",              Range(0,1)) = 0
+        Input_Film30                        ("虹彩变色3暗",              Range(0,1)) = 0
 
         [Space(20)]
         [Header(Null Star3d Crystal3d Star2d)]

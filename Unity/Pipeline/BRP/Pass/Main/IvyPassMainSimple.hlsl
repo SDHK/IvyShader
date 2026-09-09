@@ -274,12 +274,12 @@ FragOut Frag(FragIn fragIn)
     // 根据 uvId 选择对应的纹理和颜色
 
     //临时颜色！！！！
-    //IvyArg_SkinRgb10 =IvyArg_SkinRgb00;
-    //IvyArg_SkinRgb20 =IvyArg_SkinRgb00;
-    //IvyArg_SkinRgb30 =IvyArg_SkinRgb00;
-    //IvyArg_SkinRgb11 = IvyArg_SkinRgb01;
-    //IvyArg_SkinRgb21 = IvyArg_SkinRgb01;
-    //IvyArg_SkinRgb31 = IvyArg_SkinRgb01;
+    IvyArg_SkinRgb10 =IvyArg_SkinRgb00;
+    IvyArg_SkinRgb20 =IvyArg_SkinRgb00;
+    IvyArg_SkinRgb30 =IvyArg_SkinRgb00;
+    IvyArg_SkinRgb11 = IvyArg_SkinRgb01;
+    IvyArg_SkinRgb21 = IvyArg_SkinRgb01;
+    IvyArg_SkinRgb31 = IvyArg_SkinRgb01;
     //皮肤细节遮罩
     half4 skinMask = 0;
     switch (uvId)
@@ -378,8 +378,6 @@ FragOut Frag(FragIn fragIn)
     reflectIn.ViewDir = dirPosToCamWs;
     reflectIn.LightDir = lightOut.Dir;
     reflectIn.Lambert = lightOut.Lambert;
-    reflectIn.EnvLight = envLight;
-    reflectIn.LightRgb = lightOut.Rgb;
     reflectIn.ProbeRgb = probeReflect;
     reflectIn.EnvMapRgb = metalEnvReflect;
     reflectIn.MatCapRgb = matCapReflect;
@@ -391,10 +389,10 @@ FragOut Frag(FragIn fragIn)
     //===[附加光照]====================================
     //边缘光
     half rimRamp = IvyRamp_Fresnel(geomOut.NrmWsFront,dirPosToCamWs, IvyArg_LightRimSoftness) * IvyArg_RimIntensity;
-    half3 rimLight = rimRamp * (lightOut.Rgb + envLight) ;
+    half3 rimLight = rimRamp;
     //背光
     half backRimRamp = IvyRamp_BackRim(geomOut.NrmWsFront, dirPosToCamWs, lightOut.Dir, IvyArg_BackLightRimSoftness) * IvyArg_BackRimIntensity ;
-    half3 backRimLight = backRimRamp * (lightOut.Rgb + envLight) ;
+    half3 backRimLight = backRimRamp;
 
     half3 addLight = rimLight + backRimLight;
     //===[透射折射]====================================
@@ -407,12 +405,9 @@ FragOut Frag(FragIn fragIn)
     half film1 = IvySwitch_Float3(uvId, IvyArg_Film01, IvyArg_Film11, IvyArg_Film21, IvyArg_Film31).x;
     half filmAmt = lerp(film0, film1, skinMaskLuma);
     half ndotv = saturate(dot(geomOut.NrmWsFront, dirPosToCamWs));
-
     half heightFactor = geomOut.PosOs.y / max(length(geomOut.PosOs.xyz), 1e-4);
-    half iridescenceHue = IvyArg_IridescenceHue - heightFactor*0.5;
-    half3 filmRgb = lerp(1.0, IvyIridescence(ndotv, iridescenceHue, IvyArg_IridescenceSpread), filmAmt);
 
-    half3 specRgb = (reflectOut.HighLightPart + reflectOut.ReflectSpecular + reflectOut.ReflectRimLight) * filmRgb;
+    half3 specRgb = (reflectOut.HighLightPart + reflectOut.ReflectSpecular + reflectOut.ReflectRimLight);
     half3 opaqueRgb = reflectOut.DiffusePart + specRgb + addLight;
     half3 reflectRgb = lerp(opaqueRgb, specRgb + addLight, transmit);
 
@@ -425,8 +420,17 @@ FragOut Frag(FragIn fragIn)
         half3 refrProbe = DecodeHDR(refrRaw, unity_SpecCube0_HDR);
         float2 refrUv = IvyUv_DirToSphere(refrWs);
         half3 refrEnv = tex2Dlod(IvyArg_EnvMapTex, float4(refrUv, 0, mipMap)).rgb;
-        refractRgb = lerp(refrProbe, refrEnv, IvyArg_EnvMapInfluence) * filmRgb;
+        refractRgb = lerp(refrProbe, refrEnv, IvyArg_EnvMapInfluence);
     }
+
+    IvyIridescence_LitIn iridescenceIn;
+    iridescenceIn.NdotV = ndotv;
+    iridescenceIn.Hue0 = IvyArg_IridescenceHue - heightFactor * 0.5;
+    iridescenceIn.Spread = IvyArg_IridescenceSpread;
+    iridescenceIn.Amount = filmAmt;
+    iridescenceIn.ReflectRgb = reflectRgb;
+    iridescenceIn.RefractRgb = refractRgb;
+    IvyIridescence_LitOut iridescenceOut = IvyIridescence_Lit(iridescenceIn);
 
     half fresnel = IvyRamp_Fresnel(geomOut.NrmWsFront, dirPosToCamWs, 0.5);
     IvyTransmit_BlendIn transmitIn;
@@ -434,13 +438,14 @@ FragOut Frag(FragIn fragIn)
     transmitIn.Alpha = lerp(0.0, 0.15, transmit);
     transmitIn.Refract = transmit;
     transmitIn.IsFront = geomOut.IsFront;
-    transmitIn.ReflectRgb = reflectRgb;
-    transmitIn.RefractRgb = refractRgb;
+    transmitIn.ReflectRgb = iridescenceOut.ReflectRgb;
+    transmitIn.RefractRgb = iridescenceOut.RefractRgb;
     transmitIn.Fresnel = lerp(1.0, fresnel * 0.9, transmit);
     IvyTransmit_BlendOut transmitOut = IvyTransmit_Blend(transmitIn);
 
     FragOut fragOut;
     fragOut.TargetRgba = transmitOut.Rgba;
+    fragOut.TargetRgba.rgb *= (lightOut.Rgb + envLight);
     return fragOut;
 }
 

@@ -52,7 +52,7 @@ struct IvyTransmit_BlendOut
 };
 
 /// <summary>
-/// 透明合成：预乘本体 + 反射项 + 正面折射。通透内壁乘 0.6。
+/// 透明合成：预乘本体 + 反射项 + 正面折射。通透内壁乘 0.6。打光在 Pass 出口。
 /// </summary>
 IvyTransmit_BlendOut IvyTransmit_Blend(IvyTransmit_BlendIn dataIn)
 {
