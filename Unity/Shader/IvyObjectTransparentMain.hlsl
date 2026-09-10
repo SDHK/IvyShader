@@ -100,6 +100,7 @@
 #define IvyArg_IridescenceHue               Input_IridescenceHue
 #define IvyArg_IridescenceSpread            Input_IridescenceSpread
 #define IvyArg_IridescenceBands             Input_IridescenceBands
+#define IvyArg_FilmMaskTex                  Input_FilmMaskTex
 
 #define IvyArg_MatCapTex                    Input_MatCapTex
 #define IvyArg_MatCapInfluence              Input_MatCapInfluence

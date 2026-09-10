@@ -83,48 +83,49 @@ Shader "Ivy/IvyObjectTransparent"
         Input_ReflectIntensity01            ("反射强度0亮",          Range(0,1)) = 0
         Input_ReflectSmoothness01           ("反射光滑0亮",          Range(0,1)) = 0
         Input_Transmit01                    ("透明折射0亮",          Range(0,1)) = 0
-        Input_Glitter01                     ("闪粉0亮",              Range(0,1)) = 0
+        Input_Glitter01                     ("闪片高光0亮",          Range(0,1)) = 0
         [Space(5)]
         Input_ReflectIntensity00            ("反射强度0暗",          Range(0,1)) = 0
         Input_ReflectSmoothness00           ("反射光滑0暗",          Range(0,1)) = 0
         Input_Transmit00                    ("透明折射0暗",          Range(0,1)) = 0
-        Input_Glitter00                     ("闪粉0暗",              Range(0,1)) = 0
+        Input_Glitter00                     ("闪片高光0暗",          Range(0,1)) = 0
 
         [Space(10)]
         Input_ReflectIntensity11            ("反射强度1亮",          Range(0,1)) = 0
         Input_ReflectSmoothness11           ("反射光滑1亮",          Range(0,1)) = 0
         Input_Transmit11                    ("透明折射1亮",          Range(0,1)) = 0
-        Input_Glitter11                     ("闪粉1亮",              Range(0,1)) = 0
+        Input_Glitter11                     ("闪片高光1亮",          Range(0,1)) = 0
         [Space(5)]
         Input_ReflectIntensity10            ("反射强度1暗",          Range(0,1)) = 0
         Input_ReflectSmoothness10           ("反射光滑1暗",          Range(0,1)) = 0
         Input_Transmit10                    ("透明折射1暗",          Range(0,1)) = 0
-        Input_Glitter10                     ("闪粉1暗",              Range(0,1)) = 0
+        Input_Glitter10                     ("闪片高光1暗",          Range(0,1)) = 0
         [Space(10)]
         Input_ReflectIntensity21            ("反射强度2亮",          Range(0,1)) = 0
         Input_ReflectSmoothness21           ("反射光滑2亮",          Range(0,1)) = 0
         Input_Transmit21                    ("透明折射2亮",          Range(0,1)) = 0
-        Input_Glitter21                     ("闪粉2亮",              Range(0,1)) = 0
+        Input_Glitter21                     ("闪片高光2亮",          Range(0,1)) = 0
         [Space(5)]
         Input_ReflectIntensity20            ("反射强度2暗",          Range(0,1)) = 0
         Input_ReflectSmoothness20           ("反射光滑2暗",          Range(0,1)) = 0
         Input_Transmit20                    ("透明折射2暗",          Range(0,1)) = 0
-        Input_Glitter20                     ("闪粉2暗",              Range(0,1)) = 0
+        Input_Glitter20                     ("闪片高光2暗",          Range(0,1)) = 0
         [Space(10)]
         Input_ReflectIntensity31            ("反射强度3亮",          Range(0,1)) = 0
         Input_ReflectSmoothness31           ("反射光滑3亮",          Range(0,1)) = 0
         Input_Transmit31                    ("透明折射3亮",          Range(0,1)) = 0
-        Input_Glitter31                     ("闪粉3亮",              Range(0,1)) = 0
+        Input_Glitter31                     ("闪片高光3亮",          Range(0,1)) = 0
         [Space(5)]
         Input_ReflectIntensity30            ("反射强度3暗",          Range(0,1)) = 0
         Input_ReflectSmoothness30           ("反射光滑3暗",          Range(0,1)) = 0
         Input_Transmit30                    ("透明折射3暗",          Range(0,1)) = 0
-        Input_Glitter30                     ("闪粉3暗",              Range(0,1)) = 0
+        Input_Glitter30                     ("闪片高光3暗",          Range(0,1)) = 0
 
         [Space(20)]
         Input_IridescenceHue                ("虹彩色相",              Range(0,1)) = 0.55
         Input_IridescenceSpread             ("虹彩展开",              Range(0,2)) = 0.25
         [IntRange] Input_IridescenceBands   ("虹彩档数",              Range(0,16)) = 0
+        Input_FilmMaskTex                   ("彩虹遮罩(EnvMap)",      2D) = "white" {}
         [Space(10)]
         Input_Film01                        ("虹彩变色0亮",              Range(0,1)) = 0
         Input_Film00                        ("虹彩变色0暗",              Range(0,1)) = 0

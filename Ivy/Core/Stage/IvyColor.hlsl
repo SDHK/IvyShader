@@ -4,7 +4,7 @@
 * 日期： 2026/09/09
 *
 * 描述： 颜色阶段
-*        珠光/镭射乘到反射、折射上
+*        珠光/镭射盖在已合成的表面上
 *        不采样、不打光
 *
 */
@@ -25,17 +25,21 @@ struct IvyColor_StainIn
     /// </summary>
     half Bands;
     /// <summary>
-    /// 染色强度
+    /// 染色强度（面料 8 条）
     /// </summary>
     half Amount;
     /// <summary>
-    /// 已合成的反射色
+    /// 空间遮罩（花纹，不跟视角）
     /// </summary>
-    half3 ReflectRgb;
+    half Mask;
     /// <summary>
-    /// 已采样的折射环境色
+    /// 视角盖度（掠射更实）
     /// </summary>
-    half3 RefractRgb;
+    half Cover;
+    /// <summary>
+    /// 透射合成后的表面色
+    /// </summary>
+    half3 Rgb;
 };
 
 struct IvyColor_StainOut
@@ -44,20 +48,19 @@ struct IvyColor_StainOut
     /// 色相乘数
     /// </summary>
     half3 HueRgb;
-    half3 ReflectRgb;
-    half3 RefractRgb;
+    half3 Rgb;
 };
 
 /// <summary>
-/// 按珠光/镭射给反射、折射染色。
+/// 按珠光/镭射盖在合成表面上。
 /// </summary>
 IvyColor_StainOut IvyColor_Stain(IvyColor_StainIn dataIn)
 {
     IvyColor_StainOut dataOut;
     half3 hueRgb = IvyColor_Holo(dataIn.T, dataIn.Bands);
-    dataOut.HueRgb = lerp(1.0, hueRgb, saturate(dataIn.Amount));
-    dataOut.ReflectRgb = dataIn.ReflectRgb * dataOut.HueRgb;
-    dataOut.RefractRgb = dataIn.RefractRgb * dataOut.HueRgb;
+    half cover = saturate(dataIn.Amount * dataIn.Mask * dataIn.Cover);
+    dataOut.HueRgb = lerp(1.0, hueRgb, cover);
+    dataOut.Rgb = dataIn.Rgb * dataOut.HueRgb;
     return dataOut;
 }
 
