@@ -13,6 +13,10 @@ sampler2D IvyArg_SkinMask0;
 sampler2D IvyArg_SkinMask1;
 sampler2D IvyArg_SkinMask2;
 sampler2D IvyArg_SkinMask3;
+float4 IvyArg_SkinMask0_ST;
+float4 IvyArg_SkinMask1_ST;
+float4 IvyArg_SkinMask2_ST;
+float4 IvyArg_SkinMask3_ST;
 
 float4 IvyArg_SkinRgb00;
 float4 IvyArg_SkinRgb01;
@@ -181,6 +185,30 @@ int IvyArg_VecMap0;
 #define Link_IvyTransmit
 #include "../../Core/IvyCore.hlsl"
 
+float2 IvyPass_SkinUv(int uvId, float2 localUv)
+{
+    switch (uvId)
+    {
+        case 0: return IvyUv_Transform2D(localUv, IvyArg_SkinMask0_ST.xy, IvyArg_SkinMask0_ST.zw);
+        case 1: return IvyUv_Transform2D(localUv, IvyArg_SkinMask1_ST.xy, IvyArg_SkinMask1_ST.zw);
+        case 2: return IvyUv_Transform2D(localUv, IvyArg_SkinMask2_ST.xy, IvyArg_SkinMask2_ST.zw);
+        case 3: return IvyUv_Transform2D(localUv, IvyArg_SkinMask3_ST.xy, IvyArg_SkinMask3_ST.zw);
+        default: return localUv;
+    }
+}
+
+half4 IvyPass_SkinMask(int uvId, float2 uv)
+{
+    switch (uvId)
+    {
+        case 0: return tex2D(IvyArg_SkinMask0, uv);
+        case 1: return tex2D(IvyArg_SkinMask1, uv);
+        case 2: return tex2D(IvyArg_SkinMask2, uv);
+        case 3: return tex2D(IvyArg_SkinMask3, uv);
+        default: return 1;
+    }
+}
+
 struct VertIn
 {
     IvyVar_PosOs
@@ -256,15 +284,24 @@ FragOut Frag(FragIn fragIn)
     // 格子数改这里即可（2×2 / 2×3 / 3×3…）；tex2D switch 与颜色槽仍按实际贴图数手写
     int uvId = IvyUv_GridId(geomOut.Uv, 2, 2);
     float2 localUv = IvyUv_GridLocal(geomOut.Uv, 2, 2);
-    //===[光照漫反射阶段]===================================================
     IvyStruct_Light light = IvyLight_MainLight(fragIn.VertOut.ShadowCoord);
+    //===[皮肤着色]=================================================
+    // 格内 UV 先乘各花纹 Tiling，再浅视差。平铺 UV 不 saturate，织布才能 repeat。
+    float2 skinUv = IvyPass_SkinUv(uvId, localUv);
+    float3 viewTs = IvyUv_ViewToTangent(geomOut.PosWs, skinUv, dirPosToCamWs, geomOut.NrmWsFront);
+    half4 heightMask = IvyPass_SkinMask(uvId, skinUv);
+    half heightLuma = IvyColor_Luma(heightMask.rgb);
+    skinUv = IvyUv_Parallax(skinUv, heightLuma, viewTs, 0.1);
+    half4 skinMask = IvyPass_SkinMask(uvId, skinUv);
+    //皮肤灰度
+    half skinMaskLuma = IvyColor_Luma(skinMask.rgb);// * skinMask.a
+    //===[光照漫反射阶段]===================================================
     IvyLight_DiffuseIn lightIn;
     lightIn.NrmWs = geomOut.NrmWsFront;
-    lightIn.Rgb =light.Rgb;
+    lightIn.Rgb = light.Rgb;
     lightIn.Dir = light.Direction;
     lightIn.DistAtten = light.DistAtten;
     lightIn.ShadowAtten = light.ShadowAtten;
-
     lightIn.Influence = IvyArg_LightInfluence;
     lightIn.LightMin = IvyArg_LightMin;
     lightIn.LightMax = IvyArg_LightMax;
@@ -272,28 +309,10 @@ FragOut Frag(FragIn fragIn)
     lightIn.ShadowThreshold = IvyArg_LightRampThreshold;
     lightIn.ShadowSoftness = IvyArg_LightRampSoftness;
     IvyLight_DiffuseOut lightOut = IvyLight_Diffuse(lightIn);
-    //===[环境光照]================================================
-    // 环境光球谐光照，晚上没有球谐光照。
-    half3 envLight = ShadeSH9(float4(geomOut.NrmWsFront, 1));
-    // 环境光影响度
-    envLight = lerp(IvyColor_Luma(envLight), envLight, IvyArg_EnvLightInfluence);
-    // 环境光钳制，避免发光过亮导致溢出
-    //envLight = clamp(envLight , IvyArg_LightMin, IvyArg_LightMax);
 
-    //===[皮肤着色]=================================================
-    // 根据 uvId 选择对应的纹理和颜色
-    //皮肤细节遮罩
-    half4 skinMask = 0;
-    switch (uvId)
-    {
-        case 0:skinMask = tex2D(IvyArg_SkinMask0, localUv); break;
-        case 1:skinMask = tex2D(IvyArg_SkinMask1, localUv); break;
-        case 2:skinMask = tex2D(IvyArg_SkinMask2, localUv); break;
-        case 3:skinMask = tex2D(IvyArg_SkinMask3, localUv); break;
-        default:skinMask = 1; break;
-    }
-    //皮肤灰度
-    half skinMaskLuma = IvyColor_Luma(skinMask.rgb);// * skinMask.a
+    //===[环境光照]================================================
+    half3 envLight = ShadeSH9(float4(geomOut.NrmWsFront, 1));
+    envLight = lerp(IvyColor_Luma(envLight), envLight, IvyArg_EnvLightInfluence);
     //渐变着色
     half4 skinRgb0 = IvySwitch_Float4(uvId,IvyArg_SkinRgb00,IvyArg_SkinRgb10,IvyArg_SkinRgb20,IvyArg_SkinRgb30);
     half4 skinRgb1 = IvySwitch_Float4(uvId,IvyArg_SkinRgb01,IvyArg_SkinRgb11,IvyArg_SkinRgb21,IvyArg_SkinRgb31);
@@ -352,21 +371,21 @@ FragOut Frag(FragIn fragIn)
     IvyEffect3D_VolumeOut effectOut = IvyEffect3D_Volume(effectIn);
     skinRgb = effectOut.Rgb;
 
-    IvyEffect2D_MapIn effect2dIn;
-    effect2dIn.SkinRgb = skinRgb;
-    effect2dIn.InsideRgb = IvyArg_SkinRgb30;
-    effect2dIn.PosOs = geomOut.PosOs;
-    effect2dIn.NrmOs = geomOut.NrmOsFront;
-    effect2dIn.IsFront = geomOut.IsFront;
-    effect2dIn.EffectId = IvyArg_Effect2DMap;
-    effect2dIn.Mask = effectMask;
-    effect2dIn.Time = IvyParam_Time.x;
-    effect2dIn.PosOffset = float2(1, 1);
-    IvyEffect2D_MapOut effect2dOut = IvyEffect2D_Map(effect2dIn);
-    skinRgb = effect2dOut.Rgb;
+    //IvyEffect2D_MapIn effect2dIn;
+    //effect2dIn.SkinRgb = skinRgb;
+    //effect2dIn.InsideRgb = IvyArg_SkinRgb30;
+    //effect2dIn.PosOs = geomOut.PosOs;
+    //effect2dIn.NrmOs = geomOut.NrmOsFront;
+    //effect2dIn.IsFront = geomOut.IsFront;
+    //effect2dIn.EffectId = IvyArg_Effect2DMap;
+    //effect2dIn.Mask = effectMask;
+    //effect2dIn.Time = IvyParam_Time.x;
+    //effect2dIn.PosOffset = float2(1, 1);
+    //IvyEffect2D_MapOut effect2dOut = IvyEffect2D_Map(effect2dIn);
+    //skinRgb = effect2dOut.Rgb;
     half stripW = max(
         saturate(effectOut.Mask * effectOut.Field),
-        saturate(effect2dOut.Mask * effect2dOut.Field));
+        saturate(effectOut.Mask * effectOut.Field));
 
     //金属为粗糙时需要阴影，边缘反射为瓷器和塑料
     //===[金属反射]=====================================================
@@ -455,6 +474,7 @@ FragOut Frag(FragIn fragIn)
     // 环境贴图反射
     envUv = IvyUv_DirToSphere((vecMaps.VecMapReflectOs));
     half filmMask = IvyColor_Luma(tex2D(IvyArg_FilmMaskTex, envUv).rgb);//envUv vecMaps.VecCamToPosOs
+    // 油膜钉在网格法线上，不用凹凸法线，避免色带被花纹噪声打碎
     half ndotv = saturate(dot(geomOut.NrmWsFront, dirPosToCamWs));
     half heightFactor = geomOut.PosOs.y / max(length(geomOut.PosOs.xyz), 1e-4);
     half t = IvyEffect2D_Axis(ndotv, IvyArg_IridescenceHue - heightFactor * 0.5, IvyArg_IridescenceSpread);

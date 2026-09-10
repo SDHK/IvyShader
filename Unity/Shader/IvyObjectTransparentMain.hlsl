@@ -10,6 +10,10 @@
 #define IvyArg_SkinMask1                    Input_SkinMask1
 #define IvyArg_SkinMask2                    Input_SkinMask2
 #define IvyArg_SkinMask3                    Input_SkinMask3
+#define IvyArg_SkinMask0_ST                 Input_SkinMask0_ST
+#define IvyArg_SkinMask1_ST                 Input_SkinMask1_ST
+#define IvyArg_SkinMask2_ST                 Input_SkinMask2_ST
+#define IvyArg_SkinMask3_ST                 Input_SkinMask3_ST
 
 #define IvyArg_SkinRgb00                    Input_SkinRgb00
 #define IvyArg_SkinRgb01                    Input_SkinRgb01

@@ -219,4 +219,62 @@ float2 IvyUv_Wave(float2 uv, float amplitude, float frequency, float phase)
     return uv;
 }
 
+/// <summary>
+/// 由位置、UV 的屏幕导数拼切线空间，把视线（点指向相机）转进去。
+/// 须在片元、且无动态分支包住 ddx/ddy。
+/// </summary>
+float3 IvyUv_ViewToTangent(float3 posWs, float2 uv, float3 viewWs, float3 nrmWs)
+{
+    float3 dp1 = ddx(posWs);
+    float3 dp2 = ddy(posWs);
+    float2 du1 = ddx(uv);
+    float2 du2 = ddy(uv);
+    float3 dp2perp = cross(dp2, nrmWs);
+    float3 dp1perp = cross(nrmWs, dp1);
+    float3 tangent = dp2perp * du1.x + dp1perp * du2.x;
+    float3 bitangent = dp2perp * du1.y + dp1perp * du2.y;
+    float invMax = rsqrt(max(max(dot(tangent, tangent), dot(bitangent, bitangent)), 1e-8));
+    tangent *= invMax;
+    bitangent *= invMax;
+    viewWs = normalize(viewWs);
+    return float3(dot(viewWs, tangent), dot(viewWs, bitangent), dot(viewWs, nrmWs));
+}
+
+/// <summary>
+/// 一次偏移浅视差。height 0.5 不挪，scale 为 UV 幅度。
+/// </summary>
+float2 IvyUv_Parallax(float2 uv, half height, float3 viewTs, half scale)
+{
+    half h = (height - 0.5) * scale;
+    float3 v = normalize(viewTs);
+    v.z += 0.42;
+    return uv + h * (v.xy / max(v.z, 1e-4));
+}
+
+/// <summary>
+/// 由高度场屏幕导数微扰法线。scale=0 退回原法线。
+/// 须在片元、且无动态分支包住 ddx/ddy。
+/// </summary>
+float3 IvyUv_PerturbNrm(float3 nrmWs, float3 posWs, half height, half scale)
+{
+    nrmWs = normalize(nrmWs);
+    float3 sigmaX = ddx(posWs);
+    float3 sigmaY = ddy(posWs);
+    half dhdx = ddx(height);
+    half dhdy = ddy(height);
+    float3 r1 = cross(sigmaY, nrmWs);
+    float3 r2 = cross(nrmWs, sigmaX);
+    float det = dot(sigmaX, r1);
+    float3 grad = sign(det) * (dhdx * r1 + dhdy * r2);
+    return normalize(max(abs(det), 1e-8) * nrmWs - grad * scale);
+}
+
+/// <summary>
+/// 黑槽压暗、白脊略提。scale=0 为 1。
+/// </summary>
+half IvyUv_Cavity(half height, half scale)
+{
+    return clamp(1.0 + scale * (height * 2.0 - 1.0), 0.55, 1.15);
+}
+
 #endif
