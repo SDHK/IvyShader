@@ -30,6 +30,8 @@ float IvyArg_LightMax;
 float IvyArg_LightShadowMin;
 
 float IvyArg_EmissiveIntensity;
+float IvyArg_AudioPulse;
+int IvyArg_AudioBand;
 
 // SkinRamp 光照（固定参考方向，提供不随光源变化的结构性阴影）
 float IvyArg_SkinRampToggle;// SkinRamp 混合权重（0=不启用，1=完全启用）
@@ -161,6 +163,7 @@ int IvyArg_VecMap0;
 //#define Link_IvyHash
 #define Link_IvyNoise
 #define Link_IvyLight
+#define Link_IvyAudioLink
 
 #define Link_IvyMatrix
 #define Link_IvyMath
@@ -469,8 +472,10 @@ FragOut Frag(FragIn fragIn)
 
     FragOut fragOut;
     fragOut.TargetRgba = half4(colorOut.Rgb, transmitOut.Alpha);
+    half pulse = IvyAudioLink_Band((uint)IvyArg_AudioBand);
     half3 lit = lightOut.Rgb + envLight;
-    half3 litStrip = max(lit, min(IvyArg_EmissiveIntensity, IvyArg_LightMax));
+    half stripMin = min(IvyArg_EmissiveIntensity + pulse * IvyArg_AudioPulse, IvyArg_LightMax+pulse*IvyArg_AudioPulse);
+    half3 litStrip = max(lit, stripMin);
     fragOut.TargetRgba.rgb *= lerp(lit, litStrip, stripW);
     return fragOut;
 }

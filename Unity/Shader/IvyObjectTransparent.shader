@@ -17,6 +17,8 @@ Shader "Ivy/IvyObjectTransparent"
         
         [Space(20)]
         Input_EmissiveIntensity             ("特效亮度下限",         Range(0,1))  = 0
+        Input_AudioPulse                    ("特效音频脉冲",         Range(0,1))  = 0
+        [IntRange] Input_AudioBand          ("音频频段",             Range(0,3))  = 0
         
         //皮肤颜色
         [Space(20)]
