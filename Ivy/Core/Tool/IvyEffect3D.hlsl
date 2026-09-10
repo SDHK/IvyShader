@@ -53,7 +53,7 @@ float3 IvyEffect3D_VolumeStar(float3 skyOsDirMap, float3 camOs, float near, floa
 {
     skyOsDirMap = normalize(skyOsDirMap);
     float3 tile = float3(1, 1, 1);
-    float step = 0.01;
+    float step = 0.05;
     float3 color = float3(0, 0, 0);
     float weight = 0;
     float3 from = float3(dir.x, dir.y, 0);
@@ -79,7 +79,7 @@ float3 IvyEffect3D_VolumeCrystal(float3 skyOsDirMap, float3 camOs, float near, f
     float3 pos;
     skyOsDirMap = normalize(skyOsDirMap);
     float3 tile = float3(1, 1, 1);
-    float step = 0.01;
+    float step = 0.05;
     float3 color = float3(0, 0, 0);
     float weight = 0;
     float3 from = float3(dir.x, dir.y, 0);

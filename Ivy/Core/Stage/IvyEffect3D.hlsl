@@ -62,6 +62,10 @@ struct IvyEffect3D_VolumeOut
     half3 Rgb;
     half3 EffectRgb;
     half Mask;
+    /// <summary>
+    /// 体积场灰度，灯带权重用 Mask * Field
+    /// </summary>
+    half Field;
 };
 
 /// <summary>
@@ -73,6 +77,7 @@ IvyEffect3D_VolumeOut IvyEffect3D_Volume(IvyEffect3D_VolumeIn dataIn)
     dataOut.Rgb = dataIn.SkinRgb;
     dataOut.EffectRgb = 0;
     dataOut.Mask = dataIn.Mask;
+    dataOut.Field = 0;
 
     // 关闭特效或遮罩为 0 时直接返回
     if (dataIn.EffectId == 0 || dataIn.Mask == 0) return dataOut;
@@ -107,6 +112,7 @@ IvyEffect3D_VolumeOut IvyEffect3D_Volume(IvyEffect3D_VolumeIn dataIn)
     }
 
     half3 tintRgb = dataIn.IsFront ? dataIn.SkinRgb : dataIn.InsideRgb;
+    dataOut.Field = saturate(dot(volumeRgb, half3(0.299, 0.587, 0.114)));
     dataOut.EffectRgb = volumeRgb * tintRgb;
     dataOut.Rgb = lerp(dataIn.SkinRgb, dataOut.EffectRgb, dataOut.Mask);
     return dataOut;

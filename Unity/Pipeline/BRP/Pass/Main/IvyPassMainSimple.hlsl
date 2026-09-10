@@ -29,9 +29,7 @@ float IvyArg_LightMin;
 float IvyArg_LightMax;
 float IvyArg_LightShadowMin;
 
-// EmissiveTex：自发光遮罩灰度图（.r 通道，黑=不发光 白=全发光，默认 black=无自发光）
-sampler2D IvyArg_EmissiveTex;
-float IvyArg_EmissiveIntensity;// 自发光强度倍率（与灰度图相乘，0=关闭）
+float IvyArg_EmissiveIntensity;
 
 // SkinRamp 光照（固定参考方向，提供不随光源变化的结构性阴影）
 float IvyArg_SkinRampToggle;// SkinRamp 混合权重（0=不启用，1=完全启用）
@@ -239,9 +237,6 @@ FragOut Frag(FragIn fragIn)
     // >1 放大
     float2 zoomedUv = center + (grabUv - center) / zoom;
     float3 bg = tex2D(IvyArg_GrabTexture, zoomedUv).rgb;
-    //===[自发光]===================================================
-    //float emissiveMask = tex2D(IvyArg_EmissiveTex, geomOut.Uv).r;
-    //float emissiveWeight = saturate(emissiveMask * IvyArg_EmissiveIntensity);
     //===[几何基础阶段]===================================================
     IvyGeom_BuildIn geomIn;
     geomIn.Uv = fragIn.VertOut.Uv;
@@ -342,7 +337,7 @@ FragOut Frag(FragIn fragIn)
         : IvyArg_EffectInside;
     IvyEffect3D_VolumeIn effectIn;
     effectIn.SkinRgb = skinRgb;
-    effectIn.InsideRgb = IvyArg_SkinRgb31;
+    effectIn.InsideRgb = IvyArg_SkinRgb30;
     effectIn.VecMap = vecMaps.VecCamToPosOs;
     effectIn.CamOs = geomOut.CamOs;
     effectIn.IsFront = geomOut.IsFront;
@@ -356,7 +351,7 @@ FragOut Frag(FragIn fragIn)
 
     IvyEffect2D_MapIn effect2dIn;
     effect2dIn.SkinRgb = skinRgb;
-    effect2dIn.InsideRgb = IvyArg_SkinRgb31;
+    effect2dIn.InsideRgb = IvyArg_SkinRgb30;
     effect2dIn.PosOs = geomOut.PosOs;
     effect2dIn.NrmOs = geomOut.NrmOsFront;
     effect2dIn.IsFront = geomOut.IsFront;
@@ -366,6 +361,9 @@ FragOut Frag(FragIn fragIn)
     effect2dIn.PosOffset = float2(1, 1);
     IvyEffect2D_MapOut effect2dOut = IvyEffect2D_Map(effect2dIn);
     skinRgb = effect2dOut.Rgb;
+    half stripW = max(
+        saturate(effectOut.Mask * effectOut.Field),
+        saturate(effect2dOut.Mask * effect2dOut.Field));
 
     //金属为粗糙时需要阴影，边缘反射为瓷器和塑料
     //===[金属反射]=====================================================
@@ -450,8 +448,10 @@ FragOut Frag(FragIn fragIn)
     half film0 = IvySwitch_Float3(uvId, IvyArg_Film00, IvyArg_Film10, IvyArg_Film20, IvyArg_Film30).x;
     half film1 = IvySwitch_Float3(uvId, IvyArg_Film01, IvyArg_Film11, IvyArg_Film21, IvyArg_Film31).x;
     half filmAmt = lerp(film0, film1, skinMaskLuma);
-    half filmMask = IvyColor_Luma(tex2D(IvyArg_FilmMaskTex, envUv).rgb);
 
+    // 环境贴图反射
+    envUv = IvyUv_DirToSphere((vecMaps.VecMapReflectOs));
+    half filmMask = IvyColor_Luma(tex2D(IvyArg_FilmMaskTex, envUv).rgb);//envUv vecMaps.VecCamToPosOs
     half ndotv = saturate(dot(geomOut.NrmWsFront, dirPosToCamWs));
     half heightFactor = geomOut.PosOs.y / max(length(geomOut.PosOs.xyz), 1e-4);
     half t = IvyEffect2D_Axis(ndotv, IvyArg_IridescenceHue - heightFactor * 0.5, IvyArg_IridescenceSpread);
@@ -469,7 +469,9 @@ FragOut Frag(FragIn fragIn)
 
     FragOut fragOut;
     fragOut.TargetRgba = half4(colorOut.Rgb, transmitOut.Alpha);
-    fragOut.TargetRgba.rgb *= (lightOut.Rgb + envLight);
+    half3 lit = lightOut.Rgb + envLight;
+    half3 litStrip = max(lit, min(IvyArg_EmissiveIntensity, IvyArg_LightMax));
+    fragOut.TargetRgba.rgb *= lerp(lit, litStrip, stripW);
     return fragOut;
 }
 

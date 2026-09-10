@@ -16,8 +16,7 @@ Shader "Ivy/IvyObjectTransparent"
         Input_SkinMask3                     ("花纹3",   2D)     = "white" {}
         
         [Space(20)]
-        Input_EmissiveIntensity             ("自发光强度",           Range(0,1))  = 0.1
-        Input_EmissiveTex                   ("自发光遮罩",           2D)     = "white" {}
+        Input_EmissiveIntensity             ("特效亮度下限",         Range(0,1))  = 0
         
         //皮肤颜色
         [Space(20)]

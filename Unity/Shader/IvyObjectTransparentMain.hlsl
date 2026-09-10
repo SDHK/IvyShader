@@ -26,7 +26,6 @@
 #define IvyArg_LightMax                     Input_LightMax
 #define IvyArg_LightShadowMin               Input_LightShadowMin
 
-#define IvyArg_EmissiveTex                  Input_EmissiveTex
 #define IvyArg_EmissiveIntensity            Input_EmissiveIntensity
 #define IvyArg_SkinRampToggle               Input_SkinRampToggle
 #define IvyArg_StarNestEnable               Input_StarNestEnable

@@ -109,6 +109,10 @@ struct IvyGeom_VecMapOut
     /// </summary>
     float3 VecMapReflect;
     /// <summary>
+    /// 镜面反射向量（物体空间） 
+    /// </summary>
+    float3 VecMapReflectOs;
+    /// <summary>
     /// 法线转为模型空间（仅翻转X轴） - 跟随物体移动和旋转 
     /// </summary>
     float3 VecMapNrmOs;
@@ -162,6 +166,7 @@ IvyGeom_VecMapOut IvyGeom_VecMap(IvyGeom_BuildOut dataIn)
 
     dataOut.VecMapCamVs    = IvyVecMap_CamVs(dataOut.VecCamToPosWs);
     dataOut.VecMapReflect  = IvyVecMap_Reflect(dataOut.VecCamToPosWs, dataIn.NrmWsFront);
+    dataOut.VecMapReflectOs = IvyVecMap_Reflect(dataOut.VecCamToPosOs, dataIn.NrmOsFront);
     dataOut.VecMapNrmOs    = IvyVecMap_NrmOs(dataIn.NrmOs);
     dataOut.VecMapNrmWs    = IvyVecMap_NrmWs(dataIn.NrmWs);
     dataOut.VecMapNrmVs    = IvyVecMap_NrmVs(dataIn.NrmVs);
