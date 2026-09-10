@@ -271,7 +271,7 @@ Shader "Ivy/IvyObjectTransparent"
 
 
         // ===[GrabPass]===
-        GrabPass { "IvyArg_GrabTexture" }
+        //GrabPass { "IvyArg_GrabTexture" }
 
         // ===[内壁：先画，不写深度]===
         Pass
@@ -308,41 +308,12 @@ Shader "Ivy/IvyObjectTransparent"
         {
             Name "ADDITIONAL"
             Tags { "LightMode" = "ForwardAdd" }
+            Cull Back
             Blend One One
             ZWrite Off
+            ZTest LEqual
             HLSLPROGRAM
-
-            // #define IvyArg_MainTex       Input_MainTex
-            #define IvyArg_MainTex_ST    Input_MainTex_ST
-            #define IvyArg_SkinMask     Input_SkinMask
-            #define IvyArg_Color1        Input_SkinRgb1
-            #define IvyArg_Color2        Input_SkinRgb2
-            #define IvyArg_Color3        Input_SkinRgb3
-            #define IvyArg_Color4        Input_SkinRgb4
-            #define IvyArg_EmissiveTex        Input_EmissiveTex
-            #define IvyArg_EmissiveIntensity  Input_EmissiveIntensity
-            #define IvyArg_LambertScale       Input_LambertScale
-            #define IvyArg_LambertOffset      Input_LambertOffset
-            #define IvyArg_LightRampThreshold      Input_LightRampThreshold
-            #define IvyArg_LightRampSoftness       Input_LightRampSoftness
-            #define IvyArg_RampRgbBase     Input_RampRgbBase
-            #define IvyArg_SkinRampThreshold Input_SkinRampThreshold
-            #define IvyArg_SkinObjRampSoftness  Input_SkinObjRampSoftness
-            #define IvyArg_SkinObjRampRgb0     Input_SkinObjRampRgb0
-            #define IvyArg_SkinRampThreshold2 Input_SkinRampThreshold2
-            #define IvyArg_SkinObjRampSoftness2  Input_SkinObjRampSoftness2
-            #define IvyArg_SkinObjRampRgb1     Input_SkinObjRampRgb1
-            #define IvyArg_SkinRampThreshold3 Input_SkinRampThreshold3
-            #define IvyArg_SkinObjRampSoftness3  Input_SkinObjRampSoftness3
-            #define IvyArg_SkinRampRgb4     Input_SkinRampRgb4
-            #define IvyArg_SkinObjRampPos        Input_SkinObjRampPos
-            #define IvyArg_SkinRampToggle       Input_SkinRampToggle
-
-            #define IvyArg_RimRgb               Input_RimRgb
-            #define IvyArg_BackLightRimSoftness        Input_BackLightRimSoftness
-            #define IvyArg_BackRimIntensity    Input_BackRimIntensity
-            #define Link_IvyPassMainAdd
-            #include "../IvyCoreUnity.hlsl"
+            #include "IvyObjectTransparentAdd.hlsl"
             ENDHLSL
         }
 

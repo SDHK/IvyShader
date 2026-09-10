@@ -4,186 +4,313 @@
 * 日期： 2026/1/19
 *
 * 描述： IvyPassMainAdd - BRP 附加光源 Pass
-*        用于 ForwardAdd，处理点光源和聚光灯
-*        每个附加光源执行一次此 Pass
+*        ForwardAdd：每个点光 / 聚光执行一次
 *
-* 使用说明：
-* - 必须配合 IvyPassMainSimple（ForwardBase）使用
-* - Pass 设置：Blend One One, ZWrite Off
-* - 不包含环境光，只有直接光照
+* 与 IvyPassMainSimple 对齐的部分：
+* - 2×2 花纹格、Tiling、浅视差、亮暗 lerp、SkinRamp
+* - 本灯高光 / 闪粉 / 透射削漫反射、本灯背光
+*
+* 刻意不加（已在 ForwardBase 里）：
+* - 球谐、探针、环境图、MatCap、油膜、视角 Fresnel 边光
+* - 3D 体积特效、AudioLink 灯带地板、LightMin、太阳高度 sunUp、光线 Y 翻转
+* - 特效区按面板强度把本灯贡献乘成 0，避免布料点光叠在主 Pass 的特效上
+*
+* Pass：Blend One One, ZWrite Off, Cull Back
 *
 ****************************************/
 
 #if Def(IvyPassMainAdd)
 #define Def_IvyPassMainAdd
 
-
 //===[必要参数声明]====================================================
-sampler2D IvyArg_MainTex;
-float4    IvyArg_MainTex_ST;
+sampler2D IvyArg_SkinMask0;
+sampler2D IvyArg_SkinMask1;
+sampler2D IvyArg_SkinMask2;
+sampler2D IvyArg_SkinMask3;
+float4 IvyArg_SkinMask0_ST;
+float4 IvyArg_SkinMask1_ST;
+float4 IvyArg_SkinMask2_ST;
+float4 IvyArg_SkinMask3_ST;
 
-sampler2D IvyArg_ColorMask;
-float4    IvyArg_Color1;
-float4    IvyArg_Color2;
-float4    IvyArg_Color3;
-float4    IvyArg_Color4;
+float4 IvyArg_SkinRgb00;
+float4 IvyArg_SkinRgb01;
+float4 IvyArg_SkinRgb10;
+float4 IvyArg_SkinRgb11;
+float4 IvyArg_SkinRgb20;
+float4 IvyArg_SkinRgb21;
+float4 IvyArg_SkinRgb30;
+float4 IvyArg_SkinRgb31;
 
-sampler2D IvyArg_EmissiveTex;
-float     IvyArg_EmissiveIntensity;
+float IvyArg_LightInfluence;
+float IvyArg_LightMax;
+float IvyArg_LightShadowMin;
 
-float     IvyArg_LambertScale;
-float     IvyArg_LambertOffset;
+float IvyArg_SkinRampToggle;
+float4 IvyArg_SkinObjRampPos;
+float4 IvyArg_RampRgbBase;
+float4 IvyArg_SkinObjRampRgb0;
+float4 IvyArg_SkinObjRampRgb1;
+float IvyArg_SkinObjRampThreshold0;
+float IvyArg_SkinObjRampThreshold1;
+float IvyArg_SkinObjRampSoftness;
+float IvyArg_SkinViewRampThreshold0;
+float IvyArg_SkinViewRampThreshold1;
+float IvyArg_SkinViewRampSoftness;
+float4 IvyArg_SkinViewRampRgb0;
+float4 IvyArg_SkinViewRampRgb1;
 
-// Ramp 动态光照（灰度，只控制阴影边界）
-float     IvyArg_LightRampThreshold;
-float     IvyArg_LightRampSoftness;
+float IvyArg_LightRampThreshold;
+float IvyArg_LightRampSoftness;
 
-// BaseRamp 光照（固定方向结构性阴影）
-float     IvyArg_BaseRampEnable;    // BaseRamp 混合权重（0=不启用，1=完全启用）
-float3    IvyArg_BaseRampDir;          // 固定参考方向（世界空间，默认 (0,1,0) 向上）
+float IvyArg_BackRimIntensity;
+float IvyArg_BackLightRimSoftness;
 
-float4    IvyArg_BaseRampColor1;
-float4    IvyArg_BaseRampColor2;
-float4    IvyArg_BaseRampColor3;
-float4    IvyArg_BaseRampColor4;
-float4    IvyArg_BaseRampColor5;
+float IvyArg_ReflectIntensity00;
+float IvyArg_ReflectIntensity01;
+float IvyArg_ReflectIntensity10;
+float IvyArg_ReflectIntensity11;
+float IvyArg_ReflectIntensity20;
+float IvyArg_ReflectIntensity21;
+float IvyArg_ReflectIntensity30;
+float IvyArg_ReflectIntensity31;
+float IvyArg_ReflectSmoothness00;
+float IvyArg_ReflectSmoothness01;
+float IvyArg_ReflectSmoothness10;
+float IvyArg_ReflectSmoothness11;
+float IvyArg_ReflectSmoothness20;
+float IvyArg_ReflectSmoothness21;
+float IvyArg_ReflectSmoothness30;
+float IvyArg_ReflectSmoothness31;
 
-float     IvyArg_BaseRampThreshold1;
-float     IvyArg_BaseRampThreshold2;
-float     IvyArg_BaseRampThreshold3;
-float     IvyArg_BaseRampThreshold4;
+float IvyArg_Transmit00;
+float IvyArg_Transmit01;
+float IvyArg_Transmit10;
+float IvyArg_Transmit11;
+float IvyArg_Transmit20;
+float IvyArg_Transmit21;
+float IvyArg_Transmit30;
+float IvyArg_Transmit31;
 
-float     IvyArg_BaseRampSoftness1;
-float     IvyArg_BaseRampSoftness2;
-float     IvyArg_BaseRampSoftness3;
-float     IvyArg_BaseRampSoftness4;
+float IvyArg_Glitter00;
+float IvyArg_Glitter01;
+float IvyArg_Glitter10;
+float IvyArg_Glitter11;
+float IvyArg_Glitter20;
+float IvyArg_Glitter21;
+float IvyArg_Glitter30;
+float IvyArg_Glitter31;
 
-// 背光边缘光（逆光轮廓光，跟随附加光源方向）
-float4    IvyArg_BackRimColor;
-float     IvyArg_BackRimPower;
-float     IvyArg_BackRimIntensity;
+int IvyArg_EffectMap;
+float IvyArg_EffectIntensity00;
+float IvyArg_EffectIntensity01;
+float IvyArg_EffectIntensity10;
+float IvyArg_EffectIntensity11;
+float IvyArg_EffectIntensity20;
+float IvyArg_EffectIntensity21;
+float IvyArg_EffectIntensity30;
+float IvyArg_EffectIntensity31;
+float IvyArg_EffectInside;
 
-// ForwardAdd 关键字（生成 multi_compile_fwdadd_fullshadows）
+#define IvyKey_Instancing
+#define IvyKey_Fog
 #define IvyKey_ForwardAdd
 
-// 实例化支持
-#define IvyKey_Instancing
-
-// 雾效支持
-#define IvyKey_Fog
-
 #define Link_IvyBase
+#define Link_IvyNoise
 #define Link_IvyLight
 #define Link_IvyMatrix
 #define Link_IvyMath
-#define Link_IvyRamp
+#define Link_IvyColor
 #define Link_IvyVertex
+#define Link_IvyVecMap
+#define Link_IvyRamp
+#define Link_IvyEffect2D
 #define Link_IvyUv
+#define Link_IvyGeom
+#define Link_IvySkin
+#define Link_IvyReflect
 #include "../../Core/IvyCore.hlsl"
 
+float2 IvyPass_SkinUv(int uvId, float2 localUv)
+{
+    switch (uvId)
+    {
+        case 0: return IvyUv_Transform2D(localUv, IvyArg_SkinMask0_ST.xy, IvyArg_SkinMask0_ST.zw);
+        case 1: return IvyUv_Transform2D(localUv, IvyArg_SkinMask1_ST.xy, IvyArg_SkinMask1_ST.zw);
+        case 2: return IvyUv_Transform2D(localUv, IvyArg_SkinMask2_ST.xy, IvyArg_SkinMask2_ST.zw);
+        case 3: return IvyUv_Transform2D(localUv, IvyArg_SkinMask3_ST.xy, IvyArg_SkinMask3_ST.zw);
+        default: return localUv;
+    }
+}
 
-#pragma vertex vert
-#pragma fragment frag
+half4 IvyPass_SkinMask(int uvId, float2 uv)
+{
+    switch (uvId)
+    {
+        case 0: return tex2D(IvyArg_SkinMask0, uv);
+        case 1: return tex2D(IvyArg_SkinMask1, uv);
+        case 2: return tex2D(IvyArg_SkinMask2, uv);
+        case 3: return tex2D(IvyArg_SkinMask3, uv);
+        default: return 1;
+    }
+}
 
-struct VertData
+struct VertIn
 {
     IvyVar_PosOs
     IvyVar_NrmOs
-    IvyVar_T0(float2, UV)
+    IvyVar_T0(float2, Uv)
 };
 
-struct FragData
+struct VertOut
 {
     IvyVar_PosCs
-    IvyVar_T0(float2, UV)
-    IvyVar_T1(float3, NormalWs)
-    IvyVar_T2(float3, PositionWs)
-    // 光照坐标（用于距离衰减计算）
-    // 点光源和聚光灯需要此坐标来计算距离衰减
-    // 根据光源类型可能是 float3 或 float4，这里统一声明 float4
-    IvyVar_T3(float4, LightCoord)
-    // 阴影坐标（用于阴影采样）
-    // 根据阴影类型可能使用 float3 或 float4，这里统一声明 float4
-    IvyVar_T4(float4, ShadowCoord)
+    IvyVar_T0(float2, Uv)
+    IvyVar_T1(float3, NrmOs)
+    IvyVar_T2(float3, PosOs)
+    IvyVar_T3(float3, NrmWs)
+    IvyVar_T4(float3, PosWs)
+    IvyVar_T5(float4, ShadowCoord)
+    IvyVar_T6(float4, LightCoord)
 };
 
-FragData vert(VertData vertData)
+struct FragIn
 {
-    FragData fragData;
-    
-    // 计算 UV 坐标
-    fragData.UV = IvyUv_Transform2D(vertData.UV.xy, IvyArg_MainTex_ST.xy, IvyArg_MainTex_ST.zw);
-    
-    // 计算裁剪空间位置
-    fragData.PosCs = IvyMatrix_PosOsToCs(vertData.PosOs);
-    
-    // 将法线转换到世界空间
-    fragData.NormalWs = IvyMatrix_NrmOsToWs(vertData.NrmOs);
-    
-    // 计算世界空间位置
-    fragData.PositionWs = IvyMatrix_PosOsToWs(vertData.PosOs);
-    
-    // 计算光照坐标（用于距离衰减）
-    // 对应 Unity 的 COMPUTE_LIGHT_COORDS 宏
-    fragData.LightCoord = IvyLight_LightCoord(vertData.PosOs);
-    
-    // 计算阴影坐标（用于阴影采样）
-    // 对应 Unity 的 TRANSFER_SHADOW 宏
-    fragData.ShadowCoord = IvyLight_ShadowCoord(vertData.PosOs, fragData.PosCs, fragData.PositionWs);
-    
-    return fragData;
+    VertOut VertOut;
+    IvyVar_ViewFace
+};
+
+struct FragOut{ IvyVar_TargetRgba };
+
+#pragma vertex Vert
+#pragma fragment Frag
+
+VertOut Vert(VertIn vertIn)
+{
+    VertOut vertOut;
+    vertOut.Uv = vertIn.Uv;
+    vertOut.PosCs = IvyMatrix_PosOsToCs(vertIn.PosOs);
+    vertOut.NrmOs = vertIn.NrmOs;
+    vertOut.PosOs = vertIn.PosOs;
+    vertOut.NrmWs = IvyMatrix_NrmOsToWs(vertIn.NrmOs);
+    vertOut.PosWs = IvyMatrix_PosOsToWs(vertIn.PosOs);
+    vertOut.ShadowCoord = IvyLight_ShadowCoord(vertIn.PosOs, vertOut.PosCs, vertOut.PosWs);
+    vertOut.LightCoord = IvyLight_LightCoord(vertIn.PosOs);
+    return vertOut;
 }
 
-half4 frag(FragData fragData) : SV_Target
+FragOut Frag(FragIn fragIn)
 {
-    half4 mainTex = tex2D(IvyArg_MainTex, fragData.UV);
+    IvyGeom_BuildIn geomIn;
+    geomIn.Uv = fragIn.VertOut.Uv;
+    geomIn.PosOs = fragIn.VertOut.PosOs;
+    geomIn.NrmOs = fragIn.VertOut.NrmOs;
+    geomIn.IsFront = fragIn.ViewFace > 0.0;
+    geomIn.CamWs = _WorldSpaceCameraPos;
+    geomIn.OrthoParams = unity_OrthoParams;
+    IvyGeom_BuildOut geomOut = IvyGeom_Build(geomIn);
+    IvyGeom_VecMapOut vecMaps = IvyGeom_VecMap(geomOut);
+    float3 dirPosToCamWs = normalize(vecMaps.VecPosToCamWs);
 
-    //===[4 色混合]（与 ForwardBase 保持一致）======================
-    half4  colorMask   = tex2D(IvyArg_ColorMask, fragData.UV);
-    float  maskedSum   = colorMask.r + colorMask.g + colorMask.b + colorMask.a;
-    float  unmasked    = saturate(1.0 - maskedSum);
-    half3  tintedColor = colorMask.r * IvyArg_Color1.rgb
-                       + colorMask.g * IvyArg_Color2.rgb
-                       + colorMask.b * IvyArg_Color3.rgb
-                       + colorMask.a * IvyArg_Color4.rgb;
-    half3  baseColor   = (tintedColor + mainTex.rgb * unmasked) * mainTex.r;
+    int uvId = IvyUv_GridId(geomOut.Uv, 2, 2);
+    float2 localUv = IvyUv_GridLocal(geomOut.Uv, 2, 2);
 
-    //===[附加光源 Ramp 光照]========================================
-    float3 normalWs = normalize(fragData.NormalWs);
-    float  atten    = IvyLight_Attenuation(fragData.LightCoord, fragData.ShadowCoord);
-    float3 lightDir = IvyLight_Direction(fragData.PositionWs);
+    float2 skinUv = IvyPass_SkinUv(uvId, localUv);
+    float3 viewTs = IvyUv_ViewToTangent(geomOut.PosWs, skinUv, dirPosToCamWs, geomOut.NrmWsFront);
+    half4 heightMask = IvyPass_SkinMask(uvId, skinUv);
+    half heightLuma = IvyColor_Luma(heightMask.rgb);
+    skinUv = IvyUv_Parallax(skinUv, heightLuma, viewTs, 0.1);
+    half4 skinMask = IvyPass_SkinMask(uvId, skinUv);
+    half skinMaskLuma = IvyColor_Luma(skinMask.rgb);
 
-    // BaseRamp：固定方向结构性阴影（受附加光源衰减调制，不自发光）
-    float NdotBase = saturate(dot(normalWs, normalize(IvyArg_BaseRampDir)));
-    float3 baseRampColor = IvyRamp_Rgb5(
-        NdotBase,
-        IvyArg_BaseRampColor1.rgb, IvyArg_BaseRampThreshold1, IvyArg_BaseRampSoftness1,
-        IvyArg_BaseRampColor2.rgb, IvyArg_BaseRampThreshold2, IvyArg_BaseRampSoftness2,
-        IvyArg_BaseRampColor3.rgb, IvyArg_BaseRampThreshold3, IvyArg_BaseRampSoftness3,
-        IvyArg_BaseRampColor4.rgb, IvyArg_BaseRampThreshold4, IvyArg_BaseRampSoftness4,
-        IvyArg_BaseRampColor5.rgb
-    );
-    float3 baseShading = baseRampColor * IvyArg_BaseRampEnable * atten;
+    half4 skinRgb0 = IvySwitch_Float4(uvId, IvyArg_SkinRgb00, IvyArg_SkinRgb10, IvyArg_SkinRgb20, IvyArg_SkinRgb30);
+    half4 skinRgb1 = IvySwitch_Float4(uvId, IvyArg_SkinRgb01, IvyArg_SkinRgb11, IvyArg_SkinRgb21, IvyArg_SkinRgb31);
+    half3 skinRgb = lerp(skinRgb0.rgb, skinRgb1.rgb, skinMaskLuma);
 
+    if (IvyArg_SkinRampToggle != 0)
+    {
+        IvySkin_RampIn skinRampIn;
+        skinRampIn.SkinRgb = skinRgb;
+        skinRampIn.RampBaseRgb = IvyArg_RampRgbBase.rgb;
+        skinRampIn.Nrm = geomOut.NrmOsFront;
+        skinRampIn.RampDir = IvyArg_SkinObjRampPos;
+        skinRampIn.LambertScale = 0.5;
+        skinRampIn.Rgb0 = IvyArg_SkinObjRampRgb0.rgb;
+        skinRampIn.Rgb1 = IvyArg_SkinObjRampRgb1.rgb;
+        skinRampIn.Threshold0 = IvyArg_SkinObjRampThreshold0;
+        skinRampIn.Threshold1 = IvyArg_SkinObjRampThreshold1;
+        skinRampIn.Softness = IvyArg_SkinObjRampSoftness;
+        skinRgb = IvySkin_Ramp(skinRampIn).Rgb;
 
-    float NdotL     = saturate(dot(normalWs, lightDir) * IvyArg_LambertScale + IvyArg_LambertOffset);
-    float rampGray  = IvyRamp_Gray(NdotL, IvyArg_LightRampThreshold, IvyArg_LightRampSoftness);
-    half3 lightContrib = baseShading + rampGray * IvyParam_LightColor * atten;
+        skinRampIn.SkinRgb = skinRgb;
+        skinRampIn.Nrm = geomOut.NrmWsFront;
+        skinRampIn.RampDir = dirPosToCamWs;
+        skinRampIn.LambertScale = 1.0;
+        skinRampIn.Rgb0 = IvyArg_SkinViewRampRgb0.rgb;
+        skinRampIn.Rgb1 = IvyArg_SkinViewRampRgb1.rgb;
+        skinRampIn.Threshold0 = IvyArg_SkinViewRampThreshold0;
+        skinRampIn.Threshold1 = IvyArg_SkinViewRampThreshold1;
+        skinRampIn.Softness = IvyArg_SkinViewRampSoftness;
+        skinRgb = IvySkin_Ramp(skinRampIn).Rgb;
+    }
 
-    //===[背光边缘光]===============================================
-    float3 viewDir     = normalize(IvyParam_CameraPosWs - fragData.PositionWs);
-    float  backRim     = IvyRamp_BackRim(normalWs, viewDir, lightDir, IvyArg_BackRimPower);
-    half3  backRimLight = backRim * IvyArg_BackRimColor.rgb * IvyArg_BackRimIntensity
-                        * IvyParam_LightColor.rgb * atten;
+    half effectIntensity0 = IvySwitch_Float3(uvId, IvyArg_EffectIntensity00, IvyArg_EffectIntensity10, IvyArg_EffectIntensity20, IvyArg_EffectIntensity30).x;
+    half effectIntensity1 = IvySwitch_Float3(uvId, IvyArg_EffectIntensity01, IvyArg_EffectIntensity11, IvyArg_EffectIntensity21, IvyArg_EffectIntensity31).x;
+    half effectMask = geomOut.IsFront
+        ? lerp(effectIntensity0, effectIntensity1, skinMaskLuma)
+        : IvyArg_EffectInside;
+    half effectCover = (IvyArg_EffectMap != 0) ? saturate(effectMask) : 0;
 
-    //===[自发光区域屏蔽]============================================
-    // 自发光权重越高的区域越不受附加光影响，与 ForwardBase 行为一致
-    float emissiveMask   = tex2D(IvyArg_EmissiveTex, fragData.UV).r;
-    float emissiveWeight = saturate(emissiveMask * IvyArg_EmissiveIntensity);
+    float3 lightDir = IvyLight_Direction(geomOut.PosWs);
+    float atten = IvyLight_Attenuation(fragIn.VertOut.LightCoord, fragIn.VertOut.ShadowCoord);
+    half3 lightRgb = min(IvyParam_LightColor.rgb * atten, IvyArg_LightMax);
+    lightRgb = lerp(IvyColor_Luma(lightRgb), lightRgb, IvyArg_LightInfluence);
 
-    // ForwardAdd 只输出直接光照，Alpha 为 0（Blend One One 叠加模式）
-    return half4((baseColor * lightContrib + backRimLight) * (1.0 - emissiveWeight), 0);
+    half lambert = IvyRamp_Lambert(geomOut.NrmWsFront, lightDir, 0.5);
+    lambert = IvyRamp_Gray(lambert, IvyArg_LightRampThreshold, IvyArg_LightRampSoftness);
+    lambert = lerp(IvyArg_LightShadowMin, 1.0, lambert);
+
+    half reflectIntensity0 = IvySwitch_Float3(uvId, IvyArg_ReflectIntensity00, IvyArg_ReflectIntensity10, IvyArg_ReflectIntensity20, IvyArg_ReflectIntensity30).x;
+    half reflectSmoothness0 = IvySwitch_Float3(uvId, IvyArg_ReflectSmoothness00, IvyArg_ReflectSmoothness10, IvyArg_ReflectSmoothness20, IvyArg_ReflectSmoothness30).x;
+    half reflectIntensity1 = IvySwitch_Float3(uvId, IvyArg_ReflectIntensity01, IvyArg_ReflectIntensity11, IvyArg_ReflectIntensity21, IvyArg_ReflectIntensity31).x;
+    half reflectSmoothness1 = IvySwitch_Float3(uvId, IvyArg_ReflectSmoothness01, IvyArg_ReflectSmoothness11, IvyArg_ReflectSmoothness21, IvyArg_ReflectSmoothness31).x;
+    half reflectIntensity = lerp(reflectIntensity0, reflectIntensity1, skinMaskLuma);
+    half reflectSmoothness = lerp(reflectSmoothness0, reflectSmoothness1, skinMaskLuma);
+    half glitter0 = IvySwitch_Float3(uvId, IvyArg_Glitter00, IvyArg_Glitter10, IvyArg_Glitter20, IvyArg_Glitter30).x;
+    half glitter1 = IvySwitch_Float3(uvId, IvyArg_Glitter01, IvyArg_Glitter11, IvyArg_Glitter21, IvyArg_Glitter31).x;
+    half glitterAmount = lerp(glitter0, glitter1, skinMaskLuma);
+
+    IvyReflect_SpecularIn reflectIn;
+    reflectIn.SkinRgb = skinRgb;
+    reflectIn.NrmWs = geomOut.NrmWsFront;
+    reflectIn.ViewDir = dirPosToCamWs;
+    reflectIn.LightDir = lightDir;
+    reflectIn.Lambert = lambert;
+    reflectIn.ProbeRgb = 0;
+    reflectIn.EnvMapRgb = 0;
+    reflectIn.MatCapRgb = 0;
+    reflectIn.EnvMapInfluence = 0;
+    reflectIn.MatCapInfluence = 0;
+    reflectIn.ReflectSmoothness = reflectSmoothness;
+    reflectIn.ReflectIntensity = reflectIntensity;
+    reflectIn.PosOs = geomOut.PosOs;
+    reflectIn.PosOsPixel = fwidth(geomOut.PosOs);
+    reflectIn.GlitterAmount = glitterAmount;
+    IvyReflect_SpecularOut reflectOut = IvyReflect_Specular(reflectIn);
+
+    half backRimRamp = IvyRamp_BackRim(geomOut.NrmWsFront, dirPosToCamWs, lightDir, IvyArg_BackLightRimSoftness) * IvyArg_BackRimIntensity;
+
+    half transmit0 = IvySwitch_Float3(uvId, IvyArg_Transmit00, IvyArg_Transmit10, IvyArg_Transmit20, IvyArg_Transmit30).x;
+    half transmit1 = IvySwitch_Float3(uvId, IvyArg_Transmit01, IvyArg_Transmit11, IvyArg_Transmit21, IvyArg_Transmit31).x;
+    half transmit = lerp(transmit0, transmit1, skinMaskLuma);
+
+    half3 specRgb = reflectOut.HighLightPart;
+    half3 opaqueRgb = reflectOut.DiffusePart + specRgb + backRimRamp;
+    half3 shaded = lerp(opaqueRgb, specRgb + backRimRamp, transmit);
+
+    FragOut fragOut;
+    fragOut.TargetRgba = half4(shaded * lightRgb * (1.0 - effectCover), 0);
+    return fragOut;
 }
-
 
 #endif // Def(IvyPassMainAdd)

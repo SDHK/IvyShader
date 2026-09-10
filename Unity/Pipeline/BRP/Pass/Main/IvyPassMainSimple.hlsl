@@ -225,7 +225,7 @@ struct VertOut
     IvyVar_T3(float3, NrmWs)
     IvyVar_T4(float3, PosWs)
     IvyVar_T5(float4, ShadowCoord)
-    IvyVar_T6(float4, GrabPos)
+    //IvyVar_T6(float4, GrabPos)
 };
 
 struct FragIn
@@ -244,7 +244,6 @@ VertOut Vert(VertIn vertIn)
 {
     VertOut vertOut;
     //vertOut.Uv = IvyUv_Transform2D(vertIn.Uv.xy, IvyArg_MainTex_ST.xy, IvyArg_MainTex_ST.zw);
-
     vertOut.Uv = vertIn.Uv;
     vertOut.PosCs = IvyMatrix_PosOsToCs(vertIn.PosOs);
     vertOut.NrmOs = vertIn.NrmOs;
@@ -253,21 +252,21 @@ VertOut Vert(VertIn vertIn)
     vertOut.PosWs = IvyMatrix_PosOsToWs(vertIn.PosOs);
     // light-space shadow coord：基于顶点世界坐标变换，不依赖屏幕深度缓冲
     vertOut.ShadowCoord = IvyLight_ShadowCoord(vertIn.PosOs, vertOut.PosCs, vertOut.PosWs);
-    vertOut.GrabPos = ComputeGrabScreenPos(vertOut.PosCs);
+    //vertOut.GrabPos = ComputeGrabScreenPos(vertOut.PosCs);
     return vertOut;
 }
 
 FragOut Frag(FragIn fragIn)
 {
-    //===[透镜折射效果]===================================================
-    float4 grabPos = fragIn.VertOut.GrabPos;
-    float2 grabUv = grabPos.xy / grabPos.w;
-    // 简单整屏相对中心放大（先用片元 Uv 中心试；更好是物体中心投到屏幕）
-    float2 center = float2(0.5, 0.5);
-    float zoom = 1;
-    // >1 放大
-    float2 zoomedUv = center + (grabUv - center) / zoom;
-    float3 bg = tex2D(IvyArg_GrabTexture, zoomedUv).rgb;
+    ////===[透镜折射效果]===================================================
+    //float4 grabPos = fragIn.VertOut.GrabPos;
+    //float2 grabUv = grabPos.xy / grabPos.w;
+    //// 简单整屏相对中心放大（先用片元 Uv 中心试；更好是物体中心投到屏幕）
+    //float2 center = float2(0.5, 0.5);
+    //float zoom = 1;
+    //// >1 放大
+    //float2 zoomedUv = center + (grabUv - center) / zoom;
+    //float3 bg = tex2D(IvyArg_GrabTexture, zoomedUv).rgb;
     //===[几何基础阶段]===================================================
     IvyGeom_BuildIn geomIn;
     geomIn.Uv = fragIn.VertOut.Uv;
@@ -281,7 +280,6 @@ FragOut Frag(FragIn fragIn)
     // 方向世界坐标到世界相机
     float3 dirPosToCamWs = normalize(vecMaps.VecPosToCamWs);
     //===[Uv分区]===================================================
-    // 格子数改这里即可（2×2 / 2×3 / 3×3…）；tex2D switch 与颜色槽仍按实际贴图数手写
     int uvId = IvyUv_GridId(geomOut.Uv, 2, 2);
     float2 localUv = IvyUv_GridLocal(geomOut.Uv, 2, 2);
     IvyStruct_Light light = IvyLight_MainLight(fragIn.VertOut.ShadowCoord);
