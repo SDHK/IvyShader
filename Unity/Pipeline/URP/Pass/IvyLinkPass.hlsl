@@ -26,8 +26,8 @@
 *
 */
 
-#ifndef Def_IvyPass
-#define Def_IvyPass
+#ifndef Def_IvyLinkPass
+#define Def_IvyLinkPass
 
 //===[引入Pass库]===
 
@@ -35,4 +35,4 @@
 #include "ShadowCaster/IvyLinkShadowCaster.hlsl"
 #include "Outline/IvyLinkOutline.hlsl" 
 
-#endif // Def_IvyPass
+#endif // Def_IvyLinkPass

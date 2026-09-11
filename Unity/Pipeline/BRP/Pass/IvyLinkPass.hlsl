@@ -20,7 +20,7 @@
 *    #define Link_IvyPass
 *    #define Link_IvyPassOutline
 * 2. 产品 Pass：
-*    #define Link_IvyObjectTransparentTess
+*    #define Link_IvyObjectTransparentTess  或  Link_IvyObjectTransparent
 *    #define Link_IvyPassMain
 *
 * 注意：
@@ -36,6 +36,10 @@
 
 #if Link(IvyObjectTransparentTess)
 #include "IvyObject/IvyObjectTransparentTess/IvyPass.hlsl"
+#endif
+
+#if Link(IvyObjectTransparent)
+#include "IvyObject/IvyObjectTransparent/IvyPass.hlsl"
 #endif
 
 #endif // Def_IvyLinkPass

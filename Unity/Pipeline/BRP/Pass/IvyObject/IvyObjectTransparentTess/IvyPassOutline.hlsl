@@ -13,7 +13,6 @@
 #define Link_IvyBase
 #define Link_IvyMatrix
 #define Link_IvyVertex
-#define Link_IvyTess
 #include "../../../Core/IvyCore.hlsl"
 
 struct VertData

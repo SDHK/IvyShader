@@ -1,9 +1,9 @@
-HLSLINCLUDE
+﻿HLSLINCLUDE
 #define IvyShader
-#define Link_IvyObjectTransparentTess
+#define Link_IvyObjectTransparent
 ENDHLSL
 
-Shader "Ivy/IvyObjectTransparentTess"
+Shader "Ivy/IvyObjectTransparent"
 {
     Properties
     {
@@ -175,7 +175,6 @@ Shader "Ivy/IvyObjectTransparentTess"
         IvyArg_PressDepth                    ("按压深度",            Range(-1, 1)) = 0
         IvyArg_PressPos                      ("触摸位置(世界)",       Vector)     = (0, 0, 0, 0)
         IvyArg_PressRadius                   ("触摸半径",            Range(0, 2)) = 0
-        IvyArg_TessFactor                    ("细分密度",            Range(1, 8)) = 4
 
     }
 

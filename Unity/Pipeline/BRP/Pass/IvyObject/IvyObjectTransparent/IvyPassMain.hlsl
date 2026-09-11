@@ -107,29 +107,6 @@ VertOut Vert(VertIn vertIn)
     return vertOut;
 }
 
-#ifdef UNITY_CAN_COMPILE_TESSELLATION
-IvyTess_GpuPoint TessVert(VertIn vertIn)
-{
-    return IvyTess_PackGpu(vertIn.PosOs, vertIn.NrmOs, vertIn.Uv);
-}
-IvyTess_Point Hull(IvyTess_Point pointIn)
-{
-    return pointIn;
-}
-float HullConst(float3 pos0, float3 pos1, float3 pos2)
-{
-    return IvyTess_Factor(pos0, pos1, pos2, IvyArg_PressDepth, IvyArg_PressPos.xyz, IvyArg_PressRadius, IvyArg_TessFactor);
-}
-VertOut Domain(IvyTess_Point pointIn)
-{
-    VertIn vertIn;
-    vertIn.PosOs = pointIn.PosOs;
-    vertIn.NrmOs = pointIn.NrmOs;
-    vertIn.Uv = pointIn.Uv;
-    return Vert(vertIn);
-}
-#endif
-
 FragOut Frag(FragIn fragIn)
 {
     ////===[透镜折射效果]===================================================
@@ -373,21 +350,10 @@ FragOut Frag(FragIn fragIn)
 }
 
 
-#ifdef UNITY_CAN_COMPILE_TESSELLATION
-#pragma target 4.6
-#pragma vertex TessVert
-
-#pragma hull IvyTess_Hull
-IvyTess_HullTri(Hull, HullConst)
-
-#pragma domain IvyTess_Domain
-IvyTess_DomainTri(Domain, VertOut)
-#else
 #pragma vertex Vert
-#endif
 #pragma fragment Frag
 
-#endif// Def(IvyObjectTransparentTess_Main)
+#endif// Def(IvyObjectTransparent_Main)
 
 
 

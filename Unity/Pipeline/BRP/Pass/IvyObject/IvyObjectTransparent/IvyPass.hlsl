@@ -1,17 +1,15 @@
-/****************************************
+﻿/****************************************
 *
-* 描述： IvyObjectTransparentTess Pass 链接
-*        产品门 Link_IvyObjectTransparentTess
+* 描述： IvyObjectTransparent Pass 链接
+*        产品门 Link_IvyObjectTransparent
 *        角色门 Link_IvyPassMain / Add / Outline / ShadowCaster
 *
 ****************************************/
 
-#ifndef Def_IvyObjectTransparentTess 
-#define Def_IvyObjectTransparentTess 
+#ifndef Def_IvyObjectTransparent 
+#define Def_IvyObjectTransparent 
 
-#if Link(IvyObjectTransparentTess)
-
-#define Link_IvyTess
+#if Link(IvyObjectTransparent)
 
 #include "IvyArg.hlsl"
 
