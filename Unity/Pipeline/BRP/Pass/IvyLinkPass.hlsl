@@ -16,9 +16,6 @@
 * - 提供 Def 和 Link 宏定义，供 Pass 文件使用
 *
 * 使用方法：
-* 1. 通用 Pass（目录货）：
-*    #define Link_IvyPass
-*    #define Link_IvyPassOutline
 * 2. 产品 Pass：
 *    #define Link_IvyObjectTransparentTess  或  Link_IvyObjectTransparent
 *    #define Link_IvyPassMain

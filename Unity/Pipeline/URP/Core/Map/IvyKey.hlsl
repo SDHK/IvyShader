@@ -16,17 +16,13 @@
 
 //===[阴影关键字映射]===
 
-// 主光源阴影：生成 #pragma multi_compile _ _MAIN_LIGHT_SHADOWS
-// 代码中使用 #if IvyKey_MainLightShadows 判断是否有主光源阴影
+// 主光源阴影（含级联 / 屏幕空间）
 #ifdef IvyKey_MainLightShadows
-#pragma multi_compile _ _MAIN_LIGHT_SHADOWS
+#pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
 #define IvyKey_MainLightShadows defined(_MAIN_LIGHT_SHADOWS)
 #endif
 
-// 级联阴影：生成 #pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE
-// 代码中使用 #if IvyKey_MainLightShadowsCascade 判断是否有级联阴影
 #ifdef IvyKey_MainLightShadowsCascade
-#pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE
 #define IvyKey_MainLightShadowsCascade defined(_MAIN_LIGHT_SHADOWS_CASCADE)
 #endif
 

@@ -14,6 +14,12 @@
 
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
+#if defined(SHADER_API_D3D11) || defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE) || defined(SHADER_API_VULKAN) || defined(SHADER_API_METAL) || defined(SHADER_API_PSSL)
+#ifndef UNITY_CAN_COMPILE_TESSELLATION
+#define UNITY_CAN_COMPILE_TESSELLATION 1
+#endif
+#endif
+
 #endif // DefPart(IvyBase, Library)
 
 

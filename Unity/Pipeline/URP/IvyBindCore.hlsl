@@ -1,4 +1,3 @@
-
 //===[引入核心宏定义]===
 #include "../../../Ivy/IvyMacro.hlsl"
 
@@ -8,7 +7,5 @@
 #define Inc_IvyLibrary "../../Unity/Pipeline/URP/Core/Library/IvyLinkLibrary.hlsl"
 //===[注入 Unity 绑定]===
 #define Inc_IvyBind "../../Unity/Pipeline/URP/Core/Bind/IvyLinkBind.hlsl"
-
-#include "Pass/IvyPass.hlsl"
-
-
+//===[注入 Pass 系统]===
+#include "Pass/IvyLinkPass.hlsl"

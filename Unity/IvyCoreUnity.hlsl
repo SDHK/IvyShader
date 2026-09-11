@@ -10,7 +10,7 @@
 * 注入 Unity 引擎相关的 Ivy 参数映射
 * 注入 Unity 引擎相关的 Shader 核心模块
 *
-* 加载 IvyPass 入口（IvyPass.hlsl）
+* 加载 IvyPass 入口（IvyLinkPass.hlsl）
 * 加载 Ivy 库入口（IvyCore.hlsl）
 *
 */
@@ -18,18 +18,12 @@
 #ifndef Def_IvyCoreUnity
 #define Def_IvyCoreUnity
 
-//===[引入配置]===
-
 #include "../IvyConfig.hlsl"
-
-//===[引入引擎绑定]===
-#if defined(IvyShader_BRP)
-#include "Pipeline/BRP/IvyBindCore.hlsl"
-#endif
 
 #if defined(IvyShader_URP)
 #include "Pipeline/URP/IvyBindCore.hlsl"
+#elif defined(IvyShader_BRP)
+#include "Pipeline/BRP/IvyBindCore.hlsl"
 #endif
-
 
 #endif

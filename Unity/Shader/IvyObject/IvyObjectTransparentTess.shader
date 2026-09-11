@@ -182,37 +182,49 @@ Shader "Ivy/IvyObjectTransparentTess"
     //===[URP 管线]===================================================
     SubShader
     {
-        Tags { "RenderPipeline" = "UniversalPipeline" "RenderType" = "Opaque" "Queue" = "Geometry" }
+        Tags { "RenderPipeline" = "UniversalPipeline" "RenderType" = "Transparent" "Queue" = "Transparent" }
 
-        // ===[描边]===
         Pass
         {
             Name "OUTLINE"
-            Tags { "LightMode" = "SRPDefaultUnlit" }
+            Tags { "LightMode" = "UniversalForward" }
             Cull Front
-            ZWrite On
-            ZTest LEqual
+            ZWrite Off
+            Blend SrcAlpha OneMinusSrcAlpha
             HLSLPROGRAM
             #define Link_IvyPassOutline
             #include "../../IvyCoreUnity.hlsl"
             ENDHLSL
         }
 
-        // ===[简单渲染]===
         Pass
         {
+            Name "FORWARD_INNER"
             Tags { "LightMode" = "UniversalForward" }
-            Cull Back
+            Cull Front
             ZWrite On
             ZTest LEqual
-            Blend Off
+            Blend One OneMinusSrcAlpha
             HLSLPROGRAM
             #define Link_IvyPassMain
             #include "../../IvyCoreUnity.hlsl"
             ENDHLSL
         }
 
-        // ===[阴影投射]===
+        Pass
+        {
+            Name "FORWARD_OUTER"
+            Tags { "LightMode" = "UniversalForward" }
+            Cull Back
+            ZWrite On
+            ZTest LEqual
+            Blend One OneMinusSrcAlpha
+            HLSLPROGRAM
+            #define Link_IvyPassMain
+            #include "../../IvyCoreUnity.hlsl"
+            ENDHLSL
+        }
+
         Pass
         {
             Name "ShadowCaster"
