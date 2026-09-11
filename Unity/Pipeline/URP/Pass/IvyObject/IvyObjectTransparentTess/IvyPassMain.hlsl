@@ -371,7 +371,7 @@ FragOut Frag(FragIn fragIn)
     fragOut.TargetRgba = half4(colorOut.Rgb, transmitOut.Alpha);
     half pulse = 1;
     half3 lit = lightOut.Rgb + envLight;
-    half stripMin = min(IvyArg_EmissiveIntensity + pulse * IvyArg_AudioPulse, IvyArg_LightMax+pulse*IvyArg_AudioPulse);
+    half stripMin = min(IvyArg_EmissiveIntensity , IvyArg_LightMax);
     half3 litStrip = max(lit, stripMin);
     fragOut.TargetRgba.rgb *= lerp(lit, litStrip, stripW);
     return fragOut;
