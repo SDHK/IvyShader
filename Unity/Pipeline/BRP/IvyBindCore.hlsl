@@ -7,5 +7,5 @@
 #define Inc_IvyLibrary "../../Unity/Pipeline/BRP/Core/Library/IvyLinkLibrary.hlsl"
 //===[注入 Unity 绑定]===
 #define Inc_IvyBind "../../Unity/Pipeline/BRP/Core/Bind/IvyLinkBind.hlsl"
-
-#include "Pass/IvyPass.hlsl"
+//===[注入 Pass 系统]===
+#include "Pass/IvyLinkPass.hlsl"

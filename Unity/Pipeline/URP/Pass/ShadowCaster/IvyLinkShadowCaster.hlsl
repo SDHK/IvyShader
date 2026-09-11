@@ -9,6 +9,8 @@
 *
 */
 
+#if Link(IvyPass)
 #if Link(IvyPassShadowCaster)
 #include "IvyPassShadowCaster.hlsl"
+#endif
 #endif

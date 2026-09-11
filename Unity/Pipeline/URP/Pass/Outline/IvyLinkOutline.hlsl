@@ -10,6 +10,8 @@
 */
 
 
+#if Link(IvyPass)
 #if Link(IvyPassOutline)
 #include "IvyPassOutline.hlsl"
+#endif
 #endif

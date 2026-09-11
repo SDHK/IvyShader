@@ -1,9 +1,0 @@
-/****************************************
-*
-* 描述： IvyObjectTransparent 主光 Pass 入口
-*
-*/
-
-#include "IvyObjectTransparentBind.hlsl"
-#define Link_IvyPassMainSimple
-#include "../IvyCoreUnity.hlsl"

@@ -9,10 +9,14 @@
 *
 */
 
+#if Link(IvyPass)
+
 #if Link(IvyPassMainSimple)
 #include "IvyPassMainSimple.hlsl"
 #endif
 
 #if Link(IvyPassMain)
 #include "IvyPassMain.hlsl"
+#endif
+
 #endif
