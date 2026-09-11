@@ -170,6 +170,10 @@ Shader "Ivy/IvyObjectTransparent"
         [Space(20)]
         Input_OutlineColor                  ("描边颜色",            Color)  = (0, 0, 0, 1)
         Input_OutlineScale                  ("描边大小",            Float)  = 0
+        Input_PressDepth                    ("按压深度",            Range(-1, 1)) = 0
+        Input_PressPos                      ("触摸位置(世界)",       Vector)     = (0, 0, 0, 0)
+        Input_PressRadius                   ("触摸半径",            Range(0, 2)) = 0
+        Input_TessFactor                    ("按压细分",            Range(1, 8)) = 4
 
     }
 
@@ -189,6 +193,10 @@ Shader "Ivy/IvyObjectTransparent"
             HLSLPROGRAM
             #define IvyArg_Color Input_OutlineColor
             #define IvyArg_Scale Input_OutlineScale
+            #define IvyArg_PressDepth Input_PressDepth
+            #define IvyArg_PressPos Input_PressPos
+            #define IvyArg_PressRadius Input_PressRadius
+            #define IvyArg_TessFactor Input_TessFactor
             #define Link_IvyPassOutline
             #include "../IvyCoreUnity.hlsl"
             ENDHLSL
@@ -220,6 +228,10 @@ Shader "Ivy/IvyObjectTransparent"
             ZTest LEqual
             ColorMask 0
             HLSLPROGRAM
+            #define IvyArg_PressDepth Input_PressDepth
+            #define IvyArg_PressPos Input_PressPos
+            #define IvyArg_PressRadius Input_PressRadius
+            #define IvyArg_TessFactor Input_TessFactor
             #define Link_IvyPassShadowCaster
             #include "../IvyCoreUnity.hlsl"
             ENDHLSL
@@ -245,6 +257,10 @@ Shader "Ivy/IvyObjectTransparent"
             HLSLPROGRAM
             #define IvyArg_Color Input_OutlineColor
             #define IvyArg_Scale Input_OutlineScale
+            #define IvyArg_PressDepth Input_PressDepth
+            #define IvyArg_PressPos Input_PressPos
+            #define IvyArg_PressRadius Input_PressRadius
+            #define IvyArg_TessFactor Input_TessFactor
             #define Link_IvyPassOutline
             #include "../IvyCoreUnity.hlsl"
             ENDHLSL
@@ -327,6 +343,10 @@ Shader "Ivy/IvyObjectTransparent"
             ZTest LEqual
             ColorMask 0
             HLSLPROGRAM
+            #define IvyArg_PressDepth Input_PressDepth
+            #define IvyArg_PressPos Input_PressPos
+            #define IvyArg_PressRadius Input_PressRadius
+            #define IvyArg_TessFactor Input_TessFactor
             #define Link_IvyPassShadowCaster
             #include "../IvyCoreUnity.hlsl"
             ENDHLSL

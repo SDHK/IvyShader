@@ -111,6 +111,11 @@ float IvyArg_EffectIntensity30;
 float IvyArg_EffectIntensity31;
 float IvyArg_EffectInside;
 
+float IvyArg_PressDepth;
+float4 IvyArg_PressPos;
+float IvyArg_PressRadius;
+float IvyArg_TessFactor;
+
 #define IvyKey_Instancing
 #define IvyKey_Fog
 #define IvyKey_ForwardAdd
@@ -122,6 +127,7 @@ float IvyArg_EffectInside;
 #define Link_IvyMath
 #define Link_IvyColor
 #define Link_IvyVertex
+#define Link_IvyTess
 #define Link_IvyVecMap
 #define Link_IvyRamp
 #define Link_IvyEffect2D
@@ -182,22 +188,45 @@ struct FragIn
 
 struct FragOut{ IvyVar_TargetRgba };
 
-#pragma vertex Vert
-#pragma fragment Frag
-
 VertOut Vert(VertIn vertIn)
 {
     VertOut vertOut;
     vertOut.Uv = vertIn.Uv;
-    vertOut.PosCs = IvyMatrix_PosOsToCs(vertIn.PosOs);
-    vertOut.NrmOs = vertIn.NrmOs;
-    vertOut.PosOs = vertIn.PosOs;
-    vertOut.NrmWs = IvyMatrix_NrmOsToWs(vertIn.NrmOs);
-    vertOut.PosWs = IvyMatrix_PosOsToWs(vertIn.PosOs);
-    vertOut.ShadowCoord = IvyLight_ShadowCoord(vertIn.PosOs, vertOut.PosCs, vertOut.PosWs);
-    vertOut.LightCoord = IvyLight_LightCoord(vertIn.PosOs);
+    float4 posOs = vertIn.PosOs;
+    IvyVertex_PressOut press = IvyVertex_Press(posOs.xyz, vertIn.NrmOs, IvyArg_PressDepth, IvyArg_PressPos.xyz, IvyArg_PressRadius);
+    posOs.xyz = press.PosOs;
+    vertOut.PosCs = IvyMatrix_PosOsToCs(posOs);
+    vertOut.NrmOs = press.NrmOs;
+    vertOut.PosOs = posOs;
+    vertOut.NrmWs = IvyMatrix_NrmOsToWs(press.NrmOs);
+    vertOut.PosWs = IvyMatrix_PosOsToWs(posOs);
+    vertOut.ShadowCoord = IvyLight_ShadowCoord(posOs, vertOut.PosCs, vertOut.PosWs);
+    vertOut.LightCoord = IvyLight_LightCoord(posOs);
     return vertOut;
 }
+
+#ifdef UNITY_CAN_COMPILE_TESSELLATION
+IvyTess_GpuPoint TessVert(VertIn vertIn)
+{
+    return IvyTess_PackGpu(vertIn.PosOs, vertIn.NrmOs, vertIn.Uv);
+}
+IvyTess_Point Hull(IvyTess_Point pointIn)
+{
+    return pointIn;
+}
+float HullConst(float3 pos0, float3 pos1, float3 pos2)
+{
+    return IvyTess_Factor(pos0, pos1, pos2, IvyArg_PressDepth, IvyArg_PressPos.xyz, IvyArg_PressRadius, IvyArg_TessFactor);
+}
+VertOut Domain(IvyTess_Point pointIn)
+{
+    VertIn vertIn;
+    vertIn.PosOs = pointIn.PosOs;
+    vertIn.NrmOs = pointIn.NrmOs;
+    vertIn.Uv = pointIn.Uv;
+    return Vert(vertIn);
+}
+#endif
 
 FragOut Frag(FragIn fragIn)
 {
@@ -263,7 +292,7 @@ FragOut Frag(FragIn fragIn)
 
     float3 lightDir = IvyLight_Direction(geomOut.PosWs);
     float atten = IvyLight_Attenuation(fragIn.VertOut.LightCoord, fragIn.VertOut.ShadowCoord);
-    half3 lightRgb = min(IvyParam_LightColor.rgb * atten, IvyArg_LightMax);
+    half3 lightRgb = min(_LightColor0.rgb * atten, IvyArg_LightMax);
     lightRgb = lerp(IvyColor_Luma(lightRgb), lightRgb, IvyArg_LightInfluence);
 
     half lambert = IvyRamp_Lambert(geomOut.NrmWsFront, lightDir, 0.5);
@@ -312,5 +341,19 @@ FragOut Frag(FragIn fragIn)
     fragOut.TargetRgba = half4(shaded * lightRgb * (1.0 - effectCover), 0);
     return fragOut;
 }
+
+#ifdef UNITY_CAN_COMPILE_TESSELLATION
+#pragma target 4.6
+#pragma vertex TessVert
+
+#pragma hull IvyTess_Hull
+IvyTess_HullTri(Hull, HullConst)
+
+#pragma domain IvyTess_Domain
+IvyTess_DomainTri(Domain, VertOut)
+#else
+#pragma vertex Vert
+#endif
+#pragma fragment Frag
 
 #endif // Def(IvyPassMainAdd)

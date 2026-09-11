@@ -130,7 +130,7 @@ half4 frag(FragData fragData) : SV_Target
     #endif
     
     // === 环境光 ===
-    float3 ambient = IvyParam_AmbientSky.rgb;
+    float3 ambient = unity_AmbientSky.rgb;
     
     // === 最终光照 ===
     float3 finalColor = mainTex.rgb * lighting + mainTex.rgb * ambient;

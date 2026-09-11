@@ -13,6 +13,7 @@
 //===[基础库]===
 #if Link(IvyBase)
 #include "IvyBase.hlsl"
+#include "IvyStruct.hlsl"
 #endif
 
 //===[光照库]===
@@ -22,6 +23,10 @@
 
 #if Link(IvyAudioLink)
 #include "IvyAudioLink.hlsl"
+#endif
+
+#if Link(IvyTess)
+#include "IvyTess.hlsl"
 #endif
 
 

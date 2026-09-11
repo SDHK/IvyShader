@@ -126,3 +126,7 @@
 #define IvyArg_EffectInside                 Input_EffectInside
 
 #define IvyArg_VecMap0                      Input_VecMap0
+#define IvyArg_PressDepth                   Input_PressDepth
+#define IvyArg_PressPos                     Input_PressPos
+#define IvyArg_PressRadius                  Input_PressRadius
+#define IvyArg_TessFactor                   Input_TessFactor

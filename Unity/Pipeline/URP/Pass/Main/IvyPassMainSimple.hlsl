@@ -72,7 +72,7 @@ half4 frag(FragData fragData) : SV_Target
     // 计算 Lambert 光照（使用工具函数）
     half3 directLighting = IvyLight_LambertSimple(fragData.NormalWs, mainLight.direction, mainLight.color, mainLight.shadowAttenuation);
     // 最终光照 = 直接光照 + 环境光
-    float3 lighting = directLighting + IvyParam_AmbientSky.rgb;
+    float3 lighting = directLighting + unity_AmbientSky.rgb;
     // 应用光照
     mainTex.rgb *= lighting;
     return mainTex;

@@ -3,17 +3,13 @@
 * 作者： 闪电黑客
 * 日期： 2025/12/10 14:18
 *
-* 描述： 结构体定义
-* 
-
+* 描述： BRP 顶点 / 插值器语义字段
+*        GPU 绑定，不进 Core
+*
 */
 
-#ifndef Def_IvyStruct
-#define Def_IvyStruct
-
-//=== [光照阴影数据结构] ===
-
-
+#if DefPart(IvyStruct, Library)
+#define Def_IvyStruct_Library
 
 //===[数据结构字段映射]===
 // 顶点位置

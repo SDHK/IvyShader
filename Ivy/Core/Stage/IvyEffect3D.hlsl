@@ -20,7 +20,7 @@ struct IvyEffect3D_VolumeIn
     /// </summary>
     half3 SkinRgb;
     /// <summary>
-    /// 体内着色色（正面仍乘 SkinRgb）
+    /// 体内着色（正面仍乘 SkinRgb）
     /// </summary>
     half3 InsideRgb;
     /// <summary>

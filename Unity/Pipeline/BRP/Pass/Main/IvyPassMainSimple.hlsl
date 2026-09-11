@@ -55,11 +55,9 @@ float IvyArg_SkinViewRampThreshold0;
 float IvyArg_SkinViewRampThreshold1;
 float IvyArg_SkinViewRampSoftness;
 
-
 // Ramp 动态光照（灰度，只控制阴影边界，颜色由光源颜色和 SkinRamp 提供）
 float IvyArg_LightRampThreshold;// 阴影边界位置（lightLambert 轴 0~1）
 float IvyArg_LightRampSoftness;// 边界过渡宽度（0=硬切卡通）
-
 
 // 边缘色
 float4 IvyArg_SkinViewRampRgb0;// 边缘暗颜色
@@ -71,7 +69,6 @@ float IvyArg_LightRimSoftness;// 边缘集中度（高=细窄，低=宽泛，建
 // 背光边缘光（逆光轮廓光，跟随光源方向）
 float IvyArg_BackRimIntensity;// 背光强度（0=关闭）
 float IvyArg_BackLightRimSoftness;// 边缘集中度（建议 2~8）
-
 
 float IvyArg_ReflectIntensity00;
 float IvyArg_ReflectIntensity01;
@@ -143,7 +140,10 @@ float IvyArg_EffectInside;
 // 映射图
 int IvyArg_VecMap0;
 
-
+float IvyArg_PressDepth;
+float4 IvyArg_PressPos;
+float IvyArg_PressRadius;
+float IvyArg_TessFactor;
 
 //色板暂定为：10*5 : 白 → 粉 → 红 → 橘 → 橙 → 黄 → 绿 → 青 → 蓝 → 紫
 //4*2=8色，4个细节贴图，法线贴图。8个材质枚举。
@@ -173,6 +173,7 @@ int IvyArg_VecMap0;
 #define Link_IvyMath
 #define Link_IvyColor
 #define Link_IvyVertex
+#define Link_IvyTess
 #define Link_IvyField
 #define Link_IvyVecMap
 #define Link_IvyRamp
@@ -236,25 +237,47 @@ struct FragIn
 
 struct FragOut{ IvyVar_TargetRgba };
 
-
-#pragma vertex Vert
-#pragma fragment Frag
-
 VertOut Vert(VertIn vertIn)
 {
     VertOut vertOut;
     //vertOut.Uv = IvyUv_Transform2D(vertIn.Uv.xy, IvyArg_MainTex_ST.xy, IvyArg_MainTex_ST.zw);
     vertOut.Uv = vertIn.Uv;
-    vertOut.PosCs = IvyMatrix_PosOsToCs(vertIn.PosOs);
-    vertOut.NrmOs = vertIn.NrmOs;
-    vertOut.PosOs = vertIn.PosOs;
-    vertOut.NrmWs = IvyMatrix_NrmOsToWs(vertIn.NrmOs);
-    vertOut.PosWs = IvyMatrix_PosOsToWs(vertIn.PosOs);
+    float4 posOs = vertIn.PosOs;
+    IvyVertex_PressOut press = IvyVertex_Press(posOs.xyz, vertIn.NrmOs, IvyArg_PressDepth, IvyArg_PressPos.xyz, IvyArg_PressRadius);
+    posOs.xyz = press.PosOs;
+    vertOut.PosCs = IvyMatrix_PosOsToCs(posOs);
+    vertOut.NrmOs = press.NrmOs;
+    vertOut.PosOs = posOs;
+    vertOut.NrmWs = IvyMatrix_NrmOsToWs(press.NrmOs);
+    vertOut.PosWs = IvyMatrix_PosOsToWs(posOs);
     // light-space shadow coord：基于顶点世界坐标变换，不依赖屏幕深度缓冲
-    vertOut.ShadowCoord = IvyLight_ShadowCoord(vertIn.PosOs, vertOut.PosCs, vertOut.PosWs);
+    vertOut.ShadowCoord = IvyLight_ShadowCoord(posOs, vertOut.PosCs, vertOut.PosWs);
     //vertOut.GrabPos = ComputeGrabScreenPos(vertOut.PosCs);
     return vertOut;
 }
+
+#ifdef UNITY_CAN_COMPILE_TESSELLATION
+IvyTess_GpuPoint TessVert(VertIn vertIn)
+{
+    return IvyTess_PackGpu(vertIn.PosOs, vertIn.NrmOs, vertIn.Uv);
+}
+IvyTess_Point Hull(IvyTess_Point pointIn)
+{
+    return pointIn;
+}
+float HullConst(float3 pos0, float3 pos1, float3 pos2)
+{
+    return IvyTess_Factor(pos0, pos1, pos2, IvyArg_PressDepth, IvyArg_PressPos.xyz, IvyArg_PressRadius, IvyArg_TessFactor);
+}
+VertOut Domain(IvyTess_Point pointIn)
+{
+    VertIn vertIn;
+    vertIn.PosOs = pointIn.PosOs;
+    vertIn.NrmOs = pointIn.NrmOs;
+    vertIn.Uv = pointIn.Uv;
+    return Vert(vertIn);
+}
+#endif
 
 FragOut Frag(FragIn fragIn)
 {
@@ -364,26 +387,26 @@ FragOut Frag(FragIn fragIn)
     effectIn.Depth = 1.0;
     effectIn.EffectId = IvyArg_EffectMap;
     effectIn.Mask = effectMask;
-    effectIn.Time = IvyParam_Time.x;
+    effectIn.Time = _Time.x;
     effectIn.PosOffset = float2(0, 0);
     IvyEffect3D_VolumeOut effectOut = IvyEffect3D_Volume(effectIn);
     skinRgb = effectOut.Rgb;
 
-    //IvyEffect2D_MapIn effect2dIn;
-    //effect2dIn.SkinRgb = skinRgb;
-    //effect2dIn.InsideRgb = IvyArg_SkinRgb30;
-    //effect2dIn.PosOs = geomOut.PosOs;
-    //effect2dIn.NrmOs = geomOut.NrmOsFront;
-    //effect2dIn.IsFront = geomOut.IsFront;
-    //effect2dIn.EffectId = IvyArg_Effect2DMap;
-    //effect2dIn.Mask = effectMask;
-    //effect2dIn.Time = IvyParam_Time.x;
-    //effect2dIn.PosOffset = float2(1, 1);
-    //IvyEffect2D_MapOut effect2dOut = IvyEffect2D_Map(effect2dIn);
-    //skinRgb = effect2dOut.Rgb;
+    IvyEffect2D_MapIn effect2dIn;
+    effect2dIn.SkinRgb = skinRgb;
+    effect2dIn.InsideRgb = IvyArg_SkinRgb30;
+    effect2dIn.PosOs = geomOut.PosOs;
+    effect2dIn.NrmOs = geomOut.NrmOsFront;
+    effect2dIn.IsFront = geomOut.IsFront;
+    effect2dIn.EffectId = IvyArg_Effect2DMap;
+    effect2dIn.Mask = effectMask;
+    effect2dIn.Time = _Time.x;
+    effect2dIn.PosOffset = float2(1, 1);
+    IvyEffect2D_MapOut effect2dOut = IvyEffect2D_Map(effect2dIn);
+    skinRgb = effect2dOut.Rgb;
     half stripW = max(
         saturate(effectOut.Mask * effectOut.Field),
-        saturate(effectOut.Mask * effectOut.Field));
+        saturate(effect2dOut.Mask * effect2dOut.Field));
 
     //金属为粗糙时需要阴影，边缘反射为瓷器和塑料
     //===[金属反射]=====================================================
@@ -498,7 +521,30 @@ FragOut Frag(FragIn fragIn)
     return fragOut;
 }
 
+
+#ifdef UNITY_CAN_COMPILE_TESSELLATION
+#pragma target 4.6
+#pragma vertex TessVert
+
+#pragma hull IvyTess_Hull
+IvyTess_HullTri(Hull, HullConst)
+
+#pragma domain IvyTess_Domain
+IvyTess_DomainTri(Domain, VertOut)
+#else
+#pragma vertex Vert
+#endif
+#pragma fragment Frag
+
 #endif// Def(IvyPassMainSimple)
+
+
+
+
+
+
+
+
 
 
 
@@ -506,7 +552,7 @@ FragOut Frag(FragIn fragIn)
 
 // ===星旋效果
 
-//       float iTime = IvyParam_Time.y;
+//       float iTime = _Time.y;
 //   //float2 uv = (fragData.Uv / iResolution.xy) - .5;
 //   float2 uv = fragData.Uv*0.5;
 //float t = iTime * .1 + ((.25 + .05 * sin(iTime * .1))/(length(uv.xy) + .07)) * 2.2;

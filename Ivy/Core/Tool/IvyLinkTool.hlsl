@@ -40,6 +40,9 @@
 #if Link(IvyVertex)
 #include "IvyVertex.hlsl"   // 顶点工具
 #endif
+#if Link(IvyTess)
+#include "IvyTess.hlsl"     // 曲面细分因子
+#endif
 #if Link(IvyVecMap)
 #include "IvyVecMap.hlsl"     // 坐标扭曲工具
 #endif

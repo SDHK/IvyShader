@@ -14,6 +14,10 @@
 #include "IvyGeom.hlsl"      
 #endif
 
+#if Link(IvyTess)
+#include "IvyTess.hlsl"
+#endif
+
 #if Link(IvyLight)
 #include "IvyLight.hlsl"      
 #endif
