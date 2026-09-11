@@ -68,13 +68,14 @@ half3 IvyLight_Probe(float3 dirWs, half mip)
 float4 IvyShadowCaster_PositionCS(float4 positionOS, float3 normalOS)
 {
     float3 positionWS = TransformObjectToWorld(positionOS.xyz);
-    float3 normalWS = TransformObjectToWorldNormal(normalOS);
 #if defined(_CASTING_PUNCTUAL_LIGHT_SHADOW)
     float3 lightDirectionWS = normalize(_LightPosition - positionWS);
 #else
     float3 lightDirectionWS = _LightDirection;
 #endif
-    float4 positionCS = TransformWorldToHClip(ApplyShadowBias(positionWS, normalWS, lightDirectionWS));
+    // 只沿光线做深度偏置，不沿法线挤出（避免描边轮廓打进 shadowmap）
+    positionWS = positionWS + lightDirectionWS * _ShadowBias.xxx;
+    float4 positionCS = TransformWorldToHClip(positionWS);
 #if UNITY_REVERSED_Z
     positionCS.z = min(positionCS.z, UNITY_NEAR_CLIP_VALUE);
 #else

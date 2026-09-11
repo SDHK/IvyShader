@@ -177,39 +177,27 @@ float4 IvyLight_LightCoord(float4 positionOS)
 //===[阴影接收相关方法] ===
 // 这些方法用于在Forward Pass中接收阴影
 
-// 计算并返回阴影坐标（在vertex shader中调用）
-// 参数：positionOS - 物体空间位置（float4，从vertex shader输入获取，如 vertData.PositionOS）
-// 参数：positionCS - 裁剪空间位置（float4，fragData.pos）
-// 参数：positionWS - 世界空间位置（float3，BRP中不使用但为接口统一保留）
-// 返回值：阴影坐标（float4，对于SHADOWS_CUBE类型，只使用xyz部分）
-// 使用方式：fragData.ShadowCoord = IvyLight_ShadowCoord(vertData.PositionOS, fragData.pos, fragData.PositionWS)
-// 说明：根据不同的阴影类型自动选择正确的计算方式
-//       字段类型根据阴影类型而定：
-//       - SHADOWS_SCREEN: float4 ShadowCoord : TEXCOORDx;
-//       - SHADOWS_DEPTH (SPOT): float4 ShadowCoord : TEXCOORDx;
-//       - SHADOWS_CUBE (POINT): float3 ShadowCoord : TEXCOORDx; (使用返回值的xyz)
+// 计算并返回阴影坐标（片元中调用，避免顶点插值）
+// 参数：positionOS - 物体空间位置
+// 参数：positionCS - 裁剪空间位置（屏幕空间阴影用）
+// 参数：positionWS - 世界空间位置
 float4 IvyLight_ShadowCoord(float4 positionOS, float4 positionCS, float3 positionWS)
 {
     #if defined(SHADOWS_SCREEN)
-        // 屏幕空间阴影坐标（不透明物体默认路径）
         #if defined(UNITY_NO_SCREENSPACE_SHADOWS)
-            return mul(unity_WorldToShadow[0], mul(unity_ObjectToWorld, positionOS));
+            return mul(unity_WorldToShadow[0], float4(positionWS, 1.0));
         #else
             return ComputeScreenPos(positionCS);
         #endif
     #elif defined(SHADOWS_DEPTH) && !defined(SPOT)
-        // Light-space 方向光级联阴影坐标（透明物体兼容路径）
-        // 基于顶点世界坐标变换到光源空间，不依赖主摄像机深度缓冲
-        return mul(unity_WorldToShadow[0], mul(unity_ObjectToWorld, positionOS));
+        return mul(unity_WorldToShadow[0], float4(positionWS, 1.0));
     #elif defined(SHADOWS_DEPTH) && defined(SPOT)
-        // 聚光灯阴影坐标
-        return mul(unity_WorldToShadow[0], mul(unity_ObjectToWorld, positionOS));
+        return mul(unity_WorldToShadow[0], float4(positionWS, 1.0));
     #elif defined(SHADOWS_CUBE)
-        // 点光源立方体阴影坐标
-        float3 shadowCoord3 = mul(unity_ObjectToWorld, positionOS).xyz - _LightPositionRange.xyz;
+        float3 shadowCoord3 = positionWS - _LightPositionRange.xyz;
         return float4(shadowCoord3, 0.0);
     #else
-        return float4(0, 0, 0, 0); // 无阴影情况
+        return float4(0, 0, 0, 0);
     #endif
 }
 
@@ -221,11 +209,12 @@ float4 IvyLight_ShadowCoord(float4 positionOS, float4 positionCS, float3 positio
 // 计算阴影投射顶点位置（在vertex shader中调用）
 float4 IvyShadowCaster_PositionCS(float4 positionOS, float3 normalOS)
 {
-    // 将为点光源生成立方体阴影贴图的情况单独处理
     #if defined(SHADOWS_CUBE) && !defined(SHADOWS_CUBE_IN_DEPTH_TEX)
         return UnityObjectToClipPos(positionOS);
-    #else  // 生成定向或点光源阴影
-        float4 positionCS = UnityClipSpaceShadowCasterPos(positionOS, normalOS);
+    #else
+        // 不用 UnityClipSpaceShadowCasterPos 的法线挤出：和描边同一套沿法线外扩，
+        // 会把网格轮廓打进 shadowmap，球体/低模自阴影交界呈锯齿。
+        float4 positionCS = UnityObjectToClipPos(positionOS);
         return UnityApplyLinearShadowBias(positionCS);
     #endif
 }

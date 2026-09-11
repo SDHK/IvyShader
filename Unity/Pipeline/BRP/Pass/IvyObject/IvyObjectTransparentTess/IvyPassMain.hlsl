@@ -76,8 +76,7 @@ struct VertOut
     IvyVar_T2(float3, PosOs)
     IvyVar_T3(float3, NrmWs)
     IvyVar_T4(float3, PosWs)
-    IvyVar_T5(float4, ShadowCoord)
-    //IvyVar_T6(float4, GrabPos)
+    //IvyVar_T5(float4, GrabPos)
 };
 
 struct FragIn
@@ -101,9 +100,6 @@ VertOut Vert(VertIn vertIn)
     vertOut.PosOs = posOs;
     vertOut.NrmWs = IvyMatrix_NrmOsToWs(press.NrmOs);
     vertOut.PosWs = IvyMatrix_PosOsToWs(posOs);
-    // light-space shadow coord：基于顶点世界坐标变换，不依赖屏幕深度缓冲
-    vertOut.ShadowCoord = IvyLight_ShadowCoord(posOs, vertOut.PosCs, vertOut.PosWs);
-    //vertOut.GrabPos = ComputeGrabScreenPos(vertOut.PosCs);
     return vertOut;
 }
 
@@ -156,7 +152,8 @@ FragOut Frag(FragIn fragIn)
     //===[Uv分区]===================================================
     int uvId = IvyUv_GridId(geomOut.Uv, 2, 2);
     float2 localUv = IvyUv_GridLocal(geomOut.Uv, 2, 2);
-    IvyStruct_Light light = IvyLight_MainLight(fragIn.VertOut.ShadowCoord);
+    float4 shadowCoord = IvyLight_ShadowCoord(float4(geomOut.PosOs, 1.0), geomOut.PosCs, geomOut.PosWs);
+    IvyStruct_Light light = IvyLight_MainLight(shadowCoord);
     //===[皮肤着色]=================================================
     // 格内 UV 先乘各花纹 Tiling，再浅视差。平铺 UV 不 saturate，织布才能 repeat。
     float2 skinUv = IvyPass_SkinUv(uvId, localUv);

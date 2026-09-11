@@ -81,8 +81,6 @@ struct VertOut
     IvyVar_T2(float3, PosOs)
     IvyVar_T3(float3, NrmWs)
     IvyVar_T4(float3, PosWs)
-    IvyVar_T5(float4, ShadowCoord)
-    IvyVar_T6(float4, LightCoord)
 };
 
 struct FragIn
@@ -105,8 +103,6 @@ VertOut Vert(VertIn vertIn)
     vertOut.PosOs = posOs;
     vertOut.NrmWs = IvyMatrix_NrmOsToWs(press.NrmOs);
     vertOut.PosWs = IvyMatrix_PosOsToWs(posOs);
-    vertOut.ShadowCoord = IvyLight_ShadowCoord(posOs, vertOut.PosCs, vertOut.PosWs);
-    vertOut.LightCoord = IvyLight_LightCoord(posOs);
     return vertOut;
 }
 
@@ -196,7 +192,9 @@ FragOut Frag(FragIn fragIn)
     half effectCover = (IvyArg_EffectMap != 0) ? saturate(effectMask) : 0;
 
     float3 lightDir = IvyLight_Direction(geomOut.PosWs);
-    float atten = IvyLight_Attenuation(fragIn.VertOut.LightCoord, fragIn.VertOut.ShadowCoord);
+    float4 shadowCoord = IvyLight_ShadowCoord(float4(geomOut.PosOs, 1.0), geomOut.PosCs, geomOut.PosWs);
+    float4 lightCoord = IvyLight_LightCoord(float4(geomOut.PosOs, 1.0));
+    float atten = IvyLight_Attenuation(lightCoord, shadowCoord);
     half3 lightRgb = min(_LightColor0.rgb * atten, IvyArg_LightMax);
     lightRgb = lerp(IvyColor_Luma(lightRgb), lightRgb, IvyArg_LightInfluence);
 
