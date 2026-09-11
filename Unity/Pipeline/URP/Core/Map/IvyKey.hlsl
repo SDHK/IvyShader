@@ -16,21 +16,24 @@
 
 //===[阴影关键字映射]===
 
-// 主光源阴影（含级联 / 屏幕空间）
+// 主光源阴影。透明 Pass 默认不含 SCREEN：屏幕空间阴影采不透明深度，会在身上打出块状投影。
 #ifdef IvyKey_MainLightShadows
+#ifdef IvySet_ShadowScreen
 #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
-#define IvyKey_MainLightShadows defined(_MAIN_LIGHT_SHADOWS)
+#else
+#pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE
+#endif
+#define IvyKey_MainLightShadows (defined(_MAIN_LIGHT_SHADOWS) || defined(_MAIN_LIGHT_SHADOWS_CASCADE) || defined(_MAIN_LIGHT_SHADOWS_SCREEN))
 #endif
 
 #ifdef IvyKey_MainLightShadowsCascade
 #define IvyKey_MainLightShadowsCascade defined(_MAIN_LIGHT_SHADOWS_CASCADE)
 #endif
 
-// 软阴影：生成 #pragma multi_compile _ _SHADOWS_SOFT
-// 代码中使用 #if IvyKey_ShadowsSoft 判断是否有软阴影
 #ifdef IvyKey_ShadowsSoft
-#pragma multi_compile _ _SHADOWS_SOFT
-#define IvyKey_ShadowsSoft defined(_SHADOWS_SOFT)
+#pragma multi_compile_fragment _ _SHADOWS_SOFT
+#pragma multi_compile_fragment _ _SHADOWS_SOFT_LOW _SHADOWS_SOFT_MEDIUM _SHADOWS_SOFT_HIGH
+#define IvyKey_ShadowsSoft (defined(_SHADOWS_SOFT) || defined(_SHADOWS_SOFT_LOW) || defined(_SHADOWS_SOFT_MEDIUM) || defined(_SHADOWS_SOFT_HIGH))
 #endif
 
 // 附加光源：生成 #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
@@ -43,7 +46,7 @@
 // 附加光源阴影：生成 #pragma multi_compile _ _ADDITIONAL_LIGHT_SHADOWS
 // 代码中使用 #if IvyKey_AdditionalLightShadows 判断是否有附加光源阴影
 #ifdef IvyKey_AdditionalLightShadows
-#pragma multi_compile _ _ADDITIONAL_LIGHT_SHADOWS
+#pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
 #define IvyKey_AdditionalLightShadows defined(_ADDITIONAL_LIGHT_SHADOWS)
 #endif
 

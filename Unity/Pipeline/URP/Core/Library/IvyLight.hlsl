@@ -50,6 +50,7 @@ IvyStruct_Light IvyLight_MainLight(float4 shadowCoord)
 
 float4 IvyLight_ShadowCoord(float4 positionOS, float4 positionCS, float3 positionWS)
 {
+    // 级联选择按世界坐标进行，须在片元调用，顶点插值会把不同 cascade 的坐标混在一起。
     return TransformWorldToShadowCoord(positionWS);
 }
 

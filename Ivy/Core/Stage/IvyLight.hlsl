@@ -77,16 +77,18 @@ IvyLight_DiffuseOut IvyLight_Diffuse(IvyLight_DiffuseIn dataIn)
     float sunUp = clamp(dataOut.Dir.y, 0 , 1) * 2;
     //光照强度的大小限制
     dataOut.Rgb = clamp(dataOut.Rgb * sunUp, dataIn.LightMin, dataIn.LightMax);
-    // 综合距离衰减和阴影衰减，得到最终光照颜色
-    dataOut.Rgb = dataOut.Rgb * dataIn.DistAtten * dataIn.ShadowAtten;
+    // 擦光处不用 shadowmap：球体自阴影 terminator 会把纹素拉成锯齿。
+    // 背光变暗交给后面的 Lambert，别人投来的影子仍在亮部生效。
+    half ndotl = saturate(dot(dataIn.NrmWs, dataIn.Dir));
+    half terminator = smoothstep(0.0, 0.2, ndotl);
+    half shadowAtten = lerp(1.0, dataIn.ShadowAtten, terminator);
+    dataOut.Rgb = dataOut.Rgb * dataIn.DistAtten * shadowAtten;
     //光照色彩的影响力
     dataOut.Rgb = lerp(IvyColor_Luma(dataOut.Rgb) , dataOut.Rgb, dataIn.Influence);
     //如果光线向下，则反转光线方向，让光线始终在上方，保证阴影效果
     if(dataOut.Dir.y<=0) dataOut.Dir.y= -dataOut.Dir.y;
     //当光线消失时，保持固定头顶方向以维持阴影效果
     if(length(dataOut.Dir)==0) dataOut.Dir = float3(0,1,0);
-    //计算光照的亮度
-    dataOut.Luma = IvyColor_Luma(dataOut.Rgb);
 
     //计算光照的Lambert值
     half lightLambert = IvyRamp_Lambert(dataIn.NrmWs, dataOut.Dir, 0.5);
@@ -94,10 +96,10 @@ IvyLight_DiffuseOut IvyLight_Diffuse(IvyLight_DiffuseIn dataIn)
     //将光照Lambert值限制在阴影最小值和1之间
     lightLambert  =lerp(dataIn.ShadowMin, 1, lightLambert);
 
-    //将光照颜色乘以Lambert值，得到最终的光照颜色
-    dataOut.LambertRgb = dataOut.Rgb * lightLambert;
-    //将光照亮度乘以Lambert值，得到最终的光照亮度
-    dataOut.LambertLuma = dataOut.Luma * lightLambert;
+    dataOut.Rgb *= lightLambert;
+    dataOut.Luma = IvyColor_Luma(dataOut.Rgb);
+    dataOut.LambertRgb = dataOut.Rgb;
+    dataOut.LambertLuma = dataOut.Luma;
     dataOut.Lambert = lightLambert;
     return dataOut;
 }

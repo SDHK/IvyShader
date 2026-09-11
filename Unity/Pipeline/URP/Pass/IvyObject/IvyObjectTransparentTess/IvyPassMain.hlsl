@@ -9,18 +9,12 @@
 #define IvyKey_ShadowsSoft
 #define IvyKey_AdditionalLights
 #define IvyKey_AdditionalLightShadows
-// #define IvySet_ShadowScreen
-// IvySet_ShadowScreen 不启用：
-// 屏幕空间阴影依赖不透明物体的深度缓冲，透明物体（ZWrite Off）不写深度，
-// 导致采样到身后物体的阴影数据，在透明表面产生矩形投影。
-// 改用 light-space 深度图采样，基于顶点世界坐标，不依赖屏幕深度，透明兼容。
+#define _SURFACE_TYPE_TRANSPARENT
 
 //===[引入核心库]====================================================
 #define Link_IvyBase
-//#define Link_IvyHash
 #define Link_IvyNoise
 #define Link_IvyLight
-#define Link_IvyAudioLink
 
 #define Link_IvyMatrix
 #define Link_IvyMath
@@ -77,8 +71,7 @@ struct VertOut
     IvyVar_T2(float3, PosOs)
     IvyVar_T3(float3, NrmWs)
     IvyVar_T4(float3, PosWs)
-    IvyVar_T5(float4, ShadowCoord)
-    //IvyVar_T6(float4, GrabPos)
+    //IvyVar_T5(float4, GrabPos)
 };
 
 struct FragIn
@@ -102,9 +95,6 @@ VertOut Vert(VertIn vertIn)
     vertOut.PosOs = posOs;
     vertOut.NrmWs = IvyMatrix_NrmOsToWs(press.NrmOs);
     vertOut.PosWs = IvyMatrix_PosOsToWs(posOs);
-    // light-space shadow coord：基于顶点世界坐标变换，不依赖屏幕深度缓冲
-    vertOut.ShadowCoord = IvyLight_ShadowCoord(posOs, vertOut.PosCs, vertOut.PosWs);
-    //vertOut.GrabPos = ComputeGrabScreenPos(vertOut.PosCs);
     return vertOut;
 }
 
@@ -130,6 +120,7 @@ VertOut Domain(IvyTess_Point pointIn)
     return Vert(vertIn);
 }
 #endif
+
 
 FragOut Frag(FragIn fragIn)
 {
@@ -157,7 +148,8 @@ FragOut Frag(FragIn fragIn)
     //===[Uv分区]===================================================
     int uvId = IvyUv_GridId(geomOut.Uv, 2, 2);
     float2 localUv = IvyUv_GridLocal(geomOut.Uv, 2, 2);
-    IvyStruct_Light light = IvyLight_MainLight(fragIn.VertOut.ShadowCoord);
+    float4 shadowCoord = IvyLight_ShadowCoord(float4(geomOut.PosOs, 1.0), geomOut.PosCs, geomOut.PosWs);
+    IvyStruct_Light light = IvyLight_MainLight(shadowCoord);
     //===[皮肤着色]=================================================
     // 格内 UV 先乘各花纹 Tiling，再浅视差。平铺 UV 不 saturate，织布才能 repeat。
     float2 skinUv = IvyPass_SkinUv(uvId, localUv);
@@ -377,14 +369,13 @@ FragOut Frag(FragIn fragIn)
 
     FragOut fragOut;
     fragOut.TargetRgba = half4(colorOut.Rgb, transmitOut.Alpha);
-    half pulse = IvyAudioLink_Band((uint)IvyArg_AudioBand);
+    half pulse = 1;
     half3 lit = lightOut.Rgb + envLight;
     half stripMin = min(IvyArg_EmissiveIntensity + pulse * IvyArg_AudioPulse, IvyArg_LightMax+pulse*IvyArg_AudioPulse);
     half3 litStrip = max(lit, stripMin);
     fragOut.TargetRgba.rgb *= lerp(lit, litStrip, stripW);
     return fragOut;
 }
-
 
 #ifdef UNITY_CAN_COMPILE_TESSELLATION
 #pragma target 4.6

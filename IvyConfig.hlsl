@@ -5,5 +5,5 @@
 *
 ****************************************/
 
-#define IvyShader_BRP
-//#define IvyShader_URP
+//#define IvyShader_BRP
+#define IvyShader_URP

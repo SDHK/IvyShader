@@ -13,10 +13,6 @@
 #include "IvyLight.hlsl"
 #endif
 
-#if Link(IvyAudioLink)
-#include "IvyAudioLink.hlsl"
-#endif
-
 #if Link(IvyTess)
 #include "IvyTess.hlsl"
 #endif

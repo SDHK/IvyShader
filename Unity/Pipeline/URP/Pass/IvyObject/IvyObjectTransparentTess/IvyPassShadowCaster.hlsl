@@ -35,8 +35,7 @@ FragData vert(VertData vertData)
     FragData fragData;
     
     IvyVertex_PressOut press = IvyVertex_Press(vertData.PosOs.xyz, vertData.NrmOs, IvyArg_PressDepth, IvyArg_PressPos.xyz, IvyArg_PressRadius);
-    float3 position3 = press.PosOs + press.NrmOs * IvyArg_Scale;
-    float4 positionOs = float4(position3, vertData.PosOs.w);
+    float4 positionOs = float4(press.PosOs, vertData.PosOs.w);
     fragData.PosCs = IvyShadowCaster_PositionCS(positionOs, press.NrmOs); 
     fragData.LightVector3 = IvyShadowCaster_Vector(positionOs);
     return fragData;

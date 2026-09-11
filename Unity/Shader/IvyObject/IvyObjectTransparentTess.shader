@@ -187,7 +187,7 @@ Shader "Ivy/IvyObjectTransparentTess"
         Pass
         {
             Name "OUTLINE"
-            Tags { "LightMode" = "UniversalForward" }
+            Tags { "LightMode" = "SRPDefaultUnlit" }
             Cull Front
             ZWrite Off
             Blend SrcAlpha OneMinusSrcAlpha
@@ -214,7 +214,7 @@ Shader "Ivy/IvyObjectTransparentTess"
         Pass
         {
             Name "FORWARD_OUTER"
-            Tags { "LightMode" = "UniversalForward" }
+            Tags { "LightMode" = "UniversalForwardOnly" }
             Cull Back
             ZWrite On
             ZTest LEqual
