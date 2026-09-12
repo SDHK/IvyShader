@@ -23,7 +23,7 @@ bool IvyAudioLink_Available()
 /// </summary>
 half IvyAudioLink_Band(uint band)
 {
-    // if (!AudioLinkIsAvailable()) return 1;
+    if (!AudioLinkIsAvailable()) return 0;
     band = min(band, 3u);
     return AudioLinkData(ALPASS_AUDIOLINK + uint2(0, band)).r;
 }

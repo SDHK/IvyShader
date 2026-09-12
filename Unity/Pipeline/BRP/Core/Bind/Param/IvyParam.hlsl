@@ -10,6 +10,8 @@
 #if DefPart(IvyBase, Param)
 #define Def_IvyBase_Param
 
+// 改名叫做IvyEnv 实现参数和全局接口方法
+
 //===[矩阵接口实现]===
 
 //float4x4 模型矩阵
@@ -39,5 +41,13 @@
 #define IvyParam_Matrix_I_VP  mul(IvyParam_Matrix_I_V, IvyParam_Matrix_I_P)
 //float4x4 模型视图投影矩阵的逆矩阵
 #define IvyParam_Matrix_I_MVP mul(IvyParam_Matrix_I_M, IvyParam_Matrix_I_VP)
+
+//===[类型接口]===
+#define IvyTexType sampler2D
+#define IvyTex(name) IvyTexType name
+
+//===[方法接口]===
+#define IvyTex2D(tex, uv) tex2D(tex, uv)
+#define IvyTex2DLod(tex, uv, lod) tex2Dlod(tex, float4((uv).xy, 0, (lod)))
 
 #endif // DefPart(IvyBase, Param)

@@ -20,7 +20,7 @@ struct IvyGeom_BuildIn
     float3 NrmOs;
     float3 CamWs;
     bool   IsFront;
-    float4 OrthoParams;
+    bool   IsOrtho;
 
 };
 
@@ -69,7 +69,7 @@ IvyGeom_BuildOut IvyGeom_Build(IvyGeom_BuildIn dataIn)
     dataOut.CamWs = dataIn.CamWs;
     dataOut.CamVs = IvyMatrix_PosWsToVs(dataIn.CamWs);
 
-    dataOut.IsOrtho = dataIn.OrthoParams.w > 0.5;
+    dataOut.IsOrtho = dataIn.IsOrtho;
 
     dataOut.IsFront = dataIn.IsFront;
     if(dataIn.IsFront)

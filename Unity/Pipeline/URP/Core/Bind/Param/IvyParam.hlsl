@@ -40,4 +40,12 @@
 //float4x4 模型视图投影矩阵的逆矩阵 ：需要测试I_MVP
 #define IvyParam_Matrix_I_MVP mul(IvyParam_Matrix_I_VP, IvyParam_Matrix_I_M)
 
+//===[类型接口]===
+#define IvyTexType sampler2D
+#define IvyTex(name) IvyTexType name
+
+//===[方法接口]===
+#define IvyTex2D(tex, uv) tex2D(tex, uv)
+#define IvyTex2DLod(tex, uv, lod) tex2Dlod(tex, float4((uv).xy, 0, (lod)))
+
 #endif // DefPart(IvyBase, Param)

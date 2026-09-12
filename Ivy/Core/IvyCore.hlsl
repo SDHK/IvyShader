@@ -58,12 +58,9 @@
 #include "Bind/IvyLinkBind.hlsl"
 #endif
 
-//===[可选引用]===
-// 工具函数统一入口（根据 Link_IvyXXX 宏控制是否链接）
-#include "Tool/IvyLinkTool.hlsl"
+//===[入口引用]===
 
-
-// 阶段函数统一入口（根据 Link_IvyXXX 宏控制是否链接）
-#include "Stage/IvyLinkStage.hlsl"
+// 组装流程统一入口（根据 Link_IvyXXX 宏控制是否链接）
+#include "Flow/IvyLinkFlow.hlsl"
 
 #endif // Def_IvyCore
