@@ -30,37 +30,27 @@
 #ifndef Def_IvyCore
 #define Def_IvyCore
 
-//===[引入核心宏定义]===
-#include "../IvyMacro.hlsl"
+//===[引入基础支持]===
+#include "Base/IvyLinkBase.hlsl"
 
 //===[引入映射系统]===
-// 注意：Map 必须在 Library 之前引入，以便 Unity 库代码能正确识别关键字
+// 注意：Map 必须在 Env 之前引入，以便 Unity 库代码能正确识别关键字
 #ifdef Inc_IvyMap
 #include Inc_IvyMap
 #endif
 
-//===[环境库引用]===
-// 引用基础库（根据 URP/BRP 自动选择）
-// 使用 Link_IvyBase 和 Link_IvyLight 宏控制是否链接
-#ifdef Inc_IvyLibrary
-#include Inc_IvyLibrary
-#endif
-
-//===[Ivy库引用]===
-
-//===[引入定义]===
-#include "Define/IvyLinkDefine.hlsl"
-
-//===[引入外部绑定]===
-#ifdef Inc_IvyBind
-#include Inc_IvyBind 
+//===[环境履约]===
+// 引用管线 Env（根据 URP/BRP 自动选择）
+// 使用 Link_IvyEnvBase 和 Link_IvyEnvLight 宏控制是否链接
+#ifdef Inc_IvyEnv
+#include Inc_IvyEnv
 #else
-#include "Bind/IvyLinkBind.hlsl"
+#include "Env/IvyLinkEnv.hlsl"
 #endif
 
 //===[入口引用]===
 
 // 组装流程统一入口（根据 Link_IvyXXX 宏控制是否链接）
-#include "Flow/IvyLinkFlow.hlsl"
+#include "../Flow/IvyLinkFlow.hlsl"
 
 #endif // Def_IvyCore

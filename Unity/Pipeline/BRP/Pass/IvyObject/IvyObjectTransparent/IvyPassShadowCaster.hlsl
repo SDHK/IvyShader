@@ -1,10 +1,10 @@
 ﻿/****************************************
-*
+
 * 作者： 闪电黑客
-* 日期： 2025/12/19 17:45
-*
-* 描述： IvyObjectTransparent 阴影投射 Pass
-*
+* 日期： 2026/9/13
+
+* 描述： IvyObjectTransparent BRP 阴影投射 Pass 适配
+
 */
 
 #if Def(IvyPassShadowCaster)
@@ -12,42 +12,56 @@
 
 #define IvyKey_ShadowCaster
 
-#define Link_IvyBase
-#define Link_IvyLight
-#define Link_IvyMatrix
-#define Link_IvyVertex
+#define Link_IvyEnvBase
+#define Link_IvyEnvLight
+#define Link_IvyFlowShadow
 #include "../../../Core/IvyCore.hlsl"
 
-struct VertData
+struct VertIn
 {
     IvyVar_PosOs
     IvyVar_NrmOs
 };
 
-struct FragData
+struct VertOut
 {
     IvyVar_PosCs
-    IvyVar_T0(float3,LightVector3)
+    IvyVar_T0(float3, LightVec)
 };
 
-FragData vert(VertData vertData)
+struct FragIn
 {
-    FragData fragData;
-    
-    IvyVertex_PressOut press = IvyVertex_Press(vertData.PosOs.xyz, vertData.NrmOs, IvyArg_PressDepth, IvyArg_PressPos.xyz, IvyArg_PressRadius);
-    float4 positionOs = float4(press.PosOs, vertData.PosOs.w);
-    fragData.PosCs = IvyShadowCaster_PositionCS(positionOs, press.NrmOs); 
-    fragData.LightVector3 = IvyShadowCaster_Vector(positionOs);
-    return fragData;
+    VertOut VertOut;
+};
+
+struct FragOut { IvyVar_TargetRgba };
+
+VertOut Vert(VertIn vertIn)
+{
+    IvyFlowShadow_VertIn flowIn;
+    flowIn.PosOs = vertIn.PosOs;
+    flowIn.NrmOs = vertIn.NrmOs;
+    IvyFlowShadow_VertOut flowOut = IvyFlowShadow_Vert(flowIn);
+
+    VertOut vertOut;
+    vertOut.PosCs = flowOut.PosCs;
+    vertOut.LightVec = flowOut.LightVec;
+    return vertOut;
 }
 
-half4 frag(FragData fragData) : SV_Target
+FragOut Frag(FragIn fragIn)
 {
-    return IvyShadowCaster_Fragment(fragData.LightVector3);
+    IvyFlowShadow_FragIn flowIn;
+    flowIn.VertOut.PosCs = fragIn.VertOut.PosCs;
+    flowIn.VertOut.LightVec = fragIn.VertOut.LightVec;
+    IvyFlowShadow_FragOut flowOut = IvyFlowShadow_Frag(flowIn);
+
+    FragOut fragOut;
+    fragOut.TargetRgba = flowOut.TargetRgba;
+    return fragOut;
 }
 
-#pragma vertex vert
-#pragma fragment frag
+#pragma vertex Vert
+#pragma fragment Frag
 
-#endif // Def(IvyObjectTransparent_Shadow)
-
+#endif

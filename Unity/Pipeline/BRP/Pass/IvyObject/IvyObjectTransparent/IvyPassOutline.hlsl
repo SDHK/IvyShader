@@ -1,49 +1,61 @@
 ﻿/****************************************
-*
+
 * 作者： 闪电黑客
-* 日期： 2025/12/10 20:38
-*
-* 描述： IvyObjectTransparent 描边 Pass
-*
+* 日期： 2026/9/13
+
+* 描述： IvyObjectTransparent BRP 描边 Pass 适配
+
 */
 
 #if Def(IvyPassOutline)
 #define Def_IvyPassOutline
 
-#define Link_IvyBase
-#define Link_IvyMatrix
-#define Link_IvyVertex
+#define Link_IvyEnvBase
+#define Link_IvyFlowOutline
 #include "../../../Core/IvyCore.hlsl"
 
-struct VertData
+struct VertIn
 {
     IvyVar_PosOs
     IvyVar_NrmOs
 };
 
-struct FragData
+struct VertOut
 {
     IvyVar_PosCs
 };
-            
 
-FragData vert(VertData vertData)
+struct FragIn
 {
-    FragData fragData;
+    VertOut VertOut;
+};
 
-    IvyVertex_PressOut press = IvyVertex_Press(vertData.PosOs.xyz, vertData.NrmOs, IvyArg_PressDepth, IvyArg_PressPos.xyz, IvyArg_PressRadius);
-    float3 position3 = press.PosOs + press.NrmOs * IvyArg_Scale;
-    fragData.PosCs = IvyMatrix_PosOsToCs(float4(position3, 1.0));
-    return fragData;
+struct FragOut { IvyVar_TargetRgba };
+
+VertOut Vert(VertIn vertIn)
+{
+    IvyFlowOutline_VertIn flowIn;
+    flowIn.PosOs = vertIn.PosOs;
+    flowIn.NrmOs = vertIn.NrmOs;
+    IvyFlowOutline_VertOut flowOut = IvyFlowOutline_Vert(flowIn);
+
+    VertOut vertOut;
+    vertOut.PosCs = flowOut.PosCs;
+    return vertOut;
 }
 
-half4 frag(FragData fragData) : SV_Target
+FragOut Frag(FragIn fragIn)
 {
-    return IvyArg_Color;
+    IvyFlowOutline_FragIn flowIn;
+    flowIn.VertOut.PosCs = fragIn.VertOut.PosCs;
+    IvyFlowOutline_FragOut flowOut = IvyFlowOutline_Frag(flowIn);
+
+    FragOut fragOut;
+    fragOut.TargetRgba = flowOut.TargetRgba;
+    return fragOut;
 }
 
-#pragma vertex vert
-#pragma fragment frag
+#pragma vertex Vert
+#pragma fragment Frag
 
-#endif // Def(IvyObjectTransparent_Outline)
-
+#endif

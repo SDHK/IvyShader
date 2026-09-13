@@ -1,44 +1,62 @@
 /****************************************
-*
+
 * 作者： 闪电黑客
-* 日期： 2025/12/10 20:38
-*
-* 描述： IvyObjectTransparentTess 描边 Pass
-*
+* 日期： 2026/9/13
+
+* 描述： IvyObjectTransparentTess BRP 描边 Pass 适配
+
 */
 
 #if Def(IvyPassOutline)
 #define Def_IvyPassOutline
 
-#define Link_IvyBase
-#define Link_IvyMatrix
-#define Link_IvyVertex
+#define Link_IvyEnvBase
+#define Link_IvyFlowOutline
 #include "../../../Core/IvyCore.hlsl"
 
-struct VertData
+struct VertIn
 {
     IvyVar_PosOs
     IvyVar_NrmOs
 };
 
-struct FragData
+struct VertOut
 {
     IvyVar_PosCs
 };
-            
 
-FragData vert(VertData vertData)
+struct FragIn
 {
-    FragData fragData;
+    VertOut VertOut;
+};
 
-    IvyVertex_PressOut press = IvyVertex_Press(vertData.PosOs.xyz, vertData.NrmOs, IvyArg_PressDepth, IvyArg_PressPos.xyz, IvyArg_PressRadius);
-    float3 position3 = press.PosOs + press.NrmOs * IvyArg_Scale;
-    fragData.PosCs = IvyMatrix_PosOsToCs(float4(position3, 1.0));
-    return fragData;
+struct FragOut { IvyVar_TargetRgba };
+
+VertOut Vert(VertIn vertIn)
+{
+    IvyFlowOutline_VertIn flowIn;
+    flowIn.PosOs = vertIn.PosOs;
+    flowIn.NrmOs = vertIn.NrmOs;
+    IvyFlowOutline_VertOut flowOut = IvyFlowOutline_Vert(flowIn);
+
+    VertOut vertOut;
+    vertOut.PosCs = flowOut.PosCs;
+    return vertOut;
+}
+
+FragOut Frag(FragIn fragIn)
+{
+    IvyFlowOutline_FragIn flowIn;
+    flowIn.VertOut.PosCs = fragIn.VertOut.PosCs;
+    IvyFlowOutline_FragOut flowOut = IvyFlowOutline_Frag(flowIn);
+
+    FragOut fragOut;
+    fragOut.TargetRgba = flowOut.TargetRgba;
+    return fragOut;
 }
 
 #ifdef UNITY_CAN_COMPILE_TESSELLATION
-IvyTess_GpuPoint TessVert(VertData vertIn)
+IvyTess_GpuPoint TessVert(VertIn vertIn)
 {
     return IvyTess_PackGpu(vertIn.PosOs, vertIn.NrmOs, float2(0, 0));
 }
@@ -50,19 +68,14 @@ float HullConst(float3 pos0, float3 pos1, float3 pos2)
 {
     return IvyTess_Factor(pos0, pos1, pos2, IvyArg_PressDepth, IvyArg_PressPos.xyz, IvyArg_PressRadius, IvyArg_TessFactor);
 }
-FragData Domain(IvyTess_Point pointIn)
+VertOut Domain(IvyTess_Point pointIn)
 {
-    VertData vertIn;
+    VertIn vertIn;
     vertIn.PosOs = pointIn.PosOs;
     vertIn.NrmOs = pointIn.NrmOs;
-    return vert(vertIn);
+    return Vert(vertIn);
 }
 #endif
-
-half4 frag(FragData fragData) : SV_Target
-{
-    return IvyArg_Color;
-}
 
 #ifdef UNITY_CAN_COMPILE_TESSELLATION
 #pragma target 4.6
@@ -72,11 +85,10 @@ half4 frag(FragData fragData) : SV_Target
 IvyTess_HullTri(Hull, HullConst)
 
 #pragma domain IvyTess_Domain
-IvyTess_DomainTri(Domain, FragData)
+IvyTess_DomainTri(Domain, VertOut)
 #else
-#pragma vertex vert
+#pragma vertex Vert
 #endif
-#pragma fragment frag
+#pragma fragment Frag
 
-#endif // Def(IvyObjectTransparentTess_Outline)
-
+#endif

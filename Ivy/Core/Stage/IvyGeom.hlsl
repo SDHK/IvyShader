@@ -148,7 +148,7 @@ IvyGeom_VecMapOut IvyGeom_VecMap(IvyGeom_BuildOut dataIn)
 
     if (dataIn.IsOrtho)
     {
-        dataOut.VecPosToCamWs = IvyParam_Matrix_V[2].xyz;
+        dataOut.VecPosToCamWs = IvyEnvBase_Matrix_V[2].xyz;
     }
     else
     {

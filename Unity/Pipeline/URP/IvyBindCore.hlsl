@@ -1,11 +1,9 @@
-//===[引入核心宏定义]===
-#include "../../../Ivy/IvyMacro.hlsl"
+//===[引入核心基础支持]===
+#include "../../../Ivy/Core/Base/IvyLinkBase.hlsl"
 
 //===[注入映射系统]===
 #define Inc_IvyMap "../../Unity/Pipeline/URP/Core/Map/IvyLinkMap.hlsl"
-//===[注入基础库]===
-#define Inc_IvyLibrary "../../Unity/Pipeline/URP/Core/Library/IvyLinkLibrary.hlsl"
-//===[注入 Unity 绑定]===
-#define Inc_IvyBind "../../Unity/Pipeline/URP/Core/Bind/IvyLinkBind.hlsl"
+//===[注入环境履约]===
+#define Inc_IvyEnv "../../Unity/Pipeline/URP/Core/Env/IvyLinkEnv.hlsl"
 //===[注入 Pass 系统]===
 #include "Pass/IvyLinkPass.hlsl"

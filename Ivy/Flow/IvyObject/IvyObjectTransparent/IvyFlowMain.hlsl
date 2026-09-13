@@ -1,9 +1,17 @@
+/****************************************
 
+* 作者： 闪电黑客
+* 日期： 2026/9/13
+
+* 描述： IvyObjectTransparent 主光配方
+
+*/
 
 #if Def(IvyFlowMain)
 #define Def_IvyFlowMain
 
-//#define Link_IvyBase//?
+#define Link_IvyEnvBase
+#define Link_IvyEnvLight
 #define Link_IvyNoise
 #define Link_IvyLight
 #define Link_IvyMatrix
@@ -21,16 +29,16 @@
 #define Link_IvyReflect
 #define Link_IvyTransmit
 #include "../../../Core/IvyKit.hlsl"
-#include "IvyFlowArg.hlsl"
+#include "IvyFlowPort.hlsl"
 
-struct IvyFlowVertIn
+struct IvyFlowMain_VertIn
 {
     float4 PosOs;
     float3 NrmOs;
     float2 Uv;
 };
 
-struct IvyFlowVertOut
+struct IvyFlowMain_VertOut
 {
     float4 PosCs;
     float2 Uv;
@@ -39,9 +47,9 @@ struct IvyFlowVertOut
     float3 NrmWs;
     float3 PosWs;
 };
-IvyFlowVertOut Vert(IvyFlowVertIn vertIn)
+IvyFlowMain_VertOut IvyFlowMain_Vert(IvyFlowMain_VertIn vertIn)
 {
-    IvyFlowVertOut vertOut;
+    IvyFlowMain_VertOut vertOut;
     vertOut.Uv = vertIn.Uv;
     float4 posOs = vertIn.PosOs;
     IvyVertex_PressOut press = IvyVertex_Press(posOs.xyz, vertIn.NrmOs, IvyArg_PressDepth, IvyArg_PressPos.xyz, IvyArg_PressRadius);
@@ -55,18 +63,18 @@ IvyFlowVertOut Vert(IvyFlowVertIn vertIn)
 }
 
 
-struct IvyFlowFragIn
+struct IvyFlowMain_FragIn
 {
-    IvyFlowVertOut VertOut;
+    IvyFlowMain_VertOut VertOut;
     float ViewFace;
 };
 
-struct IvyFlowFragOut
+struct IvyFlowMain_FragOut
 {
     float4 TargetRgba;
 };
 
-half4 IvyPass_SkinMask(int uvId, float2 uv)
+half4 IvyFlowMain_SkinMask(int uvId, float2 uv)
 {
     switch (uvId)
     {
@@ -79,7 +87,7 @@ half4 IvyPass_SkinMask(int uvId, float2 uv)
 }
 
 
-IvyFlowFragOut Frag(IvyFlowFragIn fragIn)
+IvyFlowMain_FragOut IvyFlowMain_Frag(IvyFlowMain_FragIn fragIn)
 {
     //===[几何基础阶段]===================================================
     IvyGeom_BuildIn geomIn;
@@ -87,19 +95,19 @@ IvyFlowFragOut Frag(IvyFlowFragIn fragIn)
     geomIn.PosOs = fragIn.VertOut.PosOs;
     geomIn.NrmOs = fragIn.VertOut.NrmOs;
     geomIn.IsFront = fragIn.ViewFace > 0.0;
-    geomIn.CamWs = IvyFunc_GetCamWs();
-    geomIn.IsOrtho =IvyFunc_IsCamOrtho();
+    geomIn.CamWs = IvyEnvBase_GetCamWs();
+    geomIn.IsOrtho = IvyEnvBase_IsCamOrtho();
     IvyGeom_BuildOut geomOut = IvyGeom_Build(geomIn);
     IvyGeom_VecMapOut vecMaps = IvyGeom_VecMap(geomOut);
     // 方向世界坐标到世界相机
     float3 dirPosToCamWs = normalize(vecMaps.VecPosToCamWs);
     //===[光照漫反射阶段]==================================================
-    float4 shadowCoord = IvyFunc_ShadowCoord(float4(geomOut.PosOs, 1.0), geomOut.PosCs, geomOut.PosWs);
-    IvyStruct_Light light = IvyFunc_GetMainLight(shadowCoord);
+    float4 shadowCoord = IvyFunc_ShadowCoord(geomOut);
+    IvyStruct_LightData light = IvyEnvLight_GetMainLight(shadowCoord);
     IvyLight_DiffuseIn lightIn;
     lightIn.NrmWs = geomOut.NrmWsFront;
     lightIn.Rgb = light.Rgb;
-    lightIn.Dir = light.Direction;
+    lightIn.Dir = light.Dir;
     lightIn.DistAtten = light.DistAtten;
     lightIn.ShadowAtten = light.ShadowAtten;
     lightIn.Influence = IvyArg_LightInfluence;
@@ -110,15 +118,20 @@ IvyFlowFragOut Frag(IvyFlowFragIn fragIn)
     lightIn.ShadowSoftness = IvyArg_LightRampSoftness;
     IvyLight_DiffuseOut lightOut = IvyLight_Diffuse(lightIn);
     //===[附加点光阶段]==================================================
-    uint pixelLightCount = IvyFunc_GetLightCount();
+    uint pixelLightCount = IvyEnvLight_GetAddLightCount();
     for (uint lightIndex = 0u; lightIndex < pixelLightCount; ++lightIndex)
     {
-        IvyLight_DiffuseIn addIn = IvyFunc_GetAddLight( lightIn, lightIndex, geomOut.PosWs);
+        IvyStruct_LightData addLightData = IvyEnvLight_GetAddLight(lightIndex, geomOut.PosWs);
+        IvyLight_DiffuseIn addIn = lightIn;
+        addIn.Rgb = addLightData.Rgb;
+        addIn.Dir = addLightData.Dir;
+        addIn.DistAtten = addLightData.DistAtten;
+        addIn.ShadowAtten = addLightData.ShadowAtten;
         IvyLight_DiffuseOut addOut = IvyLight_Diffuse(addIn);
         lightOut.Rgb += addOut.Rgb;
     }
     //===[环境光照]================================================
-    half3 envLight = IvyFunc_LightSH(geomOut.NrmWsFront);
+    half3 envLight = IvyEnvLight_LightSH(geomOut.NrmWsFront);
     envLight = lerp(IvyColor_Luma(envLight), envLight, IvyArg_EnvLightInfluence);
   
 
@@ -130,10 +143,10 @@ IvyFlowFragOut Frag(IvyFlowFragIn fragIn)
     float4 skinMaskST = IvySwitch_Float4(uvId, IvyArg_SkinMask0_ST, IvyArg_SkinMask1_ST, IvyArg_SkinMask2_ST, IvyArg_SkinMask3_ST);
     float2 skinUv = IvyUv_Transform2D(localUv, skinMaskST.xy, skinMaskST.zw);
     float3 viewTs = IvyUv_ViewToTangent(geomOut.PosWs, skinUv, dirPosToCamWs, geomOut.NrmWsFront);
-    half4 heightMask = IvyPass_SkinMask(uvId, skinUv);
+    half4 heightMask = IvyFlowMain_SkinMask(uvId, skinUv);
     half heightLuma = IvyColor_Luma(heightMask.rgb);
     skinUv = IvyUv_Parallax(skinUv, heightLuma, viewTs, 0.1);
-    half4 skinMask = IvyPass_SkinMask(uvId, skinUv);
+    half4 skinMask = IvyFlowMain_SkinMask(uvId, skinUv);
     //皮肤灰度
     half skinMaskLuma = IvyColor_Luma(skinMask.rgb);// * skinMask.a
    //===[皮肤渐变喷涂]========================
@@ -184,7 +197,7 @@ IvyFlowFragOut Frag(IvyFlowFragIn fragIn)
     effectIn.Depth = 1.0;
     effectIn.EffectId = IvyArg_EffectMap;
     effectIn.Mask = effectMask;
-    effectIn.Time = IvyFunc_GetTime();
+    effectIn.Time = IvyEnvBase_GetTime();
     effectIn.PosOffset = float2(0, 0);
     IvyEffect3D_VolumeOut effectOut = IvyEffect3D_Volume(effectIn);
     skinRgb = effectOut.Rgb;
@@ -197,7 +210,7 @@ IvyFlowFragOut Frag(IvyFlowFragIn fragIn)
     effect2dIn.IsFront = geomOut.IsFront;
     effect2dIn.EffectId = IvyArg_Effect2DMap;
     effect2dIn.Mask = effectMask;
-    effect2dIn.Time = IvyFunc_GetTime();
+    effect2dIn.Time = IvyEnvBase_GetTime();
     effect2dIn.PosOffset = float2(1, 1);
     IvyEffect2D_MapOut effect2dOut = IvyEffect2D_Map(effect2dIn);
     skinRgb = effect2dOut.Rgb;
@@ -216,7 +229,7 @@ IvyFlowFragOut Frag(IvyFlowFragIn fragIn)
     half glitterAmount = lerp(glitter0, glitter1, skinMaskLuma);
     // 反射模糊度
     half mipMap = (1.0 - reflectSmoothness) * 8.0; 
-    float3 probeReflect = IvyFunc_GetProbeReflect(vecMaps.VecMapReflect, mipMap);
+    float3 probeReflect = IvyEnvLight_ProbeReflect(vecMaps.VecMapReflect, mipMap);
     // 环境贴图反射
     float2 envUv = IvyUv_DirToSphere(vecMaps.VecMapReflect);
      float3 metalEnvReflect = IvyFunc_EnvMapTex(envUv, mipMap).rgb;
@@ -261,7 +274,7 @@ IvyFlowFragOut Frag(IvyFlowFragIn fragIn)
     {
         half ior = lerp(1.0, 2.42, transmit);
         float3 refrWs = refract(-dirPosToCamWs, geomOut.NrmWsFront, 1.0 / ior);
-        half3 refrProbe = IvyFunc_GetProbeReflect(refrWs, mipMap);
+        half3 refrProbe = IvyEnvLight_ProbeReflect(refrWs, mipMap);
         float2 refrUv = IvyUv_DirToSphere(refrWs);
         half3 refrEnv = IvyFunc_EnvMapTex(refrUv, mipMap).rgb;
         refractRgb = lerp(refrProbe, refrEnv, IvyArg_EnvMapInfluence);
@@ -300,7 +313,7 @@ IvyFlowFragOut Frag(IvyFlowFragIn fragIn)
     colorIn.Rgb = transmitOut.Rgb;
     IvyColor_StainOut colorOut = IvyColor_Stain(colorIn);
 
-    IvyFlowFragOut fragOut;
+    IvyFlowMain_FragOut fragOut;
     fragOut.TargetRgba = half4(colorOut.Rgb, transmitOut.Alpha);
     half pulse = IvyFunc_AudioLinkBand((uint)IvyArg_AudioBand);
     half3 lit = lightOut.Rgb + envLight;

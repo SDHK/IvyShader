@@ -14,9 +14,9 @@
 * 空间转换流程：Os --[M]--> Ws --[V]--> Vs --[P]--> Cs
 * 代码实现：
 *   float4 positionOs = float4(vertexPosition, 1.0);           // Os
-*   float4 positionWs = mul(IvyParam_Matrix_M, positionOs);       // Os → Ws (M)
-*   float4 positionVs = mul(IvyParam_Matrix_V, positionWs);       // Ws → Vs (V)
-*   float4 positionCs = mul(IvyParam_Matrix_P, positionVs);       // Vs → Cs (P)
+*   float4 positionWs = mul(IvyEnvBase_Matrix_M, positionOs);       // Os → Ws (M)
+*   float4 positionVs = mul(IvyEnvBase_Matrix_V, positionWs);       // Ws → Vs (V)
+*   float4 positionCs = mul(IvyEnvBase_Matrix_P, positionVs);       // Vs → Cs (P)
 *
 * 详细说明：
 * Os → Ws（物体空间 → 世界空间）
@@ -73,7 +73,7 @@ float3 IvyMatrix_SafeNormalize(float3 inVec)
 /// <returns>世界法线</returns>
 float3 IvyMatrix_NrmOsToWs(float3 nrmOs)
 {
-    return normalize(mul(transpose((float3x3)IvyParam_Matrix_I_M), nrmOs)); // (M⁻¹)ᵀ × nrmOs
+    return normalize(mul(transpose((float3x3)IvyEnvBase_Matrix_I_M), nrmOs)); // (M⁻¹)ᵀ × nrmOs
 }
 
 /// <summary>
@@ -83,7 +83,7 @@ float3 IvyMatrix_NrmOsToWs(float3 nrmOs)
 /// <returns>观察法线</returns>
 float3 IvyMatrix_NrmOsToVs(float3 nrmOs)
 {
-    return normalize(mul(transpose((float3x3)IvyParam_Matrix_I_MV), nrmOs)); // (MV⁻¹)ᵀ × nrmOs
+    return normalize(mul(transpose((float3x3)IvyEnvBase_Matrix_I_MV), nrmOs)); // (MV⁻¹)ᵀ × nrmOs
 }
 
 //===[法线 World Space (Ws)]===
@@ -95,7 +95,7 @@ float3 IvyMatrix_NrmOsToVs(float3 nrmOs)
 /// <returns>物体法线</returns>
 float3 IvyMatrix_NrmWsToOs(float3 nrmWs)
 {
-    return normalize(mul(transpose((float3x3)IvyParam_Matrix_M), nrmWs)); // Mᵀ × nrmWs
+    return normalize(mul(transpose((float3x3)IvyEnvBase_Matrix_M), nrmWs)); // Mᵀ × nrmWs
 }
 
 /// <summary>
@@ -105,7 +105,7 @@ float3 IvyMatrix_NrmWsToOs(float3 nrmWs)
 /// <returns>观察法线</returns>
 float3 IvyMatrix_NrmWsToVs(float3 nrmWs)
 {
-    return normalize(mul(transpose((float3x3)IvyParam_Matrix_I_V), nrmWs)); // (V⁻¹)ᵀ × nrmWs
+    return normalize(mul(transpose((float3x3)IvyEnvBase_Matrix_I_V), nrmWs)); // (V⁻¹)ᵀ × nrmWs
 }
 
 //===[法线 View Space (Vs)]===
@@ -117,7 +117,7 @@ float3 IvyMatrix_NrmWsToVs(float3 nrmWs)
 /// <returns>物体法线</returns>
 float3 IvyMatrix_NrmVsToOs(float3 nrmVs)
 {
-    return normalize(mul(transpose((float3x3)IvyParam_Matrix_MV), nrmVs)); // MVᵀ × nrmVs
+    return normalize(mul(transpose((float3x3)IvyEnvBase_Matrix_MV), nrmVs)); // MVᵀ × nrmVs
 }
 
 /// <summary>
@@ -127,7 +127,7 @@ float3 IvyMatrix_NrmVsToOs(float3 nrmVs)
 /// <returns>世界法线</returns>
 float3 IvyMatrix_NrmVsToWs(float3 nrmVs)
 {
-    return normalize(mul(transpose((float3x3)IvyParam_Matrix_V), nrmVs)); // Vᵀ × nrmVs
+    return normalize(mul(transpose((float3x3)IvyEnvBase_Matrix_V), nrmVs)); // Vᵀ × nrmVs
 }
 
 //===[Position (pos) 转换]===
@@ -141,7 +141,7 @@ float3 IvyMatrix_NrmVsToWs(float3 nrmVs)
 /// <returns>世界坐标</returns>
 float3 IvyMatrix_PosOsToWs(float3 posOs)
 {
-    return mul(IvyParam_Matrix_M, float4(posOs, 1.0)).xyz;
+    return mul(IvyEnvBase_Matrix_M, float4(posOs, 1.0)).xyz;
 }
 
 /// <summary>
@@ -151,7 +151,7 @@ float3 IvyMatrix_PosOsToWs(float3 posOs)
 /// <returns>世界向量</returns>
 float3 IvyMatrix_VecOsToWs(float3 posOs)
 {
-    return mul((float3x3)IvyParam_Matrix_M, posOs);
+    return mul((float3x3)IvyEnvBase_Matrix_M, posOs);
 }
 
 
@@ -162,7 +162,7 @@ float3 IvyMatrix_VecOsToWs(float3 posOs)
 /// <returns>观察坐标</returns>
 float3 IvyMatrix_PosOsToVs(float3 posOs)
 {
-    return mul(IvyParam_Matrix_MV, float4(posOs, 1.0)).xyz;
+    return mul(IvyEnvBase_Matrix_MV, float4(posOs, 1.0)).xyz;
 }
 
 /// <summary>
@@ -172,7 +172,7 @@ float3 IvyMatrix_PosOsToVs(float3 posOs)
 /// <returns>观察向量</returns>
 float3 IvyMatrix_VecOsToVs(float3 posOs)
 {
-    return mul((float3x3)IvyParam_Matrix_MV, posOs);
+    return mul((float3x3)IvyEnvBase_Matrix_MV, posOs);
 }
 
 /// <summary>
@@ -182,7 +182,7 @@ float3 IvyMatrix_VecOsToVs(float3 posOs)
 /// <returns>裁剪坐标</returns>
 float4 IvyMatrix_PosOsToCs(float3 posOs)
 {
-    return mul(IvyParam_Matrix_MVP, float4(posOs, 1));
+    return mul(IvyEnvBase_Matrix_MVP, float4(posOs, 1));
 }
 
 
@@ -195,7 +195,7 @@ float4 IvyMatrix_PosOsToCs(float3 posOs)
 /// <returns>物体坐标</returns>
 float3 IvyMatrix_PosWsToOs(float3 posWs)
 {
-    return mul(IvyParam_Matrix_I_M,float4(posWs, 1.0)).xyz;
+    return mul(IvyEnvBase_Matrix_I_M,float4(posWs, 1.0)).xyz;
 }
 /// <summary>
 /// 转换为向量：从世界空间转到物体空间（World Space -> Object Space）
@@ -204,7 +204,7 @@ float3 IvyMatrix_PosWsToOs(float3 posWs)
 /// <returns>物体向量</returns>
 float3 IvyMatrix_VecWsToOs(float3 posWs)
 {
-    return mul((float3x3)IvyParam_Matrix_I_M, posWs);
+    return mul((float3x3)IvyEnvBase_Matrix_I_M, posWs);
 }
 
 /// <summary>
@@ -214,7 +214,7 @@ float3 IvyMatrix_VecWsToOs(float3 posWs)
 /// <returns>观察坐标</returns>
 float3 IvyMatrix_PosWsToVs(float3 posWs)
 {
-    return mul(IvyParam_Matrix_V, float4(posWs, 1.0)).xyz;
+    return mul(IvyEnvBase_Matrix_V, float4(posWs, 1.0)).xyz;
 }
 /// <summary>
 /// 转换为向量：从世界空间转到观察空间（World Space -> View Space）
@@ -223,7 +223,7 @@ float3 IvyMatrix_PosWsToVs(float3 posWs)
 /// <returns>观察向量</returns>
 float3 IvyMatrix_VecWsToVs(float3 posWs)
 {
-    return mul((float3x3)IvyParam_Matrix_V, posWs);
+    return mul((float3x3)IvyEnvBase_Matrix_V, posWs);
 }
 
 /// <summary>
@@ -233,7 +233,7 @@ float3 IvyMatrix_VecWsToVs(float3 posWs)
 /// <returns>裁剪坐标</returns>
 float4 IvyMatrix_PosWsToCs(float3 posWs)
 {
-    return mul(IvyParam_Matrix_VP, float4(posWs, 1.0));
+    return mul(IvyEnvBase_Matrix_VP, float4(posWs, 1.0));
 }
 
 //===[View Space (Vs) 转换]===
@@ -245,7 +245,7 @@ float4 IvyMatrix_PosWsToCs(float3 posWs)
 /// <returns>物体坐标</returns>
 float3 IvyMatrix_PosVsToOs(float3 posVs)
 {
-    return mul(IvyParam_Matrix_I_MV, float4(posVs, 1.0)).xyz;
+    return mul(IvyEnvBase_Matrix_I_MV, float4(posVs, 1.0)).xyz;
 }
 /// <summary>
 /// 转换为向量：从观察空间转到物体空间（View Space -> Object Space）
@@ -254,7 +254,7 @@ float3 IvyMatrix_PosVsToOs(float3 posVs)
 /// <returns>物体向量</returns>
 float3 IvyMatrix_VecVsToOs(float3 posVs)
 {
-    return mul((float3x3)IvyParam_Matrix_I_MV, posVs);
+    return mul((float3x3)IvyEnvBase_Matrix_I_MV, posVs);
 }
 
 /// <summary>
@@ -264,7 +264,7 @@ float3 IvyMatrix_VecVsToOs(float3 posVs)
 /// <returns>世界坐标</returns>
 float3 IvyMatrix_PosVsToWs(float3 posVs)
 {
-    return mul(IvyParam_Matrix_I_V, float4(posVs, 1.0)).xyz;
+    return mul(IvyEnvBase_Matrix_I_V, float4(posVs, 1.0)).xyz;
 }
 /// <summary>
 /// 转换为向量：从观察空间转到世界空间（View Space -> World Space）
@@ -273,7 +273,7 @@ float3 IvyMatrix_PosVsToWs(float3 posVs)
 /// <returns>世界向量</returns>
 float3 IvyMatrix_VecVsToWs(float3 posVs)
 {
-    return mul((float3x3)IvyParam_Matrix_I_V, posVs);
+    return mul((float3x3)IvyEnvBase_Matrix_I_V, posVs);
 }
 
 /// <summary>
@@ -283,7 +283,7 @@ float3 IvyMatrix_VecVsToWs(float3 posVs)
 /// <returns>裁剪坐标</returns>
 float4 IvyMatrix_PosVsToCs(float3 posVs)
 {
-    return mul(IvyParam_Matrix_P, float4(posVs, 1.0));
+    return mul(IvyEnvBase_Matrix_P, float4(posVs, 1.0));
 }
 
 
@@ -297,7 +297,7 @@ float4 IvyMatrix_PosVsToCs(float3 posVs)
 /// <returns>物体坐标</returns>
 float3 IvyMatrix_PosCsToOs(float4 posCs)
 {
-    float4 posOs = mul(IvyParam_Matrix_I_MVP, posCs);
+    float4 posOs = mul(IvyEnvBase_Matrix_I_MVP, posCs);
     return posOs.xyz / posOs.w;
 }
 
@@ -309,7 +309,7 @@ float3 IvyMatrix_PosCsToOs(float4 posCs)
 /// <returns>世界坐标</returns>
 float3 IvyMatrix_PosCsToWs(float4 posCs)
 {
-    float4 posWs = mul(IvyParam_Matrix_I_VP, posCs);
+    float4 posWs = mul(IvyEnvBase_Matrix_I_VP, posCs);
     return posWs.xyz / posWs.w;
 }
 
@@ -321,7 +321,7 @@ float3 IvyMatrix_PosCsToWs(float4 posCs)
 /// <returns>观察坐标</returns>
 float3 IvyMatrix_PosCsToVs(float4 posCs)
 {
-    float4 posVs = mul(IvyParam_Matrix_I_P, posCs);
+    float4 posVs = mul(IvyEnvBase_Matrix_I_P, posCs);
     return posVs.xyz / posVs.w;
 }
 
