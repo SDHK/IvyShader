@@ -12,30 +12,30 @@
 
 #include "../../../Core/IvyStruct.hlsl"
 
-struct IvyFlowOutline_VertIn
+struct IvyFlow_VertIn
 {
     IvyVar_PosOs
     IvyVar_NrmOs
 };
 
-struct IvyFlowOutline_VertOut
+struct IvyFlow_VertOut
 {
     IvyVar_PosCs
 };
 
-struct IvyFlowOutline_FragIn
+struct IvyFlow_FragIn
 {
-    IvyFlowOutline_VertOut VertOut;
+    IvyFlow_VertOut VertOut;
 };
 
-struct IvyFlowOutline_FragOut { IvyVar_TargetRgba };
+struct IvyFlow_FragOut { IvyVar_TargetRgba };
 
 #define Link_IvyEnvBase
 #define Link_IvyFlowOutline
 #include "../../../Core/IvyCore.hlsl"
 
 #ifdef UNITY_CAN_COMPILE_TESSELLATION
-IvyTess_GpuPoint TessVert(IvyFlowOutline_VertIn vertIn)
+IvyTess_GpuPoint TessVert(IvyFlow_VertIn vertIn)
 {
     return IvyTess_PackGpu(vertIn.PosOs, vertIn.NrmOs, float2(0, 0));
 }
@@ -49,10 +49,10 @@ IvyTess_GpuPoint TessVert(IvyFlowOutline_VertIn vertIn)
 IvyTess_HullTri(IvyFlowTess_Hull, IvyFlowTess_HullConst)
 
 #pragma domain IvyTess_Domain
-IvyTess_DomainTri(IvyFlowOutline_Domain, IvyFlowOutline_VertOut)
+IvyTess_DomainTri(IvyFlow_Domain, IvyFlow_VertOut)
 #else
-#pragma vertex IvyFlowOutline_Vert
+#pragma vertex IvyFlow_Vert
 #endif
-#pragma fragment IvyFlowOutline_Frag
+#pragma fragment IvyFlow_Frag
 
 #endif

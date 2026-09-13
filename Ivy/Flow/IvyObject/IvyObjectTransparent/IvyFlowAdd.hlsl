@@ -28,14 +28,14 @@
 #include "IvyFlowPort.hlsl"
 
 #ifndef Link_IvyFlowAdd
-struct IvyFlowAdd_VertIn
+struct IvyFlow_VertIn
 {
     float4 PosOs;
     float3 NrmOs;
     float2 Uv;
 };
 
-struct IvyFlowAdd_VertOut
+struct IvyFlow_VertOut
 {
     float4 PosCs;
     float2 Uv;
@@ -45,21 +45,21 @@ struct IvyFlowAdd_VertOut
     float3 PosWs;
 };
 
-struct IvyFlowAdd_FragIn
+struct IvyFlow_FragIn
 {
-    IvyFlowAdd_VertOut VertOut;
+    IvyFlow_VertOut VertOut;
     float ViewFace;
 };
 
-struct IvyFlowAdd_FragOut
+struct IvyFlow_FragOut
 {
     float4 TargetRgba;
 };
 #endif
 
-IvyFlowAdd_VertOut IvyFlowAdd_Vert(IvyFlowAdd_VertIn vertIn)
+IvyFlow_VertOut IvyFlow_Vert(IvyFlow_VertIn vertIn)
 {
-    IvyFlowAdd_VertOut vertOut;
+    IvyFlow_VertOut vertOut;
     vertOut.Uv = vertIn.Uv;
     float4 posOs = vertIn.PosOs;
     IvyVertex_PressOut press = IvyVertex_Press(posOs.xyz, vertIn.NrmOs, IvyArg_PressDepth, IvyArg_PressPos.xyz, IvyArg_PressRadius);
@@ -72,7 +72,7 @@ IvyFlowAdd_VertOut IvyFlowAdd_Vert(IvyFlowAdd_VertIn vertIn)
     return vertOut;
 }
 
-half4 IvyFlowAdd_SkinMask(int uvId, float2 uv)
+half4 IvyFlow_SkinMask(int uvId, float2 uv)
 {
     switch (uvId)
     {
@@ -84,7 +84,7 @@ half4 IvyFlowAdd_SkinMask(int uvId, float2 uv)
     }
 }
 
-IvyFlowAdd_FragOut IvyFlowAdd_Frag(IvyFlowAdd_FragIn fragIn)
+IvyFlow_FragOut IvyFlow_Frag(IvyFlow_FragIn fragIn)
 {
     IvyGeom_BuildIn geomIn;
     geomIn.Uv = fragIn.VertOut.Uv;
@@ -103,10 +103,10 @@ IvyFlowAdd_FragOut IvyFlowAdd_Frag(IvyFlowAdd_FragIn fragIn)
     float4 skinMaskST = IvySwitch_Float4(uvId, IvyArg_SkinMask0_ST, IvyArg_SkinMask1_ST, IvyArg_SkinMask2_ST, IvyArg_SkinMask3_ST);
     float2 skinUv = IvyUv_Transform2D(localUv, skinMaskST.xy, skinMaskST.zw);
     float3 viewTs = IvyUv_ViewToTangent(geomOut.PosWs, skinUv, dirPosToCamWs, geomOut.NrmWsFront);
-    half4 heightMask = IvyFlowAdd_SkinMask(uvId, skinUv);
+    half4 heightMask = IvyFlow_SkinMask(uvId, skinUv);
     half heightLuma = IvyColor_Luma(heightMask.rgb);
     skinUv = IvyUv_Parallax(skinUv, heightLuma, viewTs, 0.1);
-    half4 skinMask = IvyFlowAdd_SkinMask(uvId, skinUv);
+    half4 skinMask = IvyFlow_SkinMask(uvId, skinUv);
     half skinMaskLuma = IvyColor_Luma(skinMask.rgb);
 
     half4 skinRgb0 = IvySwitch_Float4(uvId, IvyArg_SkinRgb00, IvyArg_SkinRgb10, IvyArg_SkinRgb20, IvyArg_SkinRgb30);
@@ -194,7 +194,7 @@ IvyFlowAdd_FragOut IvyFlowAdd_Frag(IvyFlowAdd_FragIn fragIn)
     half3 opaqueRgb = reflectOut.DiffusePart + specRgb + backRimRamp;
     half3 shaded = lerp(opaqueRgb, specRgb + backRimRamp, transmit);
 
-    IvyFlowAdd_FragOut fragOut;
+    IvyFlow_FragOut fragOut;
     fragOut.TargetRgba = half4(shaded * lightRgb * (1.0 - effectCover), 0);
     return fragOut;
 }

@@ -12,29 +12,29 @@
 
 #include "../../../Core/IvyStruct.hlsl"
 
-struct IvyFlowOutline_VertIn
+struct IvyFlow_VertIn
 {
     IvyVar_PosOs
     IvyVar_NrmOs
 };
 
-struct IvyFlowOutline_VertOut
+struct IvyFlow_VertOut
 {
     IvyVar_PosCs
 };
 
-struct IvyFlowOutline_FragIn
+struct IvyFlow_FragIn
 {
-    IvyFlowOutline_VertOut VertOut;
+    IvyFlow_VertOut VertOut;
 };
 
-struct IvyFlowOutline_FragOut { IvyVar_TargetRgba };
+struct IvyFlow_FragOut { IvyVar_TargetRgba };
 
 #define Link_IvyEnvBase
 #define Link_IvyFlowOutline
 #include "../../../Core/IvyCore.hlsl"
 
-#pragma vertex IvyFlowOutline_Vert
-#pragma fragment IvyFlowOutline_Frag
+#pragma vertex IvyFlow_Vert
+#pragma fragment IvyFlow_Frag
 
 #endif

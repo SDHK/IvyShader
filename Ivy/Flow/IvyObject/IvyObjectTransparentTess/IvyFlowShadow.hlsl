@@ -10,12 +10,12 @@
 #if Def(IvyFlowShadowTess)
 #define Def_IvyFlowShadowTess
 
-IvyFlowShadow_VertOut IvyFlowShadow_Domain(IvyTess_Point pointIn)
+IvyFlow_VertOut IvyFlow_Domain(IvyTess_Point pointIn)
 {
-    IvyFlowShadow_VertIn vertIn;
+    IvyFlow_VertIn vertIn;
     vertIn.PosOs = pointIn.PosOs;
     vertIn.NrmOs = pointIn.NrmOs;
-    return IvyFlowShadow_Vert(vertIn);
+    return IvyFlow_Vert(vertIn);
 }
 
 #endif

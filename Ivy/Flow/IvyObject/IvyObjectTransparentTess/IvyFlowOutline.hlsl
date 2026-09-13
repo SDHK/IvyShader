@@ -10,12 +10,12 @@
 #if Def(IvyFlowOutlineTess)
 #define Def_IvyFlowOutlineTess
 
-IvyFlowOutline_VertOut IvyFlowOutline_Domain(IvyTess_Point pointIn)
+IvyFlow_VertOut IvyFlow_Domain(IvyTess_Point pointIn)
 {
-    IvyFlowOutline_VertIn vertIn;
+    IvyFlow_VertIn vertIn;
     vertIn.PosOs = pointIn.PosOs;
     vertIn.NrmOs = pointIn.NrmOs;
-    return IvyFlowOutline_Vert(vertIn);
+    return IvyFlow_Vert(vertIn);
 }
 
 #endif

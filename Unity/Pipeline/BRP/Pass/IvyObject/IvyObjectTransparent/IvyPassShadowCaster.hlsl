@@ -14,31 +14,31 @@
 
 #include "../../../Core/IvyStruct.hlsl"
 
-struct IvyFlowShadow_VertIn
+struct IvyFlow_VertIn
 {
     IvyVar_PosOs
     IvyVar_NrmOs
 };
 
-struct IvyFlowShadow_VertOut
+struct IvyFlow_VertOut
 {
     IvyVar_PosCs
     IvyVar_T0(float3, LightVec)
 };
 
-struct IvyFlowShadow_FragIn
+struct IvyFlow_FragIn
 {
-    IvyFlowShadow_VertOut VertOut;
+    IvyFlow_VertOut VertOut;
 };
 
-struct IvyFlowShadow_FragOut { IvyVar_TargetRgba };
+struct IvyFlow_FragOut { IvyVar_TargetRgba };
 
 #define Link_IvyEnvBase
 #define Link_IvyEnvLight
 #define Link_IvyFlowShadow
 #include "../../../Core/IvyCore.hlsl"
 
-#pragma vertex IvyFlowShadow_Vert
-#pragma fragment IvyFlowShadow_Frag
+#pragma vertex IvyFlow_Vert
+#pragma fragment IvyFlow_Frag
 
 #endif

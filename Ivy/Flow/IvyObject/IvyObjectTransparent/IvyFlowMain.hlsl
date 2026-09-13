@@ -32,14 +32,14 @@
 #include "IvyFlowPort.hlsl"
 
 #ifndef Link_IvyFlowMain
-struct IvyFlowMain_VertIn
+struct IvyFlow_VertIn
 {
     float4 PosOs;
     float3 NrmOs;
     float2 Uv;
 };
 
-struct IvyFlowMain_VertOut
+struct IvyFlow_VertOut
 {
     float4 PosCs;
     float2 Uv;
@@ -49,21 +49,21 @@ struct IvyFlowMain_VertOut
     float3 PosWs;
 };
 
-struct IvyFlowMain_FragIn
+struct IvyFlow_FragIn
 {
-    IvyFlowMain_VertOut VertOut;
+    IvyFlow_VertOut VertOut;
     float ViewFace;
 };
 
-struct IvyFlowMain_FragOut
+struct IvyFlow_FragOut
 {
     float4 TargetRgba;
 };
 #endif
 
-IvyFlowMain_VertOut IvyFlowMain_Vert(IvyFlowMain_VertIn vertIn)
+IvyFlow_VertOut IvyFlow_Vert(IvyFlow_VertIn vertIn)
 {
-    IvyFlowMain_VertOut vertOut;
+    IvyFlow_VertOut vertOut;
     vertOut.Uv = vertIn.Uv;
     float4 posOs = vertIn.PosOs;
     IvyVertex_PressOut press = IvyVertex_Press(posOs.xyz, vertIn.NrmOs, IvyArg_PressDepth, IvyArg_PressPos.xyz, IvyArg_PressRadius);
@@ -76,7 +76,7 @@ IvyFlowMain_VertOut IvyFlowMain_Vert(IvyFlowMain_VertIn vertIn)
     return vertOut;
 }
 
-half4 IvyFlowMain_SkinMask(int uvId, float2 uv)
+half4 IvyFlow_SkinMask(int uvId, float2 uv)
 {
     switch (uvId)
     {
@@ -89,7 +89,7 @@ half4 IvyFlowMain_SkinMask(int uvId, float2 uv)
 }
 
 
-IvyFlowMain_FragOut IvyFlowMain_Frag(IvyFlowMain_FragIn fragIn)
+IvyFlow_FragOut IvyFlow_Frag(IvyFlow_FragIn fragIn)
 {
     //===[几何基础阶段]===================================================
     IvyGeom_BuildIn geomIn;
@@ -145,10 +145,10 @@ IvyFlowMain_FragOut IvyFlowMain_Frag(IvyFlowMain_FragIn fragIn)
     float4 skinMaskST = IvySwitch_Float4(uvId, IvyArg_SkinMask0_ST, IvyArg_SkinMask1_ST, IvyArg_SkinMask2_ST, IvyArg_SkinMask3_ST);
     float2 skinUv = IvyUv_Transform2D(localUv, skinMaskST.xy, skinMaskST.zw);
     float3 viewTs = IvyUv_ViewToTangent(geomOut.PosWs, skinUv, dirPosToCamWs, geomOut.NrmWsFront);
-    half4 heightMask = IvyFlowMain_SkinMask(uvId, skinUv);
+    half4 heightMask = IvyFlow_SkinMask(uvId, skinUv);
     half heightLuma = IvyColor_Luma(heightMask.rgb);
     skinUv = IvyUv_Parallax(skinUv, heightLuma, viewTs, 0.1);
-    half4 skinMask = IvyFlowMain_SkinMask(uvId, skinUv);
+    half4 skinMask = IvyFlow_SkinMask(uvId, skinUv);
     //皮肤灰度
     half skinMaskLuma = IvyColor_Luma(skinMask.rgb);// * skinMask.a
    //===[皮肤渐变喷涂]========================
@@ -315,7 +315,7 @@ IvyFlowMain_FragOut IvyFlowMain_Frag(IvyFlowMain_FragIn fragIn)
     colorIn.Rgb = transmitOut.Rgb;
     IvyColor_StainOut colorOut = IvyColor_Stain(colorIn);
 
-    IvyFlowMain_FragOut fragOut;
+    IvyFlow_FragOut fragOut;
     fragOut.TargetRgba = half4(colorOut.Rgb, transmitOut.Alpha);
     half pulse = IvyFunc_AudioLinkBand((uint)IvyArg_AudioBand);
     half3 lit = lightOut.Rgb + envLight;

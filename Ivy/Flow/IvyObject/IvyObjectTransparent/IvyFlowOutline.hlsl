@@ -18,40 +18,40 @@
 #include "IvyFlowPort.hlsl"
 
 #ifndef Link_IvyFlowOutline
-struct IvyFlowOutline_VertIn
+struct IvyFlow_VertIn
 {
     float4 PosOs;
     float3 NrmOs;
 };
 
-struct IvyFlowOutline_VertOut
+struct IvyFlow_VertOut
 {
     float4 PosCs;
 };
 
-struct IvyFlowOutline_FragIn
+struct IvyFlow_FragIn
 {
-    IvyFlowOutline_VertOut VertOut;
+    IvyFlow_VertOut VertOut;
 };
 
-struct IvyFlowOutline_FragOut
+struct IvyFlow_FragOut
 {
     float4 TargetRgba;
 };
 #endif
 
-IvyFlowOutline_VertOut IvyFlowOutline_Vert(IvyFlowOutline_VertIn vertIn)
+IvyFlow_VertOut IvyFlow_Vert(IvyFlow_VertIn vertIn)
 {
-    IvyFlowOutline_VertOut vertOut;
+    IvyFlow_VertOut vertOut;
     IvyVertex_PressOut press = IvyVertex_Press(vertIn.PosOs.xyz, vertIn.NrmOs, IvyArg_PressDepth, IvyArg_PressPos.xyz, IvyArg_PressRadius);
     float3 posOs = IvyVertex_Scale(float4(press.PosOs, 1.0), press.NrmOs, IvyArg_Scale);
     vertOut.PosCs = IvyMatrix_PosOsToCs(float4(posOs, 1.0));
     return vertOut;
 }
 
-IvyFlowOutline_FragOut IvyFlowOutline_Frag(IvyFlowOutline_FragIn fragIn)
+IvyFlow_FragOut IvyFlow_Frag(IvyFlow_FragIn fragIn)
 {
-    IvyFlowOutline_FragOut fragOut;
+    IvyFlow_FragOut fragOut;
     fragOut.TargetRgba = IvyArg_Color;
     return fragOut;
 }
