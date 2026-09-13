@@ -13,8 +13,6 @@
 
 #define Link_IvyTess
 
-#include "IvyArg.hlsl"
-
 #if Link(IvyPassMain)
 #include "IvyPassMain.hlsl"
 #endif

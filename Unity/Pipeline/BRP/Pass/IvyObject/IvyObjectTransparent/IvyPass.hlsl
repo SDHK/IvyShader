@@ -11,8 +11,6 @@
 
 #if Link(IvyObjectTransparent)
 
-#include "IvyArg.hlsl"
-
 #if Link(IvyPassMain)
 #include "IvyPassMain.hlsl"
 #endif
