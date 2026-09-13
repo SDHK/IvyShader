@@ -41,4 +41,6 @@ half4 IvyFunc_MatCapTex(half2 uv, half mipMap)
     return tex2Dlod(IvyArg_MatCapTex, float4(uv, 0, mipMap));
 }
 
+half IvyFunc_AudioLinkBand(uint band) { return 0; }
+
 #endif

@@ -25,15 +25,10 @@ half4 IvyFunc_FilmMaskTex(half2 uv);
 half4 IvyFunc_EnvMapTex(half2 uv,half mipMap);
 half4 IvyFunc_MatCapTex(half2 uv,half mipMap);
 
-//===[虚方法]==================================================
-
 /// <summary>
-/// 音频频段幅度 
+/// 音频频段幅度
 /// </summary>
-half IvyOverFunc_AudioLinkBand(uint band);
-#ifndef IvyFunc_AudioLinkBand 
-#define IvyFunc_AudioLinkBand(band) 0
-#endif
+half IvyFunc_AudioLinkBand(uint band);
 
 //===[面板参数]==================================================
 float4 IvyArg_SkinMask0_ST;
