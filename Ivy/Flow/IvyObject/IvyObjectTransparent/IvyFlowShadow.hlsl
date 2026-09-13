@@ -18,6 +18,7 @@
 #include "../../../Core/IvyKit.hlsl"
 #include "IvyFlowPort.hlsl"
 
+#ifndef Link_IvyFlowShadow
 struct IvyFlowShadow_VertIn
 {
     float4 PosOs;
@@ -30,16 +31,6 @@ struct IvyFlowShadow_VertOut
     float3 LightVec;
 };
 
-IvyFlowShadow_VertOut IvyFlowShadow_Vert(IvyFlowShadow_VertIn vertIn)
-{
-    IvyFlowShadow_VertOut vertOut;
-    IvyVertex_PressOut press = IvyVertex_Press(vertIn.PosOs.xyz, vertIn.NrmOs, IvyArg_PressDepth, IvyArg_PressPos.xyz, IvyArg_PressRadius);
-    float4 posOs = float4(press.PosOs, vertIn.PosOs.w);
-    vertOut.PosCs = IvyEnvLight_ShadowCasterPositionCS(posOs, press.NrmOs);
-    vertOut.LightVec = IvyEnvLight_ShadowCasterVector(posOs);
-    return vertOut;
-}
-
 struct IvyFlowShadow_FragIn
 {
     IvyFlowShadow_VertOut VertOut;
@@ -49,6 +40,17 @@ struct IvyFlowShadow_FragOut
 {
     float4 TargetRgba;
 };
+#endif
+
+IvyFlowShadow_VertOut IvyFlowShadow_Vert(IvyFlowShadow_VertIn vertIn)
+{
+    IvyFlowShadow_VertOut vertOut;
+    IvyVertex_PressOut press = IvyVertex_Press(vertIn.PosOs.xyz, vertIn.NrmOs, IvyArg_PressDepth, IvyArg_PressPos.xyz, IvyArg_PressRadius);
+    float4 posOs = float4(press.PosOs, vertIn.PosOs.w);
+    vertOut.PosCs = IvyEnvLight_ShadowCasterPositionCS(posOs, press.NrmOs);
+    vertOut.LightVec = IvyEnvLight_ShadowCasterVector(posOs);
+    return vertOut;
+}
 
 IvyFlowShadow_FragOut IvyFlowShadow_Frag(IvyFlowShadow_FragIn fragIn)
 {

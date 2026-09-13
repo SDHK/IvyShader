@@ -27,6 +27,7 @@
 #include "../../../Core/IvyKit.hlsl"
 #include "IvyFlowPort.hlsl"
 
+#ifndef Link_IvyFlowAdd
 struct IvyFlowAdd_VertIn
 {
     float4 PosOs;
@@ -44,6 +45,18 @@ struct IvyFlowAdd_VertOut
     float3 PosWs;
 };
 
+struct IvyFlowAdd_FragIn
+{
+    IvyFlowAdd_VertOut VertOut;
+    float ViewFace;
+};
+
+struct IvyFlowAdd_FragOut
+{
+    float4 TargetRgba;
+};
+#endif
+
 IvyFlowAdd_VertOut IvyFlowAdd_Vert(IvyFlowAdd_VertIn vertIn)
 {
     IvyFlowAdd_VertOut vertOut;
@@ -58,17 +71,6 @@ IvyFlowAdd_VertOut IvyFlowAdd_Vert(IvyFlowAdd_VertIn vertIn)
     vertOut.PosWs = IvyMatrix_PosOsToWs(posOs);
     return vertOut;
 }
-
-struct IvyFlowAdd_FragIn
-{
-    IvyFlowAdd_VertOut VertOut;
-    float ViewFace;
-};
-
-struct IvyFlowAdd_FragOut
-{
-    float4 TargetRgba;
-};
 
 half4 IvyFlowAdd_SkinMask(int uvId, float2 uv)
 {

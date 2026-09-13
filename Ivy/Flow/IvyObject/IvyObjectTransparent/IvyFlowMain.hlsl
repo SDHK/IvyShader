@@ -31,6 +31,7 @@
 #include "../../../Core/IvyKit.hlsl"
 #include "IvyFlowPort.hlsl"
 
+#ifndef Link_IvyFlowMain
 struct IvyFlowMain_VertIn
 {
     float4 PosOs;
@@ -47,6 +48,19 @@ struct IvyFlowMain_VertOut
     float3 NrmWs;
     float3 PosWs;
 };
+
+struct IvyFlowMain_FragIn
+{
+    IvyFlowMain_VertOut VertOut;
+    float ViewFace;
+};
+
+struct IvyFlowMain_FragOut
+{
+    float4 TargetRgba;
+};
+#endif
+
 IvyFlowMain_VertOut IvyFlowMain_Vert(IvyFlowMain_VertIn vertIn)
 {
     IvyFlowMain_VertOut vertOut;
@@ -61,18 +75,6 @@ IvyFlowMain_VertOut IvyFlowMain_Vert(IvyFlowMain_VertIn vertIn)
     vertOut.PosWs = IvyMatrix_PosOsToWs(posOs);
     return vertOut;
 }
-
-
-struct IvyFlowMain_FragIn
-{
-    IvyFlowMain_VertOut VertOut;
-    float ViewFace;
-};
-
-struct IvyFlowMain_FragOut
-{
-    float4 TargetRgba;
-};
 
 half4 IvyFlowMain_SkinMask(int uvId, float2 uv)
 {

@@ -17,6 +17,7 @@
 #include "../../../Core/IvyKit.hlsl"
 #include "IvyFlowPort.hlsl"
 
+#ifndef Link_IvyFlowOutline
 struct IvyFlowOutline_VertIn
 {
     float4 PosOs;
@@ -28,15 +29,6 @@ struct IvyFlowOutline_VertOut
     float4 PosCs;
 };
 
-IvyFlowOutline_VertOut IvyFlowOutline_Vert(IvyFlowOutline_VertIn vertIn)
-{
-    IvyFlowOutline_VertOut vertOut;
-    IvyVertex_PressOut press = IvyVertex_Press(vertIn.PosOs.xyz, vertIn.NrmOs, IvyArg_PressDepth, IvyArg_PressPos.xyz, IvyArg_PressRadius);
-    float3 posOs = IvyVertex_Scale(float4(press.PosOs, 1.0), press.NrmOs, IvyArg_Scale);
-    vertOut.PosCs = IvyMatrix_PosOsToCs(float4(posOs, 1.0));
-    return vertOut;
-}
-
 struct IvyFlowOutline_FragIn
 {
     IvyFlowOutline_VertOut VertOut;
@@ -46,6 +38,16 @@ struct IvyFlowOutline_FragOut
 {
     float4 TargetRgba;
 };
+#endif
+
+IvyFlowOutline_VertOut IvyFlowOutline_Vert(IvyFlowOutline_VertIn vertIn)
+{
+    IvyFlowOutline_VertOut vertOut;
+    IvyVertex_PressOut press = IvyVertex_Press(vertIn.PosOs.xyz, vertIn.NrmOs, IvyArg_PressDepth, IvyArg_PressPos.xyz, IvyArg_PressRadius);
+    float3 posOs = IvyVertex_Scale(float4(press.PosOs, 1.0), press.NrmOs, IvyArg_Scale);
+    vertOut.PosCs = IvyMatrix_PosOsToCs(float4(posOs, 1.0));
+    return vertOut;
+}
 
 IvyFlowOutline_FragOut IvyFlowOutline_Frag(IvyFlowOutline_FragIn fragIn)
 {

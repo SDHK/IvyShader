@@ -17,6 +17,33 @@
 #define IvyKey_MainLightShadowsCascade
 #define IvyKey_ShadowsSoft
 
+#include "../../../Core/IvyStruct.hlsl"
+
+struct IvyFlowMain_VertIn
+{
+    IvyVar_PosOs
+    IvyVar_NrmOs
+    IvyVar_T0(float2, Uv)
+};
+
+struct IvyFlowMain_VertOut
+{
+    IvyVar_PosCs
+    IvyVar_T0(float2, Uv)
+    IvyVar_T1(float3, NrmOs)
+    IvyVar_T2(float3, PosOs)
+    IvyVar_T3(float3, NrmWs)
+    IvyVar_T4(float3, PosWs)
+};
+
+struct IvyFlowMain_FragIn
+{
+    IvyFlowMain_VertOut VertOut;
+    IvyVar_ViewFace
+};
+
+struct IvyFlowMain_FragOut { IvyVar_TargetRgba };
+
 #define Link_IvyEnvBase
 #define Link_IvyEnvLight
 #define Link_IvyFlowMain
@@ -43,64 +70,14 @@ half4 IvyFunc_MatCapTex(half2 uv, half mipMap)
     return tex2Dlod(IvyArg_MatCapTex, float4(uv, 0, mipMap));
 }
 
-struct VertIn
+IvyFlowMain_VertOut Vert(IvyFlowMain_VertIn vertIn)
 {
-    IvyVar_PosOs
-    IvyVar_NrmOs
-    IvyVar_T0(float2, Uv)
-};
-
-struct VertOut
-{
-    IvyVar_PosCs
-    IvyVar_T0(float2, Uv)
-    IvyVar_T1(float3, NrmOs)
-    IvyVar_T2(float3, PosOs)
-    IvyVar_T3(float3, NrmWs)
-    IvyVar_T4(float3, PosWs)
-};
-
-struct FragIn
-{
-    VertOut VertOut;
-    IvyVar_ViewFace
-};
-
-struct FragOut { IvyVar_TargetRgba };
-
-VertOut Vert(VertIn vertIn)
-{
-    IvyFlowMain_VertIn flowIn;
-    flowIn.PosOs = vertIn.PosOs;
-    flowIn.NrmOs = vertIn.NrmOs;
-    flowIn.Uv = vertIn.Uv;
-    IvyFlowMain_VertOut flowOut = IvyFlowMain_Vert(flowIn);
-
-    VertOut vertOut;
-    vertOut.PosCs = flowOut.PosCs;
-    vertOut.Uv = flowOut.Uv;
-    vertOut.NrmOs = flowOut.NrmOs;
-    vertOut.PosOs = flowOut.PosOs;
-    vertOut.NrmWs = flowOut.NrmWs;
-    vertOut.PosWs = flowOut.PosWs;
-    return vertOut;
+    return IvyFlowMain_Vert(vertIn);
 }
 
-FragOut Frag(FragIn fragIn)
+IvyFlowMain_FragOut Frag(IvyFlowMain_FragIn fragIn)
 {
-    IvyFlowMain_FragIn flowIn;
-    flowIn.VertOut.PosCs = fragIn.VertOut.PosCs;
-    flowIn.VertOut.Uv = fragIn.VertOut.Uv;
-    flowIn.VertOut.NrmOs = fragIn.VertOut.NrmOs;
-    flowIn.VertOut.PosOs = fragIn.VertOut.PosOs;
-    flowIn.VertOut.NrmWs = fragIn.VertOut.NrmWs;
-    flowIn.VertOut.PosWs = fragIn.VertOut.PosWs;
-    flowIn.ViewFace = fragIn.ViewFace;
-    IvyFlowMain_FragOut flowOut = IvyFlowMain_Frag(flowIn);
-
-    FragOut fragOut;
-    fragOut.TargetRgba = flowOut.TargetRgba;
-    return fragOut;
+    return IvyFlowMain_Frag(fragIn);
 }
 
 #pragma vertex Vert

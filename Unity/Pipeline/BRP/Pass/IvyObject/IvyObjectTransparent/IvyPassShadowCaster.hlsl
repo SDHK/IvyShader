@@ -12,53 +12,40 @@
 
 #define IvyKey_ShadowCaster
 
-#define Link_IvyEnvBase
-#define Link_IvyEnvLight
-#define Link_IvyFlowShadow
-#include "../../../Core/IvyCore.hlsl"
+#include "../../../Core/IvyStruct.hlsl"
 
-struct VertIn
+struct IvyFlowShadow_VertIn
 {
     IvyVar_PosOs
     IvyVar_NrmOs
 };
 
-struct VertOut
+struct IvyFlowShadow_VertOut
 {
     IvyVar_PosCs
     IvyVar_T0(float3, LightVec)
 };
 
-struct FragIn
+struct IvyFlowShadow_FragIn
 {
-    VertOut VertOut;
+    IvyFlowShadow_VertOut VertOut;
 };
 
-struct FragOut { IvyVar_TargetRgba };
+struct IvyFlowShadow_FragOut { IvyVar_TargetRgba };
 
-VertOut Vert(VertIn vertIn)
+#define Link_IvyEnvBase
+#define Link_IvyEnvLight
+#define Link_IvyFlowShadow
+#include "../../../Core/IvyCore.hlsl"
+
+IvyFlowShadow_VertOut Vert(IvyFlowShadow_VertIn vertIn)
 {
-    IvyFlowShadow_VertIn flowIn;
-    flowIn.PosOs = vertIn.PosOs;
-    flowIn.NrmOs = vertIn.NrmOs;
-    IvyFlowShadow_VertOut flowOut = IvyFlowShadow_Vert(flowIn);
-
-    VertOut vertOut;
-    vertOut.PosCs = flowOut.PosCs;
-    vertOut.LightVec = flowOut.LightVec;
-    return vertOut;
+    return IvyFlowShadow_Vert(vertIn);
 }
 
-FragOut Frag(FragIn fragIn)
+IvyFlowShadow_FragOut Frag(IvyFlowShadow_FragIn fragIn)
 {
-    IvyFlowShadow_FragIn flowIn;
-    flowIn.VertOut.PosCs = fragIn.VertOut.PosCs;
-    flowIn.VertOut.LightVec = fragIn.VertOut.LightVec;
-    IvyFlowShadow_FragOut flowOut = IvyFlowShadow_Frag(flowIn);
-
-    FragOut fragOut;
-    fragOut.TargetRgba = flowOut.TargetRgba;
-    return fragOut;
+    return IvyFlowShadow_Frag(fragIn);
 }
 
 #pragma vertex Vert

@@ -10,53 +10,42 @@
 #if Def(IvyPassOutline)
 #define Def_IvyPassOutline
 
-#define Link_IvyEnvBase
-#define Link_IvyFlowOutline
-#include "../../../Core/IvyCore.hlsl"
+#include "../../../Core/IvyStruct.hlsl"
 
-struct VertIn
+struct IvyFlowOutline_VertIn
 {
     IvyVar_PosOs
     IvyVar_NrmOs
 };
 
-struct VertOut
+struct IvyFlowOutline_VertOut
 {
     IvyVar_PosCs
 };
 
-struct FragIn
+struct IvyFlowOutline_FragIn
 {
-    VertOut VertOut;
+    IvyFlowOutline_VertOut VertOut;
 };
 
-struct FragOut { IvyVar_TargetRgba };
+struct IvyFlowOutline_FragOut { IvyVar_TargetRgba };
 
-VertOut Vert(VertIn vertIn)
+#define Link_IvyEnvBase
+#define Link_IvyFlowOutline
+#include "../../../Core/IvyCore.hlsl"
+
+IvyFlowOutline_VertOut Vert(IvyFlowOutline_VertIn vertIn)
 {
-    IvyFlowOutline_VertIn flowIn;
-    flowIn.PosOs = vertIn.PosOs;
-    flowIn.NrmOs = vertIn.NrmOs;
-    IvyFlowOutline_VertOut flowOut = IvyFlowOutline_Vert(flowIn);
-
-    VertOut vertOut;
-    vertOut.PosCs = flowOut.PosCs;
-    return vertOut;
+    return IvyFlowOutline_Vert(vertIn);
 }
 
-FragOut Frag(FragIn fragIn)
+IvyFlowOutline_FragOut Frag(IvyFlowOutline_FragIn fragIn)
 {
-    IvyFlowOutline_FragIn flowIn;
-    flowIn.VertOut.PosCs = fragIn.VertOut.PosCs;
-    IvyFlowOutline_FragOut flowOut = IvyFlowOutline_Frag(flowIn);
-
-    FragOut fragOut;
-    fragOut.TargetRgba = flowOut.TargetRgba;
-    return fragOut;
+    return IvyFlowOutline_Frag(fragIn);
 }
 
 #ifdef UNITY_CAN_COMPILE_TESSELLATION
-IvyTess_GpuPoint TessVert(VertIn vertIn)
+IvyTess_GpuPoint TessVert(IvyFlowOutline_VertIn vertIn)
 {
     return IvyTess_PackGpu(vertIn.PosOs, vertIn.NrmOs, float2(0, 0));
 }
@@ -68,9 +57,9 @@ float HullConst(float3 pos0, float3 pos1, float3 pos2)
 {
     return IvyTess_Factor(pos0, pos1, pos2, IvyArg_PressDepth, IvyArg_PressPos.xyz, IvyArg_PressRadius, IvyArg_TessFactor);
 }
-VertOut Domain(IvyTess_Point pointIn)
+IvyFlowOutline_VertOut Domain(IvyTess_Point pointIn)
 {
-    VertIn vertIn;
+    IvyFlowOutline_VertIn vertIn;
     vertIn.PosOs = pointIn.PosOs;
     vertIn.NrmOs = pointIn.NrmOs;
     return Vert(vertIn);
@@ -85,7 +74,7 @@ VertOut Domain(IvyTess_Point pointIn)
 IvyTess_HullTri(Hull, HullConst)
 
 #pragma domain IvyTess_Domain
-IvyTess_DomainTri(Domain, VertOut)
+IvyTess_DomainTri(Domain, IvyFlowOutline_VertOut)
 #else
 #pragma vertex Vert
 #endif

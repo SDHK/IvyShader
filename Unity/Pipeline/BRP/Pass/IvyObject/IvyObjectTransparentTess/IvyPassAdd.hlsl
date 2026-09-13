@@ -14,6 +14,33 @@
 #define IvyKey_Fog
 #define IvyKey_ForwardAdd
 
+#include "../../../Core/IvyStruct.hlsl"
+
+struct IvyFlowAdd_VertIn
+{
+    IvyVar_PosOs
+    IvyVar_NrmOs
+    IvyVar_T0(float2, Uv)
+};
+
+struct IvyFlowAdd_VertOut
+{
+    IvyVar_PosCs
+    IvyVar_T0(float2, Uv)
+    IvyVar_T1(float3, NrmOs)
+    IvyVar_T2(float3, PosOs)
+    IvyVar_T3(float3, NrmWs)
+    IvyVar_T4(float3, PosWs)
+};
+
+struct IvyFlowAdd_FragIn
+{
+    IvyFlowAdd_VertOut VertOut;
+    IvyVar_ViewFace
+};
+
+struct IvyFlowAdd_FragOut { IvyVar_TargetRgba };
+
 #define Link_IvyEnvBase
 #define Link_IvyEnvLight
 #define Link_IvyFlowAdd
@@ -40,68 +67,18 @@ half4 IvyFunc_MatCapTex(half2 uv, half mipMap)
     return tex2Dlod(IvyArg_MatCapTex, float4(uv, 0, mipMap));
 }
 
-struct VertIn
+IvyFlowAdd_VertOut Vert(IvyFlowAdd_VertIn vertIn)
 {
-    IvyVar_PosOs
-    IvyVar_NrmOs
-    IvyVar_T0(float2, Uv)
-};
-
-struct VertOut
-{
-    IvyVar_PosCs
-    IvyVar_T0(float2, Uv)
-    IvyVar_T1(float3, NrmOs)
-    IvyVar_T2(float3, PosOs)
-    IvyVar_T3(float3, NrmWs)
-    IvyVar_T4(float3, PosWs)
-};
-
-struct FragIn
-{
-    VertOut VertOut;
-    IvyVar_ViewFace
-};
-
-struct FragOut { IvyVar_TargetRgba };
-
-VertOut Vert(VertIn vertIn)
-{
-    IvyFlowAdd_VertIn flowIn;
-    flowIn.PosOs = vertIn.PosOs;
-    flowIn.NrmOs = vertIn.NrmOs;
-    flowIn.Uv = vertIn.Uv;
-    IvyFlowAdd_VertOut flowOut = IvyFlowAdd_Vert(flowIn);
-
-    VertOut vertOut;
-    vertOut.PosCs = flowOut.PosCs;
-    vertOut.Uv = flowOut.Uv;
-    vertOut.NrmOs = flowOut.NrmOs;
-    vertOut.PosOs = flowOut.PosOs;
-    vertOut.NrmWs = flowOut.NrmWs;
-    vertOut.PosWs = flowOut.PosWs;
-    return vertOut;
+    return IvyFlowAdd_Vert(vertIn);
 }
 
-FragOut Frag(FragIn fragIn)
+IvyFlowAdd_FragOut Frag(IvyFlowAdd_FragIn fragIn)
 {
-    IvyFlowAdd_FragIn flowIn;
-    flowIn.VertOut.PosCs = fragIn.VertOut.PosCs;
-    flowIn.VertOut.Uv = fragIn.VertOut.Uv;
-    flowIn.VertOut.NrmOs = fragIn.VertOut.NrmOs;
-    flowIn.VertOut.PosOs = fragIn.VertOut.PosOs;
-    flowIn.VertOut.NrmWs = fragIn.VertOut.NrmWs;
-    flowIn.VertOut.PosWs = fragIn.VertOut.PosWs;
-    flowIn.ViewFace = fragIn.ViewFace;
-    IvyFlowAdd_FragOut flowOut = IvyFlowAdd_Frag(flowIn);
-
-    FragOut fragOut;
-    fragOut.TargetRgba = flowOut.TargetRgba;
-    return fragOut;
+    return IvyFlowAdd_Frag(fragIn);
 }
 
 #ifdef UNITY_CAN_COMPILE_TESSELLATION
-IvyTess_GpuPoint TessVert(VertIn vertIn)
+IvyTess_GpuPoint TessVert(IvyFlowAdd_VertIn vertIn)
 {
     return IvyTess_PackGpu(vertIn.PosOs, vertIn.NrmOs, vertIn.Uv);
 }
@@ -113,9 +90,9 @@ float HullConst(float3 pos0, float3 pos1, float3 pos2)
 {
     return IvyTess_Factor(pos0, pos1, pos2, IvyArg_PressDepth, IvyArg_PressPos.xyz, IvyArg_PressRadius, IvyArg_TessFactor);
 }
-VertOut Domain(IvyTess_Point pointIn)
+IvyFlowAdd_VertOut Domain(IvyTess_Point pointIn)
 {
-    VertIn vertIn;
+    IvyFlowAdd_VertIn vertIn;
     vertIn.PosOs = pointIn.PosOs;
     vertIn.NrmOs = pointIn.NrmOs;
     vertIn.Uv = pointIn.Uv;
@@ -131,7 +108,7 @@ VertOut Domain(IvyTess_Point pointIn)
 IvyTess_HullTri(Hull, HullConst)
 
 #pragma domain IvyTess_Domain
-IvyTess_DomainTri(Domain, VertOut)
+IvyTess_DomainTri(Domain, IvyFlowAdd_VertOut)
 #else
 #pragma vertex Vert
 #endif
