@@ -31,4 +31,20 @@
 
 #include "IvyFlowTess.hlsl"
 
+#if Link(IvyFlowMain)
+#include "IvyFlowMain.hlsl"
+#endif
+
+#if Link(IvyFlowAdd)
+#include "IvyFlowAdd.hlsl"
+#endif
+
+#if Link(IvyFlowOutline)
+#include "IvyFlowOutline.hlsl"
+#endif
+
+#if Link(IvyFlowShadow)
+#include "IvyFlowShadow.hlsl"
+#endif
+
 #endif
