@@ -26,36 +26,35 @@
 #define Link_IvyReflect
 #include "../../../Core/IvyKit.hlsl"
 #include "IvyFlowPort.hlsl"
+#include "IvyFlowVar.hlsl"
 
-#ifndef Link_IvyFlowAdd
 struct IvyFlow_VertIn
 {
-    float4 PosOs;
-    float3 NrmOs;
-    float2 Uv;
+    float4 PosOs IvyVarIn_PosOs;
+    float3 NrmOs IvyVarIn_NrmOs;
+    float2 Uv IvyVarIn_Uv;
 };
 
 struct IvyFlow_VertOut
 {
-    float4 PosCs;
-    float2 Uv;
-    float3 NrmOs;
-    float3 PosOs;
-    float3 NrmWs;
-    float3 PosWs;
+    float4 PosCs IvyVarOut_PosCs;
+    float2 Uv IvyVarOut_Uv;
+    float3 NrmOs IvyVarOut_NrmOs;
+    float3 PosOs IvyVarOut_PosOs;
+    float3 NrmWs IvyVarOut_NrmWs;
+    float3 PosWs IvyVarOut_PosWs;
 };
 
 struct IvyFlow_FragIn
 {
     IvyFlow_VertOut VertOut;
-    float ViewFace;
+    float ViewFace IvyVarIn_ViewFace;
 };
 
 struct IvyFlow_FragOut
 {
-    float4 TargetRgba;
+    float4 TargetRgba IvyVarOut_Target;
 };
-#endif
 
 IvyFlow_VertOut IvyFlow_Vert(IvyFlow_VertIn vertIn)
 {

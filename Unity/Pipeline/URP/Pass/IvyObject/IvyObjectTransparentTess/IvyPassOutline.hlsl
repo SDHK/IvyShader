@@ -10,26 +10,7 @@
 #if Def(IvyPassOutline)
 #define Def_IvyPassOutline
 
-#include "../../../Core/IvyStruct.hlsl"
-
-struct IvyFlow_VertIn
-{
-    IvyVar_PosOs
-    IvyVar_NrmOs
-    IvyVar_T0(float2, Uv)
-};
-
-struct IvyFlow_VertOut
-{
-    IvyVar_PosCs
-};
-
-struct IvyFlow_FragIn
-{
-    IvyFlow_VertOut VertOut;
-};
-
-struct IvyFlow_FragOut { IvyVar_TargetRgba };
+#include "IvyPassVar.hlsl"
 
 #define Link_IvyEnvBase
 #define Link_IvyFlowOutline

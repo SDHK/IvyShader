@@ -12,26 +12,7 @@
 
 #define IvyKey_ShadowCaster
 
-#include "../../../Core/IvyStruct.hlsl"
-
-struct IvyFlow_VertIn
-{
-    IvyVar_PosOs
-    IvyVar_NrmOs
-};
-
-struct IvyFlow_VertOut
-{
-    IvyVar_PosCs
-    IvyVar_T0(float3, LightVec)
-};
-
-struct IvyFlow_FragIn
-{
-    IvyFlow_VertOut VertOut;
-};
-
-struct IvyFlow_FragOut { IvyVar_TargetRgba };
+#include "IvyPassVar.hlsl"
 
 #define Link_IvyEnvBase
 #define Link_IvyEnvLight

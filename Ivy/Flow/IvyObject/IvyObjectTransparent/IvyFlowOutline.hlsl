@@ -16,17 +16,18 @@
 #define Link_IvyGeom
 #include "../../../Core/IvyKit.hlsl"
 #include "IvyFlowPort.hlsl"
+#include "IvyFlowVar.hlsl"
 
-#ifndef Link_IvyFlowOutline
 struct IvyFlow_VertIn
 {
-    float4 PosOs;
-    float3 NrmOs;
+    float4 PosOs IvyVarIn_PosOs;
+    float3 NrmOs IvyVarIn_NrmOs;
+    float2 Uv IvyVarIn_Uv;
 };
 
 struct IvyFlow_VertOut
 {
-    float4 PosCs;
+    float4 PosCs IvyVarOut_PosCs;
 };
 
 struct IvyFlow_FragIn
@@ -36,9 +37,8 @@ struct IvyFlow_FragIn
 
 struct IvyFlow_FragOut
 {
-    float4 TargetRgba;
+    float4 TargetRgba IvyVarOut_Target;
 };
-#endif
 
 IvyFlow_VertOut IvyFlow_Vert(IvyFlow_VertIn vertIn)
 {
