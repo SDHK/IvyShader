@@ -317,7 +317,11 @@ IvyFlow_FragOut IvyFlow_Frag(IvyFlow_FragIn fragIn)
 
     IvyFlow_FragOut fragOut;
     fragOut.TargetRgba = half4(colorOut.Rgb, transmitOut.Alpha);
+#if Link(IvyAudioLink)
     half pulse = IvyFunc_AudioLinkBand((uint)IvyArg_AudioBand);
+#else
+    half pulse = 0;
+#endif
     half3 lit = lightOut.Rgb + envLight;
     half stripMin = min(IvyArg_EmissiveIntensity + pulse * IvyArg_AudioPulse, IvyArg_LightMax);
     half3 litStrip = max(lit, stripMin);

@@ -33,8 +33,6 @@ struct IvyFlow_FragOut { IvyVar_TargetRgba };
 #define Link_IvyEnvBase
 #define Link_IvyFlowOutline
 #include "../../../Core/IvyCore.hlsl"
-
-#pragma vertex IvyFlow_Vert
-#pragma fragment IvyFlow_Frag
+#include "IvyPassPort.hlsl"
 
 #endif

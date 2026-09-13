@@ -11,8 +11,11 @@
 #define Def_IvyFlowPort
 
 //===[抽象方法]==================================================
-// 计算并返回阴影坐标
+// 依赖库的声明与 Pass 履约同一扇 Link 门
+
+#if Link(IvyEnvLight)
 float4 IvyFunc_ShadowCoord(IvyGeom_BuildOut geomOut);
+#endif
 
 //贴图
 half4 IvyFunc_SkinMask0(half2 uv);
@@ -25,10 +28,9 @@ half4 IvyFunc_FilmMaskTex(half2 uv);
 half4 IvyFunc_EnvMapTex(half2 uv,half mipMap);
 half4 IvyFunc_MatCapTex(half2 uv,half mipMap);
 
-/// <summary>
-/// 音频频段幅度
-/// </summary>
+#if Link(IvyAudioLink)
 half IvyFunc_AudioLinkBand(uint band);
+#endif
 
 //===[面板参数]==================================================
 float4 IvyArg_SkinMask0_ST;

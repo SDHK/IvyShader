@@ -5,7 +5,7 @@
 *
 * 描述： IvyObjectTransparentTess Pass 端口履约
 *        对应 Flow 的 IvyFlowPort：贴图资源 + IvyFunc_ 实现
-*        Main / Add / Shadow 入口挂号（TessVert 需要 Uv）
+*        入口挂号。依赖库的 IvyFunc_ 与 Flow 声明同一扇 Link 门
 *
 */
 
@@ -21,10 +21,12 @@ sampler2D IvyArg_FilmMaskTex;
 sampler2D IvyArg_EnvMapTex;
 sampler2D IvyArg_MatCapTex;
 
+#if Link(IvyEnvLight)
 float4 IvyFunc_ShadowCoord(IvyGeom_BuildOut geomOut)
 {
     return IvyEnvLight_ShadowCoord(float4(geomOut.PosOs, 1.0), geomOut.PosCs, geomOut.PosWs);
 }
+#endif
 
 half4 IvyFunc_SkinMask0(half2 uv) { return tex2D(IvyArg_SkinMask0, uv); }
 half4 IvyFunc_SkinMask1(half2 uv) { return tex2D(IvyArg_SkinMask1, uv); }
@@ -42,7 +44,9 @@ half4 IvyFunc_MatCapTex(half2 uv, half mipMap)
     return tex2Dlod(IvyArg_MatCapTex, float4(uv, 0, mipMap));
 }
 
+#if Link(IvyAudioLink)
 half IvyFunc_AudioLinkBand(uint band) { return 0; }
+#endif
 
 #ifdef UNITY_CAN_COMPILE_TESSELLATION
 IvyTess_GpuPoint TessVert(IvyFlow_VertIn vertIn)
