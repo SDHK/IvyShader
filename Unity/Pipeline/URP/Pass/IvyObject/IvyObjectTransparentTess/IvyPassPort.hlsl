@@ -5,6 +5,7 @@
 *
 * 描述： IvyObjectTransparentTess Pass 端口履约
 *        对应 Flow 的 IvyFlowPort：贴图资源 + IvyFunc_ 实现
+*        Main / Add / Shadow 入口挂号（TessVert 需要 Uv）
 *
 */
 
@@ -42,5 +43,26 @@ half4 IvyFunc_MatCapTex(half2 uv, half mipMap)
 }
 
 half IvyFunc_AudioLinkBand(uint band) { return 0; }
+
+#ifdef UNITY_CAN_COMPILE_TESSELLATION
+IvyTess_GpuPoint TessVert(IvyFlow_VertIn vertIn)
+{
+    return IvyTess_PackGpu(vertIn.PosOs, vertIn.NrmOs, vertIn.Uv);
+}
+#endif
+
+#ifdef UNITY_CAN_COMPILE_TESSELLATION
+#pragma target 4.6
+#pragma vertex TessVert
+
+#pragma hull IvyTess_Hull
+IvyTess_HullTri(IvyFlowTess_Hull, IvyFlowTess_HullConst)
+
+#pragma domain IvyTess_Domain
+IvyTess_DomainTri(IvyFlow_Domain, IvyFlow_VertOut)
+#else
+#pragma vertex IvyFlow_Vert
+#endif
+#pragma fragment IvyFlow_Frag
 
 #endif

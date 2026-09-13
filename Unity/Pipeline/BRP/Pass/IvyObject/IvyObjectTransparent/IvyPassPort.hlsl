@@ -5,6 +5,7 @@
 *
 * 描述： IvyObjectTransparent Pass 端口履约
 *        对应 Flow 的 IvyFlowPort：贴图资源 + IvyFunc_ 实现
+*        Main / Add 入口挂号
 *
 */
 
@@ -42,5 +43,8 @@ half4 IvyFunc_MatCapTex(half2 uv, half mipMap)
 }
 
 half IvyFunc_AudioLinkBand(uint band) { return 0; }
+
+#pragma vertex IvyFlow_Vert
+#pragma fragment IvyFlow_Frag
 
 #endif
