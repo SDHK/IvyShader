@@ -50,17 +50,7 @@ struct IvyFlowMain_FragOut { IvyVar_TargetRgba };
 #include "../../../Core/IvyCore.hlsl"
 #include "IvyPassPort.hlsl"
 
-IvyFlowMain_VertOut Vert(IvyFlowMain_VertIn vertIn)
-{
-    return IvyFlowMain_Vert(vertIn);
-}
-
-IvyFlowMain_FragOut Frag(IvyFlowMain_FragIn fragIn)
-{
-    return IvyFlowMain_Frag(fragIn);
-}
-
-#pragma vertex Vert
-#pragma fragment Frag
+#pragma vertex IvyFlowMain_Vert
+#pragma fragment IvyFlowMain_Frag
 
 #endif

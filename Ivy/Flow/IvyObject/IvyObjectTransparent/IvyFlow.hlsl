@@ -4,13 +4,12 @@
 * 日期： 2026/9/13
 
 * 描述： IvyObjectTransparent 产品 Flow 链接
+*        基本库：Vert / Frag
 
 */
 
-#ifndef Def_IvyObjectTransparent_Flow
-#define Def_IvyObjectTransparent_Flow
-
-#if Link(IvyObjectTransparent) || Link(IvyObjectTransparentTess)
+#if Def(IvyFlow)
+#define Def_IvyFlow
 
 #if Link(IvyFlowMain)
 #include "IvyFlowMain.hlsl"
@@ -26,8 +25,6 @@
 
 #if Link(IvyFlowShadow)
 #include "IvyFlowShadow.hlsl"
-#endif
-
 #endif
 
 #endif

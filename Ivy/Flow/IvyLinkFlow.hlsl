@@ -10,8 +10,12 @@
 #ifndef Def_IvyLinkFlow
 #define Def_IvyLinkFlow
 
-#if Link(IvyObjectTransparent) || Link(IvyObjectTransparentTess)
+#if Link(IvyObjectTransparent)
 #include "IvyObject/IvyObjectTransparent/IvyFlow.hlsl"
+#endif
+
+#if Link(IvyObjectTransparentTess)
+#include "IvyObject/IvyObjectTransparentTess/IvyFlow.hlsl"
 #endif
 
 #endif // Def_IvyLinkFlow

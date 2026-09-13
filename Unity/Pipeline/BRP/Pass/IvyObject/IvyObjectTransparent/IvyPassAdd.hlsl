@@ -47,17 +47,7 @@ struct IvyFlowAdd_FragOut { IvyVar_TargetRgba };
 #include "../../../Core/IvyCore.hlsl"
 #include "IvyPassPort.hlsl"
 
-IvyFlowAdd_VertOut Vert(IvyFlowAdd_VertIn vertIn)
-{
-    return IvyFlowAdd_Vert(vertIn);
-}
-
-IvyFlowAdd_FragOut Frag(IvyFlowAdd_FragIn fragIn)
-{
-    return IvyFlowAdd_Frag(fragIn);
-}
-
-#pragma vertex Vert
-#pragma fragment Frag
+#pragma vertex IvyFlowAdd_Vert
+#pragma fragment IvyFlowAdd_Frag
 
 #endif

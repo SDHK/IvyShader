@@ -34,35 +34,10 @@ struct IvyFlowOutline_FragOut { IvyVar_TargetRgba };
 #define Link_IvyFlowOutline
 #include "../../../Core/IvyCore.hlsl"
 
-IvyFlowOutline_VertOut Vert(IvyFlowOutline_VertIn vertIn)
-{
-    return IvyFlowOutline_Vert(vertIn);
-}
-
-IvyFlowOutline_FragOut Frag(IvyFlowOutline_FragIn fragIn)
-{
-    return IvyFlowOutline_Frag(fragIn);
-}
-
 #ifdef UNITY_CAN_COMPILE_TESSELLATION
 IvyTess_GpuPoint TessVert(IvyFlowOutline_VertIn vertIn)
 {
     return IvyTess_PackGpu(vertIn.PosOs, vertIn.NrmOs, float2(0, 0));
-}
-IvyTess_Point Hull(IvyTess_Point pointIn)
-{
-    return pointIn;
-}
-float HullConst(float3 pos0, float3 pos1, float3 pos2)
-{
-    return IvyTess_Factor(pos0, pos1, pos2, IvyArg_PressDepth, IvyArg_PressPos.xyz, IvyArg_PressRadius, IvyArg_TessFactor);
-}
-IvyFlowOutline_VertOut Domain(IvyTess_Point pointIn)
-{
-    IvyFlowOutline_VertIn vertIn;
-    vertIn.PosOs = pointIn.PosOs;
-    vertIn.NrmOs = pointIn.NrmOs;
-    return Vert(vertIn);
 }
 #endif
 
@@ -71,13 +46,13 @@ IvyFlowOutline_VertOut Domain(IvyTess_Point pointIn)
 #pragma vertex TessVert
 
 #pragma hull IvyTess_Hull
-IvyTess_HullTri(Hull, HullConst)
+IvyTess_HullTri(IvyFlowTess_Hull, IvyFlowTess_HullConst)
 
 #pragma domain IvyTess_Domain
-IvyTess_DomainTri(Domain, IvyFlowOutline_VertOut)
+IvyTess_DomainTri(IvyFlowOutline_Domain, IvyFlowOutline_VertOut)
 #else
-#pragma vertex Vert
+#pragma vertex IvyFlowOutline_Vert
 #endif
-#pragma fragment Frag
+#pragma fragment IvyFlowOutline_Frag
 
 #endif

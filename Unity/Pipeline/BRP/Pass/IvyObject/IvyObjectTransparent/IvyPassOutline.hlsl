@@ -34,17 +34,7 @@ struct IvyFlowOutline_FragOut { IvyVar_TargetRgba };
 #define Link_IvyFlowOutline
 #include "../../../Core/IvyCore.hlsl"
 
-IvyFlowOutline_VertOut Vert(IvyFlowOutline_VertIn vertIn)
-{
-    return IvyFlowOutline_Vert(vertIn);
-}
-
-IvyFlowOutline_FragOut Frag(IvyFlowOutline_FragIn fragIn)
-{
-    return IvyFlowOutline_Frag(fragIn);
-}
-
-#pragma vertex Vert
-#pragma fragment Frag
+#pragma vertex IvyFlowOutline_Vert
+#pragma fragment IvyFlowOutline_Frag
 
 #endif

@@ -38,17 +38,7 @@ struct IvyFlowShadow_FragOut { IvyVar_TargetRgba };
 #define Link_IvyFlowShadow
 #include "../../../Core/IvyCore.hlsl"
 
-IvyFlowShadow_VertOut Vert(IvyFlowShadow_VertIn vertIn)
-{
-    return IvyFlowShadow_Vert(vertIn);
-}
-
-IvyFlowShadow_FragOut Frag(IvyFlowShadow_FragIn fragIn)
-{
-    return IvyFlowShadow_Frag(fragIn);
-}
-
-#pragma vertex Vert
-#pragma fragment Frag
+#pragma vertex IvyFlowShadow_Vert
+#pragma fragment IvyFlowShadow_Frag
 
 #endif
