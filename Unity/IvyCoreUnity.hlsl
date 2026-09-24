@@ -21,9 +21,9 @@
 #include "../IvyConfig.hlsl"
 
 #if defined(IvyShader_URP)
-#include "Pipeline/URP/IvyBindCore.hlsl"
+#include "Pipeline/URP/IvyPipeCore.hlsl"
 #elif defined(IvyShader_BRP)
-#include "Pipeline/BRP/IvyBindCore.hlsl"
+#include "Pipeline/BRP/IvyPipeCore.hlsl"
 #endif
 
 
