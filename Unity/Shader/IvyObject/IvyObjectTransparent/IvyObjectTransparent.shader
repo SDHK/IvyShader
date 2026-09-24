@@ -1,6 +1,7 @@
 ﻿HLSLINCLUDE
 #define IvyShader
 #define Link_IvyObjectTransparent
+#include "../../../../IvyConfig.hlsl"
 ENDHLSL
 
 Shader "Ivy/IvyObjectTransparent"
@@ -192,8 +193,9 @@ Shader "Ivy/IvyObjectTransparent"
             ZWrite On
             ZTest LEqual
             HLSLPROGRAM
-            #define Link_IvyPassOutline
-            #include "../../IvyCoreUnity.hlsl"
+            #define Link_IvyEnvBase
+            #define Link_IvyFlowOutline
+            #include "PassPort/IvyPassPortUrp.hlsl"
             ENDHLSL
         }
 
@@ -206,8 +208,18 @@ Shader "Ivy/IvyObjectTransparent"
             ZTest LEqual
             Blend Off
             HLSLPROGRAM
-            #define Link_IvyPassMain
-            #include "../../IvyCoreUnity.hlsl"
+            #define IvyKey_Instancing
+            #define IvyKey_Fog
+            #define IvyKey_MainLightShadows
+            #define IvyKey_MainLightShadowsCascade
+            #define IvyKey_ShadowsSoft
+            #define IvyKey_AdditionalLights
+            #define IvyKey_AdditionalLightShadows
+
+            #define Link_IvyEnvBase
+            #define Link_IvyEnvLight
+            #define Link_IvyFlowMain
+            #include "PassPort/IvyPassPortUrp.hlsl"
             ENDHLSL
         }
 
@@ -221,8 +233,12 @@ Shader "Ivy/IvyObjectTransparent"
             ZTest LEqual
             ColorMask 0
             HLSLPROGRAM
-            #define Link_IvyPassShadowCaster
-            #include "../../IvyCoreUnity.hlsl"
+            #define IvyKey_ShadowCaster
+
+            #define Link_IvyEnvBase
+            #define Link_IvyEnvLight
+            #define Link_IvyFlowShadow
+            #include "PassPort/IvyPassPortUrp.hlsl"
             ENDHLSL
         }
     }
@@ -244,8 +260,10 @@ Shader "Ivy/IvyObjectTransparent"
             ZWrite Off
             Blend SrcAlpha OneMinusSrcAlpha
             HLSLPROGRAM
-            #define Link_IvyPassOutline
-            #include "../../IvyCoreUnity.hlsl"
+            #define Link_IvyEnvBase
+            #define Link_IvyFlowOutline
+
+            #include "PassPort/IvyPassPortBrp.hlsl"
             ENDHLSL
         }
 
@@ -263,8 +281,20 @@ Shader "Ivy/IvyObjectTransparent"
             Blend One OneMinusSrcAlpha
 
             HLSLPROGRAM
-            #define Link_IvyPassMain
-            #include "../../IvyCoreUnity.hlsl"
+
+            #define IvyKey_Instancing
+            #define IvyKey_Fog
+            #define IvyKey_ForwardBase
+            #define IvyKey_MainLightShadows
+            #define IvyKey_MainLightShadowsCascade
+            #define IvyKey_ShadowsSoft
+
+            #define Link_IvyEnvBase
+            #define Link_IvyEnvLight
+            #define Link_IvyFlowMain
+
+            #include "PassPort/IvyPassPortBrp.hlsl"
+
             ENDHLSL
         }
 
@@ -279,8 +309,20 @@ Shader "Ivy/IvyObjectTransparent"
             Blend One OneMinusSrcAlpha
 
             HLSLPROGRAM
-            #define Link_IvyPassMain
-            #include "../../IvyCoreUnity.hlsl"
+            #define IvyKey_Instancing
+            #define IvyKey_Fog
+            #define IvyKey_ForwardBase
+            #define IvyKey_MainLightShadows
+            #define IvyKey_MainLightShadowsCascade
+            #define IvyKey_ShadowsSoft
+
+
+            #define Link_IvyEnvBase
+            #define Link_IvyEnvLight
+            #define Link_IvyFlowMain
+
+            #include "PassPort/IvyPassPortBrp.hlsl"
+
             ENDHLSL
         }
 
@@ -294,8 +336,17 @@ Shader "Ivy/IvyObjectTransparent"
             ZWrite Off
             ZTest LEqual
             HLSLPROGRAM
-            #define Link_IvyPassAdd
-            #include "../../IvyCoreUnity.hlsl"
+
+            #define IvyKey_Instancing
+            #define IvyKey_Fog
+            #define IvyKey_ForwardAdd
+
+            #define Link_IvyEnvBase
+            #define Link_IvyEnvLight
+            #define Link_IvyFlowAdd
+            #include "PassPort/IvyPassPortBrp.hlsl"
+
+
             ENDHLSL
         }
 
@@ -309,8 +360,14 @@ Shader "Ivy/IvyObjectTransparent"
             ZTest LEqual
             ColorMask 0
             HLSLPROGRAM
-            #define Link_IvyPassShadowCaster
-            #include "../../IvyCoreUnity.hlsl"
+
+            #define IvyKey_ShadowCaster
+
+            #define Link_IvyEnvBase
+            #define Link_IvyEnvLight
+            #define Link_IvyFlowShadow
+            #include "PassPort/IvyPassPortBrp.hlsl"
+
             ENDHLSL
         }
     }

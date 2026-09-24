@@ -1,16 +1,34 @@
 /****************************************
-*
+
 * 作者： 闪电黑客
-* 日期： 2026/9/13
-*
-* 描述： IvyObjectTransparentTess Pass 端口履约
-*        对应 Flow 的 IvyFlowPort：贴图资源 + IvyFunc_ 实现
-*        入口挂号。依赖库的 IvyFunc_ 与 Flow 声明同一扇 Link 门
-*
+* 日期： 2026/9/24
+
+* 描述： IvyObjectTransparentTess URP Pass 端口
+*        语义尾巴、贴图履约、细分入口挂号
+*        Shader 在本文件之前写 IvyKey_ / Link_
+
 */
 
-#ifndef Def_IvyPassPort
-#define Def_IvyPassPort
+#ifdef IvyShader_URP
+
+#ifndef Def_IvyPassPortUrp
+#define Def_IvyPassPortUrp
+
+#define IvyVarIn_PosOs : POSITION
+#define IvyVarIn_NrmOs : NORMAL
+#define IvyVarIn_Uv : TEXCOORD0
+#define IvyVarIn_ViewFace : VFACE
+
+#define IvyVarOut_PosCs : SV_POSITION
+#define IvyVarOut_Uv : TEXCOORD0
+#define IvyVarOut_NrmOs : TEXCOORD1
+#define IvyVarOut_PosOs : TEXCOORD2
+#define IvyVarOut_NrmWs : TEXCOORD3
+#define IvyVarOut_PosWs : TEXCOORD4
+#define IvyVarOut_LightVec : TEXCOORD0
+#define IvyVarOut_Target : SV_Target
+
+#include "../../../../Pipeline/URP/IvyPipeCore.hlsl"
 
 sampler2D IvyArg_GrabTexture;
 sampler2D IvyArg_SkinMask0;
@@ -68,5 +86,7 @@ IvyTess_DomainTri(IvyFlow_Domain, IvyFlow_VertOut)
 #pragma vertex IvyFlow_Vert
 #endif
 #pragma fragment IvyFlow_Frag
+
+#endif
 
 #endif

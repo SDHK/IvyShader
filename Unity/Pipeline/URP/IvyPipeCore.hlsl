@@ -5,5 +5,6 @@
 #define Inc_IvyMap "../../Unity/Pipeline/URP/Core/Map/IvyLinkMap.hlsl"
 //===[注入环境履约]===
 #define Inc_IvyEnv "../../Unity/Pipeline/URP/Core/Env/IvyLinkEnv.hlsl"
-//===[注入 Pass 系统]===
-#include "Pass/IvyLinkPass.hlsl"
+//===[注入核心]===
+#include "Core/IvyCore.hlsl"
+//#include "Pass/IvyLinkPass.hlsl"

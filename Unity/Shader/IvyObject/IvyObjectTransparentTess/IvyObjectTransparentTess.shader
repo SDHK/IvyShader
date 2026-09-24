@@ -1,6 +1,7 @@
 HLSLINCLUDE
 #define IvyShader
 #define Link_IvyObjectTransparentTess
+#include "../../../../IvyConfig.hlsl"
 ENDHLSL
 
 Shader "Ivy/IvyObjectTransparentTess"
@@ -192,8 +193,10 @@ Shader "Ivy/IvyObjectTransparentTess"
             ZWrite Off
             Blend SrcAlpha OneMinusSrcAlpha
             HLSLPROGRAM
-            #define Link_IvyPassOutline
-            #include "../../IvyCoreUnity.hlsl"
+            #define Link_IvyEnvBase
+            #define Link_IvyFlowOutline
+            #define Link_IvyTess
+            #include "PassPort/IvyPassPortUrp.hlsl"
             ENDHLSL
         }
 
@@ -206,8 +209,20 @@ Shader "Ivy/IvyObjectTransparentTess"
             ZTest LEqual
             Blend One OneMinusSrcAlpha
             HLSLPROGRAM
-            #define Link_IvyPassMain
-            #include "../../IvyCoreUnity.hlsl"
+            #define IvyKey_Instancing
+            #define IvyKey_Fog
+            #define IvyKey_MainLightShadows
+            #define IvyKey_MainLightShadowsCascade
+            #define IvyKey_ShadowsSoft
+            #define IvyKey_AdditionalLights
+            #define IvyKey_AdditionalLightShadows
+            #define _SURFACE_TYPE_TRANSPARENT
+
+            #define Link_IvyEnvBase
+            #define Link_IvyEnvLight
+            #define Link_IvyFlowMain
+            #define Link_IvyTess
+            #include "PassPort/IvyPassPortUrp.hlsl"
             ENDHLSL
         }
 
@@ -220,8 +235,20 @@ Shader "Ivy/IvyObjectTransparentTess"
             ZTest LEqual
             Blend One OneMinusSrcAlpha
             HLSLPROGRAM
-            #define Link_IvyPassMain
-            #include "../../IvyCoreUnity.hlsl"
+            #define IvyKey_Instancing
+            #define IvyKey_Fog
+            #define IvyKey_MainLightShadows
+            #define IvyKey_MainLightShadowsCascade
+            #define IvyKey_ShadowsSoft
+            #define IvyKey_AdditionalLights
+            #define IvyKey_AdditionalLightShadows
+            #define _SURFACE_TYPE_TRANSPARENT
+
+            #define Link_IvyEnvBase
+            #define Link_IvyEnvLight
+            #define Link_IvyFlowMain
+            #define Link_IvyTess
+            #include "PassPort/IvyPassPortUrp.hlsl"
             ENDHLSL
         }
 
@@ -234,8 +261,13 @@ Shader "Ivy/IvyObjectTransparentTess"
             ZTest LEqual
             ColorMask 0
             HLSLPROGRAM
-            #define Link_IvyPassShadowCaster
-            #include "../../IvyCoreUnity.hlsl"
+            #define IvyKey_ShadowCaster
+
+            #define Link_IvyEnvBase
+            #define Link_IvyEnvLight
+            #define Link_IvyFlowShadow
+            #define Link_IvyTess
+            #include "PassPort/IvyPassPortUrp.hlsl"
             ENDHLSL
         }
     }
@@ -257,14 +289,15 @@ Shader "Ivy/IvyObjectTransparentTess"
             ZWrite Off
             Blend SrcAlpha OneMinusSrcAlpha
             HLSLPROGRAM
-            #define Link_IvyPassOutline
-            #include "../../IvyCoreUnity.hlsl"
+            #define Link_IvyEnvBase
+            #define Link_IvyFlowOutline
+            #define Link_IvyTess
+            #include "PassPort/IvyPassPortBrp.hlsl"
             ENDHLSL
         }
 
         // ===[GrabPass]===
         //GrabPass { "IvyArg_GrabTexture" }
-
         // ===[内壁：先画，不写深度]===
         Pass
         {
@@ -276,8 +309,19 @@ Shader "Ivy/IvyObjectTransparentTess"
             Blend One OneMinusSrcAlpha
 
             HLSLPROGRAM
-            #define Link_IvyPassMain
-            #include "../../IvyCoreUnity.hlsl"
+            
+            #define IvyKey_Instancing
+            #define IvyKey_Fog
+            #define IvyKey_ForwardBase
+            #define IvyKey_MainLightShadows
+            #define IvyKey_MainLightShadowsCascade
+            #define IvyKey_ShadowsSoft
+
+            #define Link_IvyEnvBase
+            #define Link_IvyEnvLight
+            #define Link_IvyFlowMain
+            #define Link_IvyTess
+            #include "PassPort/IvyPassPortBrp.hlsl"
             ENDHLSL
         }
 
@@ -292,8 +336,19 @@ Shader "Ivy/IvyObjectTransparentTess"
             Blend One OneMinusSrcAlpha
 
             HLSLPROGRAM
-            #define Link_IvyPassMain
-            #include "../../IvyCoreUnity.hlsl"
+
+            #define IvyKey_Instancing
+            #define IvyKey_Fog
+            #define IvyKey_ForwardBase
+            #define IvyKey_MainLightShadows
+            #define IvyKey_MainLightShadowsCascade
+            #define IvyKey_ShadowsSoft
+
+            #define Link_IvyEnvBase
+            #define Link_IvyEnvLight
+            #define Link_IvyFlowMain
+            #define Link_IvyTess
+            #include "PassPort/IvyPassPortBrp.hlsl"
             ENDHLSL
         }
 
@@ -307,8 +362,15 @@ Shader "Ivy/IvyObjectTransparentTess"
             ZWrite Off
             ZTest LEqual
             HLSLPROGRAM
-            #define Link_IvyPassAdd
-            #include "../../IvyCoreUnity.hlsl"
+            #define IvyKey_Instancing
+            #define IvyKey_Fog
+            #define IvyKey_ForwardAdd
+
+            #define Link_IvyEnvBase
+            #define Link_IvyEnvLight
+            #define Link_IvyFlowAdd
+            #define Link_IvyTess
+            #include "PassPort/IvyPassPortBrp.hlsl"
             ENDHLSL
         }
 
@@ -322,8 +384,13 @@ Shader "Ivy/IvyObjectTransparentTess"
             ZTest LEqual
             ColorMask 0
             HLSLPROGRAM
-            #define Link_IvyPassShadowCaster
-            #include "../../IvyCoreUnity.hlsl"
+            #define IvyKey_ShadowCaster
+
+            #define Link_IvyEnvBase
+            #define Link_IvyEnvLight
+            #define Link_IvyFlowShadow
+            #define Link_IvyTess
+            #include "PassPort/IvyPassPortBrp.hlsl"
             ENDHLSL
         }
     }

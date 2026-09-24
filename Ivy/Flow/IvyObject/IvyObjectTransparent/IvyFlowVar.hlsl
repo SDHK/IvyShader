@@ -13,6 +13,7 @@
 #ifndef IvyVarIn_PosOs
 #define IvyVarIn_PosOs
 #endif
+
 #ifndef IvyVarIn_NrmOs
 #define IvyVarIn_NrmOs
 #endif
