@@ -1,7 +1,6 @@
 ﻿HLSLINCLUDE
 #define IvyShader
 #define Link_IvyObjectTransparent
-#include "../../../../IvyConfig.hlsl"
 ENDHLSL
 
 Shader "Ivy/IvyObjectTransparent"

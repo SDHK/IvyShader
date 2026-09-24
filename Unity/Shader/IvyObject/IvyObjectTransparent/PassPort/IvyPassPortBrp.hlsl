@@ -10,7 +10,6 @@
 
 */
 
-#ifdef IvyShader_BRP
 
 
 #ifndef Def_IvyPassPortBrp
@@ -31,7 +30,7 @@
 #define IvyVarOut_Target : SV_Target
 
 // 链接到 IvyPipeCore
-#include "../../../../Pipeline/BRP/IvyPipeCore.hlsl"
+#include "../../../../IvyCoreUnity.hlsl"
 
 sampler2D IvyArg_GrabTexture;
 sampler2D IvyArg_SkinMask0;
@@ -74,4 +73,3 @@ half IvyFunc_AudioLinkBand(uint band) { return 0; }
 
 #endif
 
-#endif

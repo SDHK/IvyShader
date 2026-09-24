@@ -9,7 +9,6 @@
 
 */
 
-#ifdef IvyShader_URP
 
 #ifndef Def_IvyPassPortUrp
 #define Def_IvyPassPortUrp
@@ -28,7 +27,9 @@
 #define IvyVarOut_LightVec : TEXCOORD0
 #define IvyVarOut_Target : SV_Target
 
-#include "../../../../Pipeline/URP/IvyPipeCore.hlsl"
+#include "../../../../IvyCoreUnity.hlsl"
+
+
 
 sampler2D IvyArg_GrabTexture;
 sampler2D IvyArg_SkinMask0;
@@ -71,4 +72,3 @@ half IvyFunc_AudioLinkBand(uint band) { return 0; }
 
 #endif
 
-#endif

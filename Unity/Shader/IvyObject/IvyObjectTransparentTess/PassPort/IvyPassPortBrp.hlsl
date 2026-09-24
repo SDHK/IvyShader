@@ -9,7 +9,6 @@
 
 */
 
-#ifdef IvyShader_BRP
 
 #ifndef Def_IvyPassPortBrp
 #define Def_IvyPassPortBrp
@@ -29,7 +28,8 @@
 #define IvyVarOut_Target : SV_Target
 
 // 链接到 IvyPipeCore
-#include "../../../../Pipeline/BRP/IvyPipeCore.hlsl"
+
+#include "../../../../IvyCoreUnity.hlsl"
 
 sampler2D IvyArg_GrabTexture;
 sampler2D IvyArg_SkinMask0;
@@ -88,5 +88,4 @@ IvyTess_DomainTri(IvyFlow_Domain, IvyFlow_VertOut)
 #endif
 #pragma fragment IvyFlow_Frag
 
-#endif
 #endif
