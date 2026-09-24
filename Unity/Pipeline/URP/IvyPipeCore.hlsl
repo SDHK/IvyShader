@@ -6,4 +6,4 @@
 //===[注入环境履约]===
 #define Inc_IvyEnv "../../Unity/Pipeline/URP/Core/Env/IvyLinkEnv.hlsl"
 //===[注入核心]===
-#include "Core/IvyCore.hlsl"
+#include "../../../Ivy/Core/IvyCore.hlsl"
