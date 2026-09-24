@@ -9,7 +9,6 @@
 
 #if Link(IvyEnvBase)
 #include "IvyEnvBase.hlsl"
-#include "../IvyStruct.hlsl"
 #endif
 
 #if Link(IvyEnvLight)
@@ -17,5 +16,5 @@
 #endif
 
 #if Link(IvyTess)
-#include "../IvyTess.hlsl"
+#include "IvyTess.hlsl"
 #endif

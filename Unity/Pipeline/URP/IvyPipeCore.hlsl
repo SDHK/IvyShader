@@ -7,4 +7,3 @@
 #define Inc_IvyEnv "../../Unity/Pipeline/URP/Core/Env/IvyLinkEnv.hlsl"
 //===[注入核心]===
 #include "Core/IvyCore.hlsl"
-//#include "Pass/IvyLinkPass.hlsl"

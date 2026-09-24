@@ -6,6 +6,7 @@
 * 描述： IvyObjectTransparentTess URP Pass 端口
 *        语义尾巴、贴图履约、细分入口挂号
 *        Shader 在本文件之前写 IvyKey_ / Link_
+*        管线由 IvyConfig 选定，与本文件所在的 SubShader 无关
 
 */
 
@@ -27,7 +28,10 @@
 #define IvyVarOut_LightVec : TEXCOORD0
 #define IvyVarOut_Target : SV_Target
 
+//===[进入管线核心]===
 #include "../../../../IvyCoreUnity.hlsl"
+
+//===[贴图资源与 IvyFunc_ 履约]===
 
 
 
