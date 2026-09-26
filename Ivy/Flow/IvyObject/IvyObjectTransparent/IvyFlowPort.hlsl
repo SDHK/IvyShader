@@ -129,8 +129,8 @@ float IvyArg_Film21;
 float IvyArg_Film30;
 float IvyArg_Film31;
 float IvyArg_IridescenceHue;
-float IvyArg_IridescenceSpread;
-float IvyArg_IridescenceBands;
+float IvyArg_IridescenceRings;
+float IvyArg_IridescenceRingWidth;
 
 
 float IvyArg_EnvMapInfluence;

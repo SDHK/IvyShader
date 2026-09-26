@@ -125,8 +125,8 @@ Shader "Ivy/IvyObjectTransparent"
 
         [Space(20)]
         IvyArg_IridescenceHue                ("虹彩色相",              Range(0,1)) = 0.55
-        IvyArg_IridescenceSpread             ("虹彩展开",              Range(0,2)) = 0.25
-        [IntRange] IvyArg_IridescenceBands   ("虹彩档数",              Range(0,16)) = 0
+        [IntRange] IvyArg_IridescenceRings   ("虹彩圆环",              Range(0,9)) = 0
+        IvyArg_IridescenceRingWidth          ("虹彩环宽",              Range(0,1)) = 0.5
         IvyArg_FilmMaskTex                   ("彩虹遮罩(EnvMap)",      2D) = "white" {}
         [Space(10)]
         IvyArg_Film01                        ("虹彩变色0亮",              Range(0,1)) = 0

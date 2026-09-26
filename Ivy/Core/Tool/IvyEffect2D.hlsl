@@ -44,6 +44,21 @@ half IvyEffect2D_Cover(half t, half amount, half bands)
 }
 
 /// <summary>
+/// 视线兰伯特圆环遮罩。0 无遮罩，1~N 对应 N 圈。
+/// 中间落到 0；(bands+0.5) 让轮廓落在峰上，边缘不挡。
+/// width 0~1 控制彩虹亮带粗细。
+/// </summary>
+half IvyEffect2D_Rings(half ndotv, half bands, half width = 0.5)
+{
+    if (bands < 1.0)
+        return 1.0;
+    half edge = saturate(1.0 - ndotv);
+    half rings = abs(sin(edge * (bands + 0.5) * 3.14159265));
+    half expo = lerp(8.0, 1.0, saturate(width));
+    return pow(rings, expo);
+}
+
+/// <summary>
 /// 斜线网屏。uv 由 Pass 填屏幕或自定义映射。
 /// </summary>
 half IvyEffect2D_Hatch(float2 uv, half scale, half angle, half fill = 0.5)

@@ -103,6 +103,8 @@ IvyReflect_SpecularOut IvyReflect_Specular(IvyReflect_SpecularIn dataIn)
 
     float3 dirHighLight = normalize(dataIn.LightDir + dataIn.ViewDir);
     half highLightRamp =IvyRamp_HighLight(dataIn.NrmWs, dirHighLight, dataOut.Rough);
+    //当光滑度低时，亮斑会变大到覆盖整体，导致整体过亮，所以这里乘以光滑度来抑制亮度。
+    highLightRamp*= dataIn.ReflectSmoothness;
 
     dataOut.EnvRgb = lerp(dataIn.ProbeRgb, dataIn.EnvMapRgb, dataIn.EnvMapInfluence);
     dataOut.EnvRgb = lerp(dataOut.EnvRgb, dataIn.MatCapRgb, dataIn.MatCapInfluence);

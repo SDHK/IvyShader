@@ -4,7 +4,7 @@
 * 日期： 2026/09/09
 *
 * 描述： 颜色阶段
-*        珠光/镭射盖在已合成的表面上
+*        半程（视线+光照）连续彩虹，作为附加光输出
 *        不采样、不打光
 *
 */
@@ -17,15 +17,11 @@
 struct IvyColor_StainIn
 {
     /// <summary>
-    /// 色轴 0~1（由 Pass 用 Effect2D_Axis 填入）
+    /// 色轴 0~1。半程兰伯特 N·H，再加色相旋转
     /// </summary>
     half T;
     /// <summary>
-    /// 量化档数。0~1 连续珠光，2 以上硬边镭射
-    /// </summary>
-    half Bands;
-    /// <summary>
-    /// 染色强度（面料 8 条）
+    /// 染色强度（面料）
     /// </summary>
     half Amount;
     /// <summary>
@@ -33,34 +29,27 @@ struct IvyColor_StainIn
     /// </summary>
     half Mask;
     /// <summary>
-    /// 视角盖度（掠射更实）
+    /// 视线圆环遮罩。0 环时为 1，有环时为 0~1 波纹
     /// </summary>
-    half Cover;
-    /// <summary>
-    /// 透射合成后的表面色
-    /// </summary>
-    half3 Rgb;
+    half Rings;
 };
 
 struct IvyColor_StainOut
 {
     /// <summary>
-    /// 色相乘数
+    /// 附加彩虹光
     /// </summary>
-    half3 HueRgb;
     half3 Rgb;
 };
 
 /// <summary>
-/// 按珠光/镭射盖在合成表面上。
+/// 半程连续彩虹，按遮罩输出附加光。
 /// </summary>
 IvyColor_StainOut IvyColor_Stain(IvyColor_StainIn dataIn)
 {
     IvyColor_StainOut dataOut;
-    half3 hueRgb = IvyColor_Holo(dataIn.T, dataIn.Bands);
-    half cover = saturate(dataIn.Amount * dataIn.Mask * dataIn.Cover);
-    dataOut.HueRgb = lerp(1.0, hueRgb, cover);
-    dataOut.Rgb = dataIn.Rgb * dataOut.HueRgb;
+    half cover = saturate(dataIn.Amount * dataIn.Mask * dataIn.Rings);
+    dataOut.Rgb = IvyColor_HueRgb(dataIn.T) * cover;
     return dataOut;
 }
 

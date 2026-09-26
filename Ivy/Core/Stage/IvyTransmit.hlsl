@@ -39,7 +39,7 @@ struct IvyTransmit_BlendIn
     /// </summary>
     half3 RefractRgb;
     /// <summary>
-    /// 已乘边缘强度的菲涅尔，用于 Alpha
+    /// 边缘菲涅尔对 Alpha 的增量。玻璃边缘宜小，避免顶成实边
     /// </summary>
     half Fresnel;
 };

@@ -261,7 +261,22 @@ IvyFlow_FragOut IvyFlow_Frag(IvyFlow_FragIn fragIn)
     //背光
     half backRimRamp = IvyRamp_BackRim(geomOut.NrmWsFront, dirPosToCamWs, lightOut.Dir, IvyArg_BackLightRimSoftness) * IvyArg_BackRimIntensity ;
     half3 backRimLight = backRimRamp;
-    half3 addLight = rimLight + backRimLight;
+    // 镭射：色轴跟半程 N·H，圆环仍跟视线 N·V
+    half film0 = IvySwitch_Float3(uvId, IvyArg_Film00, IvyArg_Film10, IvyArg_Film20, IvyArg_Film30).x;
+    half film1 = IvySwitch_Float3(uvId, IvyArg_Film01, IvyArg_Film11, IvyArg_Film21, IvyArg_Film31).x;
+    half filmAmt = lerp(film0, film1, skinMaskLuma);
+    float2 filmEnvUv = IvyUv_DirToSphere(vecMaps.VecMapReflectOs);
+    half filmMask = IvyColor_Luma(IvyFunc_FilmMaskTex(filmEnvUv).rgb);
+    float3 halfDir = normalize(lightOut.Dir + dirPosToCamWs);
+    half ndoth = saturate(dot(geomOut.NrmWsFront, halfDir));
+    half ndotv = saturate(dot(geomOut.NrmWsFront, dirPosToCamWs));
+    IvyColor_StainIn filmIn;
+    filmIn.T = frac(ndoth + IvyArg_IridescenceHue);
+    filmIn.Amount = filmAmt;
+    filmIn.Mask = filmMask;
+    filmIn.Rings = IvyEffect2D_Rings(ndotv, IvyArg_IridescenceRings, IvyArg_IridescenceRingWidth);
+    IvyColor_StainOut filmOut = IvyColor_Stain(filmIn);
+    half3 addLight = rimLight + backRimLight + filmOut.Rgb;
     //===[透射折射]====================================
     half transmit0 = IvySwitch_Float3(uvId, IvyArg_Transmit00, IvyArg_Transmit10, IvyArg_Transmit20, IvyArg_Transmit30).x;
     half transmit1 = IvySwitch_Float3(uvId, IvyArg_Transmit01, IvyArg_Transmit11, IvyArg_Transmit21, IvyArg_Transmit31).x;
@@ -283,39 +298,17 @@ IvyFlow_FragOut IvyFlow_Frag(IvyFlow_FragIn fragIn)
     half fresnel = IvyRamp_Fresnel(geomOut.NrmWsFront, dirPosToCamWs, 0.5);
     IvyTransmit_BlendIn transmitIn;
     transmitIn.Rgb = skinRgb;
+    // 不透：Alpha=1；玻璃：基底半透，边缘菲涅尔只略加不透明度，避免实边
     transmitIn.Alpha = lerp(0.0, 0.15, transmit);
     transmitIn.Refract = transmit;
     transmitIn.IsFront = geomOut.IsFront;
     transmitIn.ReflectRgb = reflectRgb;
     transmitIn.RefractRgb = refractRgb;
-    transmitIn.Fresnel = lerp(1.0, fresnel * 0.9, transmit);
+    transmitIn.Fresnel = lerp(1.0, fresnel * 0.7, transmit);
     IvyTransmit_BlendOut transmitOut = IvyTransmit_Blend(transmitIn);
-    //===[薄膜干涉]====================================
-    half film0 = IvySwitch_Float3(uvId, IvyArg_Film00, IvyArg_Film10, IvyArg_Film20, IvyArg_Film30).x;
-    half film1 = IvySwitch_Float3(uvId, IvyArg_Film01, IvyArg_Film11, IvyArg_Film21, IvyArg_Film31).x;
-    half filmAmt = lerp(film0, film1, skinMaskLuma);
-     // 环境贴图反射
-    envUv = IvyUv_DirToSphere((vecMaps.VecMapReflectOs));
-    half filmMask = IvyColor_Luma(IvyFunc_FilmMaskTex(envUv).rgb);
-    // 油膜钉在网格法线上，不用凹凸法线，避免色带被花纹噪声打碎
-    half ndotv = saturate(dot(geomOut.NrmWsFront, dirPosToCamWs));
-    half heightFactor = geomOut.PosOs.y / max(length(geomOut.PosOs.xyz), 1e-4);
-    half t = IvyEffect2D_Axis(ndotv, IvyArg_IridescenceHue - heightFactor * 0.5, IvyArg_IridescenceSpread);
-    half filmCover = IvyArg_IridescenceBands >= 2.0
-        ? IvyEffect2D_Cover(t, 1.0, IvyArg_IridescenceBands)
-        : 1.0;
-
-    IvyColor_StainIn colorIn;
-    colorIn.T = t;
-    colorIn.Bands = IvyArg_IridescenceBands;
-    colorIn.Amount = filmAmt;
-    colorIn.Mask = filmMask;
-    colorIn.Cover = filmCover;
-    colorIn.Rgb = transmitOut.Rgb;
-    IvyColor_StainOut colorOut = IvyColor_Stain(colorIn);
 
     IvyFlow_FragOut fragOut;
-    fragOut.TargetRgba = half4(colorOut.Rgb, transmitOut.Alpha);
+    fragOut.TargetRgba = half4(transmitOut.Rgb, transmitOut.Alpha);
 #if Link(IvyAudioLink)
     half pulse = IvyFunc_AudioLinkBand((uint)IvyArg_AudioBand);
 #else
